@@ -1,0 +1,96 @@
+name: asistencia-saas-dev
+
+# Local dev stack: Postgres 16 + Redis 7 + Adminer.
+# Volumes persist data between container restarts.
+# Run from repo root:
+#   docker compose -f infra/docker/docker-compose.yml up -d
+# Tear down (keep volumes):
+#   docker compose -f infra/docker/docker-compose.yml down
+# Tear down (DELETE volumes — destroys local data):
+#   docker compose -f infra/docker/docker-compose.yml down -v
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: asistencia-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-asistencia_saas}
+      POSTGRES_USER: ${POSTGRES_USER:-asistencia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-asistencia}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - asistencia-net
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${POSTGRES_USER:-asistencia} -d ${POSTGRES_DB:-asistencia_saas}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  redis:
+    image: redis:7-alpine
+    container_name: asistencia-redis
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - "60 1000"
+      - --appendonly
+      - "yes"
+      # If REDIS_PASSWORD is set, enable AUTH. In dev we default to no AUTH.
+      - ${REDIS_PASSWORD:+--requirepass}
+      - ${REDIS_PASSWORD:-}
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redisdata:/data
+    networks:
+      - asistencia-net
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - ping
+        - ${REDIS_PASSWORD:+-a}
+        - ${REDIS_PASSWORD:-}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+  adminer:
+    image: adminer:latest
+    container_name: asistencia-adminer
+    restart: unless-stopped
+    ports:
+      - "${ADMINER_PORT:-8080}:8080"
+    environment:
+      ADMINER_DEFAULT_SERVER: postgres
+      ADMINER_DESIGN: pepa-linha-dark
+    networks:
+      - asistencia-net
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+networks:
+  asistencia-net:
+    name: asistencia-net
+    driver: bridge
+
+volumes:
+  pgdata:
+    name: asistencia-pgdata
+  redisdata:
+    name: asistencia-redisdata
