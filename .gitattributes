@@ -1,0 +1,19 @@
+# Normalize line endings to LF on checkout; keep LF on commit
+* text=auto eol=lf
+
+# Force LF for shell scripts and configs
+*.sh        text eol=lf
+*.yaml      text eol=lf
+*.yml       text eol=lf
+*.json      text eol=lf
+*.js        text eol=lf
+*.ts        text eol=lf
+*.tsx       text eol=lf
+*.md        text eol=lf
+Dockerfile  text eol=lf
+.env*       text eol=lf
+
+# Binary lockfiles (do not diff)
+pnpm-lock.yaml   binary
+package-lock.json binary
+yarn.lock        binary

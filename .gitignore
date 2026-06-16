@@ -1,0 +1,76 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Build outputs
+dist/
+build/
+.next/
+out/
+*.tsbuildinfo
+
+# Environment
+.env
+.env.local
+.env.*.local
+!.env.example
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# Testing & Coverage
+coverage/
+.nyc_output/
+*.lcov
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.iml
+*.sublime-project
+*.sublime-workspace
+
+# OS junk
+.DS_Store
+Thumbs.db
+desktop.ini
+$RECYCLE.BIN/
+*.lnk
+
+# Prisma
+prisma/dev.db
+prisma/dev.db-journal
+
+# NestJS
+apps/api/dist/
+apps/api/coverage/
+
+# Vite
+apps/web/dist/
+apps/web/.vite/
+apps/web/coverage/
+
+# Docker volumes (local data)
+infra/docker/volumes/
+infra/docker/.env
+
+# Temp
+tmp/
+temp/
+.cache/
+.turbo/
+.parcel-cache/
+
+# Misc
+.history/
+*.pid
+*.seed
+*.pid.lock

@@ -1,0 +1,22 @@
+{
+  "name": "@asistencia/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "files": [
+    "base.js",
+    "react.js",
+    "nest.js"
+  ],
+  "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.12.0",
+    "@typescript-eslint/parser": "^8.12.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-react": "^7.37.2",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.14"
+  },
+  "peerDependencies": {
+    "eslint": "^9.0.0"
+  }
+}
