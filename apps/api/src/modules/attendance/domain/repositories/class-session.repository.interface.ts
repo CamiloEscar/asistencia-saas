@@ -79,4 +79,21 @@ export interface IClassSessionRepository {
 
   /** Transition status to COMPLETED. Used after a bulk-mark. */
   markCompleted(id: string): Promise<ClassSession>
+
+  /** Check whether the given teacher is assigned to the given
+   *  course. Used by the attendance use cases to enforce
+   *  REQ-ATT-001-03 (non-owner teacher forbidden) and the
+   *  same-day modify rule (REQ-ATT-002) without crossing the
+   *  course↔attendance module boundary. */
+  isTeacherAssignedToCourse(
+    institutionId: string,
+    teacherId: string,
+    courseId: string,
+  ): Promise<boolean>
+
+  /** Look up the course's `defaultSessionDurationMin` for use when
+   *  auto-creating a session in `getOrCreateForCourseAndDate`. The
+   *  attendance use case passes the result in if the caller didn't
+   *  specify a duration explicitly. */
+  getCourseDefaultDuration(institutionId: string, courseId: string): Promise<number | null>
 }

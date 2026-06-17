@@ -126,6 +126,26 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
     return this.toEntity(row)
   }
 
+  async isTeacherAssignedToCourse(
+    institutionId: string,
+    teacherId: string,
+    courseId: string,
+  ): Promise<boolean> {
+    const found = await this.prisma.courseTeacher.findFirst({
+      where: { institutionId, courseId, teacherId },
+      select: { id: true },
+    })
+    return found !== null
+  }
+
+  async getCourseDefaultDuration(institutionId: string, courseId: string): Promise<number | null> {
+    const course = await this.prisma.course.findFirst({
+      where: { id: courseId, institutionId },
+      select: { defaultSessionDurationMin: true },
+    })
+    return course?.defaultSessionDurationMin ?? null
+  }
+
   // ─── helpers ─────────────────────────────────────────────────────────
 
   /**
