@@ -1,3 +1,4 @@
+import { Injectable } from '@nestjs/common';
 import { AsyncLocalStorage } from 'node:async_hooks';
 
 /**
@@ -25,42 +26,83 @@ export interface TenantContextValue {
   requestId?: string;
 }
 
+// Module-level storage shared between the NestJS-injectable service and the
+// standalone function helpers. Both paths must read/write the same context
+// so that code injected via DI and code that has no DI access (Prisma
+// extensions, audit interceptor) see the same value.
 const storage = new AsyncLocalStorage<TenantContextValue>();
 
 /**
- * Run `fn` inside a tenant context (creates a new async scope). Use this
- * for BullMQ worker jobs and other async work that has no parent context.
+ * `TenantContextService` — NestJS-injectable wrapper around the module-level
+ * `AsyncLocalStorage`. Use this in providers/controllers/guards that already
+ * have a DI context. For code that doesn't (Prisma extensions, request
+ * interceptors), use the standalone `getTenantContext()` / etc. helpers
+ * exported below — they share the same storage.
  */
-export function runWithTenantContext<T>(ctx: TenantContextValue, fn: () => Promise<T> | T): Promise<T> | T {
+@Injectable()
+export class TenantContextService {
+  /**
+   * Run `fn` inside a tenant context (creates a new async scope). Use this
+   * for BullMQ worker jobs and other async work that has no parent context.
+   */
+  run<T>(ctx: TenantContextValue, fn: () => Promise<T> | T): Promise<T> | T {
+    return storage.run(ctx, fn);
+  }
+
+  /**
+   * Set the tenant context for the current async context WITHOUT creating a
+   * new scope. Use this in HTTP middleware: the context propagates through
+   * every subsequent `await` in the request pipeline (Node 16+ preserves
+   * AsyncLocalStorage across microtasks automatically).
+   */
+  enter(ctx: TenantContextValue): void {
+    storage.enterWith(ctx);
+  }
+
+  /** Read the current tenant context, or undefined if we're outside one. */
+  get(): TenantContextValue | undefined {
+    return storage.getStore();
+  }
+
+  /** Immutably merge a partial update into the active context. */
+  patch(patch: Partial<TenantContextValue>): void {
+    const current = storage.getStore();
+    if (current) {
+      Object.assign(current, patch);
+    }
+  }
+}
+
+// ─── Standalone function helpers ────────────────────────────────────────────
+//
+// These share the same module-level `AsyncLocalStorage` instance, so DI and
+// non-DI callers always see the same context. Used by:
+//   - tenantAwareExtension (Prisma extension, no DI)
+//   - AuditInterceptor (no DI — receives from execution context)
+//   - TenantMiddleware (no DI — NestJS middleware)
+//   - PrismaService.getCurrentTenant() (could be DI, kept as a function for
+//     ergonomics)
+//
+// Keep these signatures stable; they're part of the project's internal API.
+
+export function runWithTenantContext<T>(
+  ctx: TenantContextValue,
+  fn: () => Promise<T> | T,
+): Promise<T> | T {
   return storage.run(ctx, fn);
 }
 
-/**
- * Set the tenant context for the current async context WITHOUT creating a
- * new scope. Use this in HTTP middleware: the context propagates through
- * every subsequent `await` in the request pipeline (Node 16+ preserves
- * AsyncLocalStorage across microtasks automatically).
- */
 export function enterTenantContext(ctx: TenantContextValue): void {
   storage.enterWith(ctx);
 }
 
-/** Read the current tenant context, or undefined if we're outside one. */
 export function getTenantContext(): TenantContextValue | undefined {
   return storage.getStore();
 }
 
-/** Immutably merge a partial update into the active context. */
 export function patchTenantContext(patch: Partial<TenantContextValue>): void {
   const current = storage.getStore();
   if (current) {
     Object.assign(current, patch);
   }
 }
-
-export const TenantContext = {
-  run: runWithTenantContext,
-  enter: enterTenantContext,
-  get: getTenantContext,
-  patch: patchTenantContext,
-};
