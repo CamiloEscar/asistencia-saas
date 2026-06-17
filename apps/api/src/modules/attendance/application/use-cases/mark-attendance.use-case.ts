@@ -105,7 +105,16 @@ export class MarkAttendanceUseCase {
     }
 
     // 5. Validate every student is enrolled (REQ-ATT-001-04 — full
-    //    rollback if any are missing).
+    //    rollback if any are missing). The Zod pipe also enforces
+    //    `min(1)`; this is defense in depth in case the use case
+    //    is called outside the HTTP layer.
+    if (input.records.length === 0) {
+      throw new BadRequestException({
+        message: 'At least one record is required',
+        error: 'Bad Request',
+        field: 'records',
+      })
+    }
     const studentIds = input.records.map((r) => r.studentId)
     await this.attendance.validateStudentsEnrolledInCourse(input.courseId, studentIds)
 
