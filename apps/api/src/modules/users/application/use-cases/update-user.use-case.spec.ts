@@ -1,0 +1,73 @@
+import { ConflictException, ForbiddenException, NotFoundException } from '@nestjs/common'
+import type { User } from '../../../auth/domain/entities/user.entity'
+import type { IUserRepository } from '../../domain/repositories/user.repository.interface'
+import { UpdateUserUseCase } from './update-user.use-case'
+
+describe('UpdateUserUseCase', () => {
+  let useCase: UpdateUserUseCase
+  let users: jest.Mocked<IUserRepository>
+
+  const baseUser = {
+    id: 'u-1',
+    email: 'a@x.com',
+    fullName: 'A',
+    role: 'INSTITUTION_ADMIN',
+    status: 'ACTIVE',
+    institutionId: 'i-1',
+  } as unknown as User
+
+  beforeEach(() => {
+    users = {
+      findByIdInInstitution: jest.fn(),
+      findByEmailInInstitution: jest.fn(),
+      listInInstitution: jest.fn(),
+      createInInstitution: jest.fn(),
+      updateInInstitution: jest.fn(),
+      setActiveInInstitution: jest.fn(),
+      setPasswordHashInInstitution: jest.fn(),
+      countByRoleInInstitution: jest.fn(),
+      toEntity: jest.fn(),
+    } as unknown as jest.Mocked<IUserRepository>
+    useCase = new UpdateUserUseCase(users)
+  })
+
+  it('updates a user (happy path)', async () => {
+    users.findByIdInInstitution.mockResolvedValue(baseUser)
+    users.updateInInstitution.mockResolvedValue({ ...baseUser, fullName: 'New' })
+
+    const result = await useCase.execute('i-1', 'actor-1', 'u-1', { fullName: 'New' })
+    expect(result.fullName).toBe('New')
+  })
+
+  it('throws 404 when target user is not found', async () => {
+    users.findByIdInInstitution.mockResolvedValue(null)
+    await expect(
+      useCase.execute('i-1', 'actor-1', 'u-1', { fullName: 'X' }),
+    ).rejects.toBeInstanceOf(NotFoundException)
+  })
+
+  it('denies self role change (403)', async () => {
+    users.findByIdInInstitution.mockResolvedValue(baseUser)
+    await expect(
+      useCase.execute('i-1', 'u-1', 'u-1', { role: 'TEACHER' }),
+    ).rejects.toBeInstanceOf(ForbiddenException)
+  })
+
+  it('blocks demoting the last admin (409)', async () => {
+    users.findByIdInInstitution.mockResolvedValue(baseUser)
+    users.countByRoleInInstitution.mockResolvedValue(1)
+    await expect(
+      useCase.execute('i-1', 'actor-2', 'u-1', { role: 'TEACHER' }),
+    ).rejects.toBeInstanceOf(ConflictException)
+  })
+
+  it('rejects duplicate email (409)', async () => {
+    users.findByIdInInstitution.mockResolvedValue(baseUser)
+    users.findByEmailInInstitution.mockResolvedValue({
+      id: 'other',
+    } as unknown as User)
+    await expect(
+      useCase.execute('i-1', 'actor-1', 'u-1', { email: 'taken@x.com' }),
+    ).rejects.toBeInstanceOf(ConflictException)
+  })
+})

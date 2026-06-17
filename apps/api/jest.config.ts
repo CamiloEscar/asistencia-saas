@@ -19,7 +19,7 @@ const config: Config = {
     prefix: '<rootDir>/',
   }),
   setupFiles: ['<rootDir>/test/setup.ts'],
-  setupFilesAfterEach: [],
+  setupFilesAfterEnv: [],
   testTimeout: 60_000, // testcontainers cold start
   collectCoverageFrom: [
     'src/**/*.ts',
