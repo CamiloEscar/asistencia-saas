@@ -1,0 +1,8 @@
+{
+  "generic": "Algo salió mal. Intentá de nuevo.",
+  "unauthorized": "Email o contraseña incorrectos",
+  "forbidden": "No tenés permisos para esta acción",
+  "notFound": "Recurso no encontrado",
+  "validation": "Revisá los datos del formulario",
+  "network": "Sin conexión. Revisá tu red."
+}
