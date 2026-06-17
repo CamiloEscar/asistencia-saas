@@ -13,6 +13,7 @@ import { PrismaModule } from './shared/prisma/prisma.module';
 import { RedisModule } from './shared/redis/redis.module';
 import { TenantModule } from './shared/tenant/tenant.module';
 import { AppLoggerModule } from './shared/logger/logger.module';
+import { AuditModule } from './audit/audit.module';
 
 /**
  * Root application module. Feature modules are registered in subsequent tasks
@@ -30,6 +31,7 @@ import { AppLoggerModule } from './shared/logger/logger.module';
     RedisModule,
     TenantModule,
     AppLoggerModule,
+    AuditModule,
     ThrottlerModule.forRootAsync({
       useFactory: () => {
         const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
