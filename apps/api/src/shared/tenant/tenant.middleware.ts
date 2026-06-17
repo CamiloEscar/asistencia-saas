@@ -1,7 +1,8 @@
-import { Injectable, Logger, NestMiddleware, UnauthorizedException } from '@nestjs/common';
-import type { NextFunction, Request, Response } from 'express';
-import { enterTenantContext } from './tenant.context';
-import { TenantResolverService } from './tenant-resolver.service';
+import type { NestMiddleware } from '@nestjs/common'
+import { Injectable, Logger, UnauthorizedException } from '@nestjs/common'
+import type { NextFunction, Request, Response } from 'express'
+import { enterTenantContext } from './tenant.context'
+import type { TenantResolverService } from './tenant-resolver.service'
 
 /**
  * TenantMiddleware — runs BEFORE every controller in /api/* and /auth/*.
@@ -22,37 +23,34 @@ import { TenantResolverService } from './tenant-resolver.service';
  */
 @Injectable()
 export class TenantMiddleware implements NestMiddleware {
-  private readonly logger = new Logger(TenantMiddleware.name);
+  private readonly logger = new Logger(TenantMiddleware.name)
 
   constructor(private readonly resolver: TenantResolverService) {}
 
   async use(req: Request, _res: Response, next: NextFunction): Promise<void> {
-    const rawSubdomain = (req.headers['x-tenant-subdomain'] as string | undefined)?.trim().toLowerCase();
-    const requestId = (req.headers['x-request-id'] as string | undefined) ?? undefined;
+    const rawSubdomain = (req.headers['x-tenant-subdomain'] as string | undefined)
+      ?.trim()
+      .toLowerCase()
+    const requestId = (req.headers['x-request-id'] as string | undefined) ?? undefined
 
     if (!rawSubdomain) {
       throw new UnauthorizedException({
         message: 'X-Tenant-Subdomain header is required',
         error: 'Unauthorized',
-      });
+      })
     }
 
-    let resolved;
-    try {
-      resolved = await this.resolver.resolveBySubdomain(rawSubdomain);
-    } catch (err) {
-      throw err;
-    }
+    const resolved = await this.resolver.resolveBySubdomain(rawSubdomain)
 
     if (resolved.status === 'INACTIVE') {
       throw new UnauthorizedException({
         message: 'Institution is inactive',
         error: 'Unauthorized',
-      });
+      })
     }
 
     // Stash on the request for handlers that want to read it directly.
-    (req as Request & { tenant?: typeof resolved }).tenant = resolved;
+    ;(req as Request & { tenant?: typeof resolved }).tenant = resolved
 
     // enterWith (not run) so the context persists into the async pipeline
     // that NestJS drives after next() — every await inside controllers and
@@ -62,8 +60,8 @@ export class TenantMiddleware implements NestMiddleware {
       subdomain: resolved.subdomain,
       timezone: resolved.timezone,
       requestId,
-    });
+    })
 
-    next();
+    next()
   }
 }

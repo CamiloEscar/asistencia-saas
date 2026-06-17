@@ -1,14 +1,17 @@
-/** @type {import('eslint').Linter.Config} */
-module.exports = {
-  ...require('./base'),
-  env: {
-    node: true,
-    es2022: true,
-    jest: true,
+import base from './base.js';
+
+/**
+ * ESLint v9 flat config for the NestJS API.
+ * Extends the base config with relaxations that fit NestJS decorators and DI patterns.
+ */
+export default [
+  ...base,
+  {
+    rules: {
+      // NestJS decorators + reflect-metadata make these noisy without value.
+      '@typescript-eslint/explicit-function-return-type': 'off',
+      '@typescript-eslint/explicit-module-boundary-types': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
   },
-  rules: {
-    '@typescript-eslint/interface-name-prefix': 'off',
-    '@typescript-eslint/explicit-function-return-type': 'off',
-    '@typescript-eslint/explicit-module-boundary-types': 'off',
-  },
-}
+];

@@ -1,21 +1,16 @@
-import { Controller, Get } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckResult,
-  HealthCheckService,
-  HealthIndicator,
-  HealthIndicatorResult,
-} from '@nestjs/terminus';
-import { SkipThrottle } from '@nestjs/throttler';
-import { PrismaService } from './shared/prisma/prisma.service';
-import { RedisService } from './shared/redis/redis.service';
+import { Controller, Get } from '@nestjs/common'
+import type { HealthCheckResult, HealthCheckService, HealthIndicatorResult } from '@nestjs/terminus'
+import { HealthCheck, HealthIndicator } from '@nestjs/terminus'
+import { SkipThrottle } from '@nestjs/throttler'
+import type { PrismaService } from './shared/prisma/prisma.service'
+import type { RedisService } from './shared/redis/redis.service'
 
 type HealthPayload = HealthCheckResult & {
-  uptimeSeconds: number;
-  service: string;
-  env: string;
-  version: string;
-};
+  uptimeSeconds: number
+  service: string
+  env: string
+  version: string
+}
 
 /**
  * /health — public, un-throttled health check.
@@ -38,9 +33,9 @@ type HealthPayload = HealthCheckResult & {
 @Controller('health')
 @SkipThrottle()
 export class AppController {
-  private readonly startedAt = new Date();
-  private readonly dbIndicator = new PrismaDbHealthIndicator();
-  private readonly redisIndicator = new RedisHealthIndicator();
+  private readonly startedAt = new Date()
+  private readonly dbIndicator = new PrismaDbHealthIndicator()
+  private readonly redisIndicator = new RedisHealthIndicator()
 
   constructor(
     private readonly health: HealthCheckService,
@@ -54,14 +49,14 @@ export class AppController {
     const result = await this.health.check([
       () => this.dbIndicator.check(this.prisma),
       () => this.redisIndicator.check(this.redis),
-    ]);
+    ])
     return {
       ...result,
       uptimeSeconds: Math.floor((Date.now() - this.startedAt.getTime()) / 1000),
       service: 'asistencia-api',
       env: process.env.NODE_ENV ?? 'development',
       version: process.env.npm_package_version ?? '0.0.0',
-    };
+    }
   }
 }
 
@@ -71,15 +66,15 @@ export class AppController {
  */
 class PrismaDbHealthIndicator extends HealthIndicator {
   async check(prisma: PrismaService): Promise<HealthIndicatorResult> {
-    const start = Date.now();
+    const start = Date.now()
     try {
-      await prisma.$queryRaw`SELECT 1`;
-      return this.getStatus('database', true, { latencyMs: Date.now() - start });
+      await prisma.$queryRaw`SELECT 1`
+      return this.getStatus('database', true, { latencyMs: Date.now() - start })
     } catch (err) {
       return this.getStatus('database', false, {
         message: (err as Error).message,
         latencyMs: Date.now() - start,
-      });
+      })
     }
   }
 }
@@ -90,19 +85,19 @@ class PrismaDbHealthIndicator extends HealthIndicator {
  */
 class RedisHealthIndicator extends HealthIndicator {
   async check(redis: RedisService): Promise<HealthIndicatorResult> {
-    const start = Date.now();
+    const start = Date.now()
     try {
-      const reply = await redis.ping();
-      const isHealthy = reply === 'PONG';
+      const reply = await redis.ping()
+      const isHealthy = reply === 'PONG'
       return this.getStatus('redis', isHealthy, {
         latencyMs: Date.now() - start,
         ...(isHealthy ? {} : { message: `unexpected reply: ${reply}` }),
-      });
+      })
     } catch (err) {
       return this.getStatus('redis', false, {
         message: (err as Error).message,
         latencyMs: Date.now() - start,
-      });
+      })
     }
   }
 }

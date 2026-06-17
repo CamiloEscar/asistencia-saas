@@ -59,9 +59,11 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@asistencia/eslint-config": "workspace:^",
     "@nestjs/cli": "^10.4.0",
     "@nestjs/schematics": "^10.1.4",
     "@nestjs/testing": "^10.4.0",
+    "@testcontainers/postgresql": "^10.13.0",
     "@types/cookie-parser": "^1.4.7",
     "@types/express": "^4.17.21",
     "@types/jest": "^29.5.13",
@@ -72,7 +74,6 @@
     "jest": "^29.7.0",
     "supertest": "^7.0.0",
     "testcontainers": "^10.13.0",
-    "@testcontainers/postgresql": "^10.13.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "tsx": "^4.19.0",

@@ -1,5 +1,6 @@
-import { ArgumentMetadata, BadRequestException, Injectable, PipeTransform } from '@nestjs/common';
-import { ZodError, ZodSchema } from 'zod';
+import type { ArgumentMetadata, PipeTransform } from '@nestjs/common'
+import { BadRequestException, Injectable } from '@nestjs/common'
+import type { ZodError, ZodSchema } from 'zod'
 
 /**
  * Generic Zod validation pipe. Accepts a Zod schema in the route metadata
@@ -21,31 +22,31 @@ export class ZodValidationPipe implements PipeTransform {
   constructor(private readonly schema?: ZodSchema) {}
 
   static create<T>(schema: ZodSchema<T>): ZodValidationPipe {
-    return new ZodValidationPipe(schema);
+    return new ZodValidationPipe(schema)
   }
 
   transform(value: unknown, _metadata: ArgumentMetadata): unknown {
     if (!this.schema) {
       // No schema attached — pass through. Use class-validator ValidationPipe
       // for DTO-level validation; this pipe only enforces Zod schemas.
-      return value;
+      return value
     }
 
-    const result = this.schema.safeParse(value);
+    const result = this.schema.safeParse(value)
     if (!result.success) {
       throw new BadRequestException({
         message: 'Validation failed',
         error: 'Unprocessable Entity',
         errors: this.formatZodError(result.error),
-      });
+      })
     }
-    return result.data;
+    return result.data
   }
 
   private formatZodError(error: ZodError): Array<{ field: string; message: string }> {
     return error.issues.map((issue) => ({
       field: issue.path.join('.') || '(root)',
       message: issue.message,
-    }));
+    }))
   }
 }

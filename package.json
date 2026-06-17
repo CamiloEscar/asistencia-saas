@@ -19,6 +19,7 @@
     "prepare": "husky || true"
   },
   "devDependencies": {
+    "@asistencia/eslint-config": "workspace:^",
     "@commitlint/cli": "^19.5.0",
     "@commitlint/config-conventional": "^19.5.0",
     "@types/node": "^22.0.0",

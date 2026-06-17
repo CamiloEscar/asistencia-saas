@@ -1,8 +1,9 @@
-import { randomUUID } from 'node:crypto';
-import { Global, MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
-import { LoggerModule } from 'nestjs-pino';
-import type { Request, Response } from 'express';
-import { getTenantContext } from '../tenant/tenant.context';
+import { randomUUID } from 'node:crypto'
+import type { MiddlewareConsumer, NestModule } from '@nestjs/common'
+import { Global, Module } from '@nestjs/common'
+import { LoggerModule } from 'nestjs-pino'
+import type { Request, Response } from 'express'
+import { getTenantContext } from '../tenant/tenant.context'
 
 /**
  * Structured logging via Pino. JSON in production, pretty in dev.
@@ -46,24 +47,24 @@ import { getTenantContext } from '../tenant/tenant.context';
           censor: '[REDACTED]',
         },
         customProps: (req) => {
-          const ctx = getTenantContext();
+          const ctx = getTenantContext()
           return {
             requestId: (req.headers['x-request-id'] as string) ?? randomUUID(),
             institutionId: ctx?.tenantId,
             subdomain: ctx?.subdomain,
             userId: ctx?.userId,
             role: ctx?.role,
-          };
+          }
         },
         genReqId: (req, res) => {
-          const existing = (req.headers['x-request-id'] as string) ?? randomUUID();
-          res.setHeader('x-request-id', existing);
-          return existing;
+          const existing = (req.headers['x-request-id'] as string) ?? randomUUID()
+          res.setHeader('x-request-id', existing)
+          return existing
         },
         customLogLevel: (_req, res, err) => {
-          if (err || res.statusCode >= 500) return 'error';
-          if (res.statusCode >= 400) return 'warn';
-          return 'info';
+          if (err || res.statusCode >= 500) return 'error'
+          if (res.statusCode >= 400) return 'warn'
+          return 'info'
         },
         serializers: {
           req: (req: Request) => ({
@@ -85,6 +86,6 @@ export class AppLoggerModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {
     // LoggerModule's middleware is already wired via forRoutes('*') in main.ts.
     // We don't add additional middleware here.
-    consumer.apply().forRoutes('*');
+    consumer.apply().forRoutes('*')
   }
 }

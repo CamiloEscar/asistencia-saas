@@ -1,4 +1,4 @@
-import { Navigate, Outlet } from 'react-router-dom';
+import { Outlet } from 'react-router-dom'
 
 /**
  * Wrapper that gates routes behind authentication. If the user has no session,
@@ -12,5 +12,5 @@ export function ProtectedRoute() {
   // TODO(task 12.4): const { user, isLoading } = useAuth();
   // if (isLoading) return <LoadingScreen />;
   // if (!user) return <Navigate to="/login" state={{ returnTo: location.pathname }} replace />;
-  return <Outlet />;
+  return <Outlet />
 }

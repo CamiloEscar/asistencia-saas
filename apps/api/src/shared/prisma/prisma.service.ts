@@ -1,7 +1,8 @@
-import { Inject, Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
-import { Prisma, PrismaClient } from '@prisma/client';
-import { getTenantContext } from '../tenant/tenant.context';
-import { tenantAwareExtension } from './tenant-aware.extension';
+import type { OnModuleDestroy, OnModuleInit } from '@nestjs/common'
+import { Injectable, Logger } from '@nestjs/common'
+import { Prisma, PrismaClient } from '@prisma/client'
+import { getTenantContext } from '../tenant/tenant.context'
+import { tenantAwareExtension } from './tenant-aware.extension'
 
 /**
  * DI token for the unfiltered Prisma client used ONLY by the super-admin
@@ -9,14 +10,16 @@ import { tenantAwareExtension } from './tenant-aware.extension';
  * BYPASSRLS, so RLS is a no-op for this client; the application layer's
  * audit log is the only cross-tenant data-leak safeguard.
  */
-export const SUPER_ADMIN_PRISMA = Symbol('SUPER_ADMIN_PRISMA');
+export const SUPER_ADMIN_PRISMA = Symbol('SUPER_ADMIN_PRISMA')
 
 /**
  * The extended Prisma client type. Prisma's `$extends` returns a new type
  * with the extensions baked in — we type our service against that.
  */
-const createExtendedPrisma = () => new PrismaClient().$extends(tenantAwareExtension);
-export type ExtendedPrismaClient = ReturnType<typeof createExtendedPrisma>;
+function _createExtendedPrisma() {
+  return new PrismaClient().$extends(tenantAwareExtension)
+}
+export type ExtendedPrismaClient = ReturnType<typeof _createExtendedPrisma>
 
 /**
  * PrismaService — single Prisma client wired with the `tenantAwareExtension`.
@@ -35,58 +38,78 @@ export type ExtendedPrismaClient = ReturnType<typeof createExtendedPrisma>;
  */
 @Injectable()
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
-  private readonly logger = new Logger(PrismaService.name);
-  private readonly client: ExtendedPrismaClient;
+  private readonly logger = new Logger(PrismaService.name)
+  private readonly client: ExtendedPrismaClient
 
   constructor() {
     this.client = new PrismaClient({
       log: process.env.NODE_ENV === 'production' ? ['error', 'warn'] : ['error', 'warn', 'info'],
-    }).$extends(tenantAwareExtension);
+    }).$extends(tenantAwareExtension)
   }
 
   async onModuleInit(): Promise<void> {
-    await this.client.$connect();
-    this.logger.log('Prisma connected');
+    await this.client.$connect()
+    this.logger.log('Prisma connected')
   }
 
   async onModuleDestroy(): Promise<void> {
-    await this.client.$disconnect();
+    await this.client.$disconnect()
   }
 
   // ─── Prisma client passthrough (so callers can do prisma.$transaction etc.) ──
   get $connect(): ExtendedPrismaClient['$connect'] {
-    return this.client.$connect.bind(this.client);
+    return this.client.$connect.bind(this.client)
   }
   get $disconnect(): ExtendedPrismaClient['$disconnect'] {
-    return this.client.$disconnect.bind(this.client);
+    return this.client.$disconnect.bind(this.client)
   }
   get $transaction(): ExtendedPrismaClient['$transaction'] {
-    return this.client.$transaction.bind(this.client);
+    return this.client.$transaction.bind(this.client)
   }
   get $queryRaw(): ExtendedPrismaClient['$queryRaw'] {
-    return this.client.$queryRaw.bind(this.client);
+    return this.client.$queryRaw.bind(this.client)
   }
   get $executeRaw(): ExtendedPrismaClient['$executeRaw'] {
-    return this.client.$executeRaw.bind(this.client);
+    return this.client.$executeRaw.bind(this.client)
   }
   get $on(): ExtendedPrismaClient['$on'] {
-    return this.client.$on.bind(this.client);
+    return this.client.$on.bind(this.client)
   }
   get $use(): ExtendedPrismaClient['$use'] {
-    return this.client.$use.bind(this.client);
+    return this.client.$use.bind(this.client)
   }
 
   // ─── Model delegates ────────────────────────────────────────────────────
-  get institution(): ExtendedPrismaClient['institution'] { return this.client.institution; }
-  get user(): ExtendedPrismaClient['user'] { return this.client.user; }
-  get subject(): ExtendedPrismaClient['subject'] { return this.client.subject; }
-  get course(): ExtendedPrismaClient['course'] { return this.client.course; }
-  get courseTeacher(): ExtendedPrismaClient['courseTeacher'] { return this.client.courseTeacher; }
-  get enrollment(): ExtendedPrismaClient['enrollment'] { return this.client.enrollment; }
-  get classSession(): ExtendedPrismaClient['classSession'] { return this.client.classSession; }
-  get attendanceRecord(): ExtendedPrismaClient['attendanceRecord'] { return this.client.attendanceRecord; }
-  get refreshToken(): ExtendedPrismaClient['refreshToken'] { return this.client.refreshToken; }
-  get auditLog(): ExtendedPrismaClient['auditLog'] { return this.client.auditLog; }
+  get institution(): ExtendedPrismaClient['institution'] {
+    return this.client.institution
+  }
+  get user(): ExtendedPrismaClient['user'] {
+    return this.client.user
+  }
+  get subject(): ExtendedPrismaClient['subject'] {
+    return this.client.subject
+  }
+  get course(): ExtendedPrismaClient['course'] {
+    return this.client.course
+  }
+  get courseTeacher(): ExtendedPrismaClient['courseTeacher'] {
+    return this.client.courseTeacher
+  }
+  get enrollment(): ExtendedPrismaClient['enrollment'] {
+    return this.client.enrollment
+  }
+  get classSession(): ExtendedPrismaClient['classSession'] {
+    return this.client.classSession
+  }
+  get attendanceRecord(): ExtendedPrismaClient['attendanceRecord'] {
+    return this.client.attendanceRecord
+  }
+  get refreshToken(): ExtendedPrismaClient['refreshToken'] {
+    return this.client.refreshToken
+  }
+  get auditLog(): ExtendedPrismaClient['auditLog'] {
+    return this.client.auditLog
+  }
 
   /**
    * Wrap a unit of work in a transaction that sets the
@@ -103,14 +126,14 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   ): Promise<T> {
     return this.client.$transaction(async (tx: Prisma.TransactionClient) => {
       // tx is a TransactionClient; SET LOCAL works on the underlying session.
-      await tx.$executeRawUnsafe(`SET LOCAL app.current_institution_id = '${tenantId}'`);
-      return fn(tx);
-    });
+      await tx.$executeRawUnsafe(`SET LOCAL app.current_institution_id = '${tenantId}'`)
+      return fn(tx)
+    })
   }
 
   /** Read the current tenant from AsyncLocalStorage. */
   getCurrentTenant(): { tenantId: string; userId?: string; role?: string } | undefined {
-    return getTenantContext();
+    return getTenantContext()
   }
 }
 
@@ -126,10 +149,10 @@ export function superAdminPrismaProvider() {
     useFactory: () => {
       return new PrismaClient({
         log: process.env.NODE_ENV === 'production' ? ['error'] : ['error', 'warn'],
-      });
+      })
     },
-  };
+  }
 }
 
-export { tenantAwareExtension };
-export { Prisma };
+export { tenantAwareExtension }
+export { Prisma }

@@ -1,12 +1,13 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { PrismaClient } from '@prisma/client';
-import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
-import type { Request } from 'express';
-import { tap } from 'rxjs/operators';
-import { SUPER_ADMIN_PRISMA } from '../../shared/prisma/prisma.service';
-import { getTenantContext } from '../../shared/tenant/tenant.context';
-import { AUDIT_METADATA_KEY, AuditMetadata } from '../decorators/audit.decorator';
+import { Inject, Injectable, Logger } from '@nestjs/common'
+import type { Reflector } from '@nestjs/core'
+import type { PrismaClient } from '@prisma/client'
+import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common'
+import type { Request } from 'express'
+import { tap } from 'rxjs/operators'
+import { SUPER_ADMIN_PRISMA } from '../../shared/prisma/prisma.service'
+import { getTenantContext } from '../../shared/tenant/tenant.context'
+import type { AuditMetadata } from '../decorators/audit.decorator'
+import { AUDIT_METADATA_KEY } from '../decorators/audit.decorator'
 
 /**
  * AuditInterceptor — runs after every controller method that carries
@@ -18,7 +19,7 @@ import { AUDIT_METADATA_KEY, AuditMetadata } from '../decorators/audit.decorator
  */
 @Injectable()
 export class AuditInterceptor implements NestInterceptor {
-  private readonly logger = new Logger(AuditInterceptor.name);
+  private readonly logger = new Logger(AuditInterceptor.name)
 
   constructor(
     private readonly reflector: Reflector,
@@ -26,38 +27,52 @@ export class AuditInterceptor implements NestInterceptor {
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
-    const metadata = this.reflector.get<AuditMetadata | undefined>(AUDIT_METADATA_KEY, context.getHandler());
+    const metadata = this.reflector.get<AuditMetadata | undefined>(
+      AUDIT_METADATA_KEY,
+      context.getHandler(),
+    )
     if (!metadata) {
-      return next.handle();
+      return next.handle()
     }
 
-    const req = context.switchToHttp().getRequest<Request & { user?: { id: string; role: string } }>();
-    const tenantCtx = getTenantContext();
+    const req = context
+      .switchToHttp()
+      .getRequest<Request & { user?: { id: string; role: string } }>()
+    const tenantCtx = getTenantContext()
 
     return next.handle().pipe(
       tap({
         next: (result: unknown) => {
           // Fire-and-forget. Don't block the response.
-          void this.writeAudit(req, tenantCtx?.tenantId, req.user?.id, metadata, result).catch((err) => {
-            this.logger.error(
-              `Failed to write audit log for ${metadata.action}: ${(err as Error).message}`,
-              (err as Error).stack,
-            );
-          });
+          void this.writeAudit(req, tenantCtx?.tenantId, req.user?.id, metadata, result).catch(
+            (err) => {
+              this.logger.error(
+                `Failed to write audit log for ${metadata.action}: ${(err as Error).message}`,
+                (err as Error).stack,
+              )
+            },
+          )
         },
         error: (err: Error) => {
           // Still audit failed actions so we have a trail. The action stays
           // the same; we don't add FAILED_ prefix to keep the action taxonomy
           // stable. The HTTP status code in the request carries the failure signal.
-          void this.writeAudit(req, tenantCtx?.tenantId, req.user?.id, metadata, null, err.message).catch((writeErr) => {
+          void this.writeAudit(
+            req,
+            tenantCtx?.tenantId,
+            req.user?.id,
+            metadata,
+            null,
+            err.message,
+          ).catch((writeErr) => {
             this.logger.error(
               `Failed to write audit log for ${metadata.action}: ${(writeErr as Error).message}`,
               (writeErr as Error).stack,
-            );
-          });
+            )
+          })
         },
       }),
-    );
+    )
   }
 
   private async writeAudit(
@@ -68,7 +83,7 @@ export class AuditInterceptor implements NestInterceptor {
     result: unknown,
     errorMessage?: string,
   ): Promise<void> {
-    const entityId = this.resolveEntityId(req, metadata, result);
+    const entityId = this.resolveEntityId(req, metadata, result)
 
     await this.prisma.auditLog.create({
       data: {
@@ -78,12 +93,12 @@ export class AuditInterceptor implements NestInterceptor {
         entityType: metadata.entityType,
         entityId: entityId ?? null,
         beforeJson: null, // set later when we add before/after diffing (Phase 8+)
-        afterJson: result ? (result as object) : (errorMessage ? { error: errorMessage } : null),
+        afterJson: result ? (result as object) : errorMessage ? { error: errorMessage } : null,
         ipAddress: (req.ip as string) ?? null,
         userAgent: req.headers['user-agent'] ?? null,
         requestId: (req.headers['x-request-id'] as string) ?? null,
       },
-    });
+    })
   }
 
   private resolveEntityId(
@@ -91,30 +106,30 @@ export class AuditInterceptor implements NestInterceptor {
     metadata: AuditMetadata,
     result: unknown,
   ): string | undefined {
-    const source = metadata.entityIdFrom ?? 'param';
+    const source = metadata.entityIdFrom ?? 'param'
     switch (source) {
       case 'static':
-        return metadata.entityIdStatic;
+        return metadata.entityIdStatic
       case 'param': {
-        const key = metadata.entityIdParam ?? 'id';
-        return req.params?.[key];
+        const key = metadata.entityIdParam ?? 'id'
+        return req.params?.[key]
       }
       case 'body': {
-        const field = metadata.entityIdField ?? 'id';
-        const body = req.body as Record<string, unknown> | undefined;
-        const v = body?.[field];
-        return typeof v === 'string' ? v : undefined;
+        const field = metadata.entityIdField ?? 'id'
+        const body = req.body as Record<string, unknown> | undefined
+        const v = body?.[field]
+        return typeof v === 'string' ? v : undefined
       }
       case 'result': {
-        const field = metadata.entityIdField ?? 'id';
+        const field = metadata.entityIdField ?? 'id'
         if (result && typeof result === 'object' && field in (result as Record<string, unknown>)) {
-          const v = (result as Record<string, unknown>)[field];
-          return typeof v === 'string' ? v : undefined;
+          const v = (result as Record<string, unknown>)[field]
+          return typeof v === 'string' ? v : undefined
         }
-        return undefined;
+        return undefined
       }
       default:
-        return undefined;
+        return undefined
     }
   }
 }
