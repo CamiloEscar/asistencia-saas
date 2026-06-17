@@ -13,6 +13,7 @@ import { InstitutionsModule } from './modules/institutions/institutions.module'
 import { UsersModule } from './modules/users/users.module'
 import { TeachersModule } from './modules/teachers/teachers.module'
 import { StudentsModule } from './modules/students/students.module'
+import { SubjectsModule } from './modules/subjects/subjects.module'
 import { CsvModule } from './shared/csv/csv.module'
 import { QueueModule } from './shared/queue/queue.module'
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard'
@@ -60,6 +61,7 @@ import { AuditModule } from './audit/audit.module'
     UsersModule,
     TeachersModule,
     StudentsModule,
+    SubjectsModule,
     CsvModule,
     QueueModule,
     TerminusModule,

@@ -1,0 +1,132 @@
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  ParseUUIDPipe,
+  Patch,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common'
+import { Audit } from '../../../../audit/decorators/audit.decorator'
+import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
+import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
+import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard'
+import { TenantGuard } from '../../../auth/infrastructure/guards/tenant.guard'
+import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
+import { getTenantContext } from '../../../../shared/tenant/tenant.context'
+import type { CreateSubjectUseCase } from '../../application/use-cases/create-subject.use-case'
+import type { ListSubjectsUseCase } from '../../application/use-cases/list-subjects.use-case'
+import type { GetSubjectUseCase } from '../../application/use-cases/get-subject.use-case'
+import type { UpdateSubjectUseCase } from '../../application/use-cases/update-subject.use-case'
+import type { DeactivateSubjectUseCase } from '../../application/use-cases/deactivate-subject.use-case'
+import {
+  CreateSubjectDtoSchema,
+  type CreateSubjectDto,
+  type CreateSubjectResponse,
+} from '../../application/dtos/create-subject.dto'
+import {
+  UpdateSubjectDtoSchema,
+  type UpdateSubjectDto,
+} from '../../application/dtos/update-subject.dto'
+import {
+  ListSubjectsQueryDtoSchema,
+  type ListSubjectsQueryDto,
+} from '../../application/dtos/list-subjects.query.dto'
+
+/**
+ * SubjectsController — `/api/subjects/*` endpoints.
+ *   - GET (list + by-id): open to any authenticated user in the institution.
+ *   - POST / PATCH / DELETE: INSTITUTION_ADMIN only.
+ */
+@Controller('subjects')
+@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
+export class SubjectsController {
+  constructor(
+    private readonly createUseCase: CreateSubjectUseCase,
+    private readonly listUseCase: ListSubjectsUseCase,
+    private readonly getUseCase: GetSubjectUseCase,
+    private readonly updateUseCase: UpdateSubjectUseCase,
+    private readonly deactivateUseCase: DeactivateSubjectUseCase,
+  ) {}
+
+  // ─── GET /subjects ─────────────────────────────────────────────────────
+  @Get()
+  async list(
+    @Query(new ZodValidationPipe(ListSubjectsQueryDtoSchema)) query: ListSubjectsQueryDto,
+  ): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    const result = await this.listUseCase.execute(institutionId, {
+      cursor: query.cursor,
+      limit: query.limit,
+      search: query.search,
+    })
+    return {
+      data: result.data.map((s) => s.toPublicJson()),
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    }
+  }
+
+  // ─── POST /subjects ────────────────────────────────────────────────────
+  @Post()
+  @Roles('INSTITUTION_ADMIN')
+  @Audit({ action: 'SUBJECT_CREATED', entityType: 'Subject', entityIdFrom: 'result' })
+  async create(
+    @Body(new ZodValidationPipe(CreateSubjectDtoSchema)) body: CreateSubjectDto,
+  ): Promise<CreateSubjectResponse> {
+    const institutionId = this.requireTenantId()
+    return this.createUseCase.execute(body, institutionId)
+  }
+
+  // ─── GET /subjects/:id ─────────────────────────────────────────────────
+  @Get(':id')
+  async byId(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    const s = await this.getUseCase.execute(institutionId, id)
+    return s.toPublicJson()
+  }
+
+  // ─── PATCH /subjects/:id ───────────────────────────────────────────────
+  @Patch(':id')
+  @Roles('INSTITUTION_ADMIN')
+  @Audit({ action: 'SUBJECT_UPDATED', entityType: 'Subject' })
+  async update(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @Body(new ZodValidationPipe(UpdateSubjectDtoSchema)) body: UpdateSubjectDto,
+  ): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    const s = await this.updateUseCase.execute(institutionId, id, body)
+    return s.toPublicJson()
+  }
+
+  // ─── POST /subjects/:id/deactivate ─────────────────────────────────────
+  @Post(':id/deactivate')
+  @Roles('INSTITUTION_ADMIN')
+  @Audit({ action: 'SUBJECT_DEACTIVATED', entityType: 'Subject' })
+  async deactivate(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    const s = await this.deactivateUseCase.execute(institutionId, id)
+    return s.toPublicJson()
+  }
+
+  // ─── DELETE /subjects/:id (alias) ──────────────────────────────────────
+  @Delete(':id')
+  @Roles('INSTITUTION_ADMIN')
+  @Audit({ action: 'SUBJECT_DELETED', entityType: 'Subject' })
+  async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    const s = await this.deactivateUseCase.execute(institutionId, id)
+    return s.toPublicJson()
+  }
+
+  private requireTenantId(): string {
+    const ctx = getTenantContext()
+    if (!ctx) {
+      throw new Error('Tenant context missing — TenantMiddleware did not run')
+    }
+    return ctx.tenantId
+  }
+}
