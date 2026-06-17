@@ -9,6 +9,10 @@ import { AppService } from './app.service';
 import { HttpExceptionFilter } from './shared/filters/http-exception.filter';
 import { ZodValidationPipe } from './shared/pipes/zod-validation.pipe';
 import { envSchema } from './shared/config/env.schema';
+import { PrismaModule } from './shared/prisma/prisma.module';
+import { RedisModule } from './shared/redis/redis.module';
+import { TenantModule } from './shared/tenant/tenant.module';
+import { AppLoggerModule } from './shared/logger/logger.module';
 
 /**
  * Root application module. Feature modules are registered in subsequent tasks
@@ -22,6 +26,10 @@ import { envSchema } from './shared/config/env.schema';
       cache: true,
       validate: (raw) => envSchema.parse(raw),
     }),
+    PrismaModule,
+    RedisModule,
+    TenantModule,
+    AppLoggerModule,
     ThrottlerModule.forRootAsync({
       useFactory: () => {
         const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
