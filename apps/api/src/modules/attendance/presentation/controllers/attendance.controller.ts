@@ -9,7 +9,11 @@ import {
   Query,
   NotFoundException,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
+  BadRequestException,
 } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
 import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
@@ -24,6 +28,7 @@ import type { ModifyAttendanceUseCase } from '../../application/use-cases/modify
 import type { ListAttendanceUseCase } from '../../application/use-cases/list-attendance.use-case'
 import type { AttendanceSummaryUseCase } from '../../application/use-cases/attendance-summary.use-case'
 import type { GetAttendanceUseCase } from '../../application/use-cases/get-attendance.use-case'
+import type { UploadEvidenceUseCase } from '../../application/use-cases/upload-evidence.use-case'
 import {
   MarkAttendanceDtoSchema,
   type MarkAttendanceDto,
@@ -69,6 +74,7 @@ export class AttendanceController {
     private readonly listUseCase: ListAttendanceUseCase,
     private readonly summaryUseCase: AttendanceSummaryUseCase,
     private readonly getUseCase: GetAttendanceUseCase,
+    private readonly uploadEvidenceUseCase: UploadEvidenceUseCase,
   ) {}
 
   // ─── POST /attendance (bulk mark) ────────────────────────────────────
@@ -190,6 +196,30 @@ export class AttendanceController {
       actorRole: user.role,
     })
     return updated.toPublicJson()
+  }
+
+  // ─── POST /attendance/:id/evidence (image upload) ────────────────────
+  @Post(':id/evidence')
+  @Roles('TEACHER', 'INSTITUTION_ADMIN', 'SUPER_ADMIN')
+  @UseInterceptors(FileInterceptor('file'))
+  @Audit({ action: 'ATTENDANCE_EVIDENCE_UPLOADED', entityType: 'AttendanceRecord' })
+  async uploadEvidence(
+    @Param('id', new ParseUUIDPipe()) id: string,
+    @UploadedFile() file: Express.Multer.File,
+  ): Promise<unknown> {
+    if (!file) {
+      throw new BadRequestException({ message: 'No file uploaded' })
+    }
+    const institutionId = this.requireTenantId()
+    const updated = await this.uploadEvidenceUseCase.execute(id, institutionId, {
+      buffer: file.buffer,
+      mimetype: file.mimetype,
+      size: file.size,
+    })
+    return {
+      id: updated.id,
+      evidenceUrl: updated.evidenceUrl,
+    }
   }
 
   private requireTenantId(): string {

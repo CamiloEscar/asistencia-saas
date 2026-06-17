@@ -14,6 +14,7 @@ import { ModifyAttendanceUseCase } from './application/use-cases/modify-attendan
 import { ListAttendanceUseCase } from './application/use-cases/list-attendance.use-case'
 import { AttendanceSummaryUseCase } from './application/use-cases/attendance-summary.use-case'
 import { GetAttendanceUseCase } from './application/use-cases/get-attendance.use-case'
+import { UploadEvidenceUseCase } from './application/use-cases/upload-evidence.use-case'
 import { AttendanceController } from './presentation/controllers/attendance.controller'
 
 /**
@@ -41,6 +42,7 @@ import { AttendanceController } from './presentation/controllers/attendance.cont
     ListAttendanceUseCase,
     AttendanceSummaryUseCase,
     GetAttendanceUseCase,
+    UploadEvidenceUseCase,
     JwtAuthGuard,
     RolesGuard,
     TenantGuard,

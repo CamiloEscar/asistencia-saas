@@ -239,6 +239,7 @@ model AttendanceRecord {
   studentId         String           @db.Uuid
   status            AttendanceStatus @default(PRESENT)
   justificationText String?          @db.VarChar(500)
+  evidenceUrl       String?          @db.Text
   recordedBy        String           @db.Uuid
   recordedAt        DateTime         @default(now()) @db.Timestamptz(6)
   updatedAt         DateTime         @updatedAt @db.Timestamptz(6)
