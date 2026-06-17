@@ -1,14 +1,6 @@
 import { Controller, Get } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckService,
-  PrismaHealthIndicator,
-  type HealthCheckResult,
-  type HealthIndicatorResult,
-} from '@nestjs/terminus';
+import { HealthCheck, type HealthCheckResult, type HealthIndicatorResult } from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
-import { InjectDataSource } from '@nestjs/terminus';
-import type { DataSource } from 'typeorm';
 import { PrismaService } from './shared/prisma/prisma.service';
 import { RedisService } from './shared/redis/redis.service';
 
@@ -46,8 +38,14 @@ export class AppController {
     const allUp = dbCheck.status === 'up' && redisCheck.status === 'up';
     const result: HealthCheckResult = {
       status: allUp ? 'ok' : 'error',
-      info: { database: dbCheck.status === 'up' ? dbCheck : undefined, redis: redisCheck.status === 'up' ? redisCheck : undefined },
-      error: { database: dbCheck.status !== 'up' ? dbCheck : undefined, redis: redisCheck.status !== 'up' ? redisCheck : undefined },
+      info: {
+        database: dbCheck.status === 'up' ? dbCheck : undefined,
+        redis: redisCheck.status === 'up' ? redisCheck : undefined,
+      },
+      error: {
+        database: dbCheck.status !== 'up' ? dbCheck : undefined,
+        redis: redisCheck.status !== 'up' ? redisCheck : undefined,
+      },
       details: { database: dbCheck, redis: redisCheck },
     };
     return {
