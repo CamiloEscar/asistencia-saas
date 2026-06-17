@@ -12,6 +12,9 @@ import { AuthModule } from './modules/auth/auth.module'
 import { InstitutionsModule } from './modules/institutions/institutions.module'
 import { UsersModule } from './modules/users/users.module'
 import { TeachersModule } from './modules/teachers/teachers.module'
+import { StudentsModule } from './modules/students/students.module'
+import { CsvModule } from './shared/csv/csv.module'
+import { QueueModule } from './shared/queue/queue.module'
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard'
 import { RolesGuard } from './modules/auth/infrastructure/guards/roles.guard'
 import { TenantGuard } from './modules/auth/infrastructure/guards/tenant.guard'
@@ -56,6 +59,9 @@ import { AuditModule } from './audit/audit.module'
     InstitutionsModule,
     UsersModule,
     TeachersModule,
+    StudentsModule,
+    CsvModule,
+    QueueModule,
     TerminusModule,
     ThrottlerModule.forRootAsync({
       useFactory: () => {
