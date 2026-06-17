@@ -1,53 +1,60 @@
 import { Controller, Get } from '@nestjs/common';
-import { HealthCheck, type HealthCheckResult, type HealthIndicatorResult } from '@nestjs/terminus';
+import {
+  HealthCheck,
+  HealthCheckResult,
+  HealthCheckService,
+  HealthIndicator,
+  HealthIndicatorResult,
+} from '@nestjs/terminus';
 import { SkipThrottle } from '@nestjs/throttler';
 import { PrismaService } from './shared/prisma/prisma.service';
 import { RedisService } from './shared/redis/redis.service';
 
+type HealthPayload = HealthCheckResult & {
+  uptimeSeconds: number;
+  service: string;
+  env: string;
+  version: string;
+};
+
 /**
  * /health — public, un-throttled health check.
  *
- * Returns 200 with `{ status, info, error, details }` shape (Terminus
- * convention) when all dependencies are reachable. Returns 503 with the
- * same shape (and `error` populated) when any dependency is down.
+ * Uses @nestjs/terminus `HealthCheckService` with two custom indicator
+ * functions (database + redis). Returns 200 with the standard Terminus
+ * `{ status, info, error, details }` shape when all dependencies are
+ * reachable, or 503 (also via Terminus' `HealthCheck()` decorator) when
+ * any dependency is down. The extra fields (`uptimeSeconds`, `service`,
+ * `env`, `version`) are merged in for ops convenience.
  *
  * Docker healthcheck and uptime monitors (UptimeRobot, etc.) should poll
  * this endpoint.
  *
- * We do NOT use the standard `@nestjs/terminus` PrismaIndicator because it
- * requires a TypeORM DataSource. Instead we ping Prisma + Redis directly.
+ * We do NOT use the standard `@nestjs/terminus` `PrismaHealthIndicator`
+ * because it expects a `PrismaClient` instance — we pass the Nest-managed
+ * `PrismaService` directly. The custom indicators also report `latencyMs`
+ * per check, which is useful for the dashboard.
  */
 @Controller('health')
 @SkipThrottle()
 export class AppController {
   private readonly startedAt = new Date();
+  private readonly dbIndicator = new PrismaDbHealthIndicator();
+  private readonly redisIndicator = new RedisHealthIndicator();
 
   constructor(
+    private readonly health: HealthCheckService,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
   ) {}
 
   @Get()
   @HealthCheck()
-  async getHealth(): Promise<
-    HealthCheckResult & { uptimeSeconds: number; service: string; env: string; version: string }
-  > {
-    const dbCheck = await this.checkDatabase();
-    const redisCheck = await this.checkRedis();
-
-    const allUp = dbCheck.status === 'up' && redisCheck.status === 'up';
-    const result: HealthCheckResult = {
-      status: allUp ? 'ok' : 'error',
-      info: {
-        database: dbCheck.status === 'up' ? dbCheck : undefined,
-        redis: redisCheck.status === 'up' ? redisCheck : undefined,
-      },
-      error: {
-        database: dbCheck.status !== 'up' ? dbCheck : undefined,
-        redis: redisCheck.status !== 'up' ? redisCheck : undefined,
-      },
-      details: { database: dbCheck, redis: redisCheck },
-    };
+  async getHealth(): Promise<HealthPayload> {
+    const result = await this.health.check([
+      () => this.dbIndicator.check(this.prisma),
+      () => this.redisIndicator.check(this.redis),
+    ]);
     return {
       ...result,
       uptimeSeconds: Math.floor((Date.now() - this.startedAt.getTime()) / 1000),
@@ -56,27 +63,46 @@ export class AppController {
       version: process.env.npm_package_version ?? '0.0.0',
     };
   }
+}
 
-  private async checkDatabase(): Promise<HealthIndicatorResult> {
+/**
+ * Database health indicator — runs `SELECT 1` against Postgres and
+ * reports `{ database: { status, latencyMs, message? } }`.
+ */
+class PrismaDbHealthIndicator extends HealthIndicator {
+  async check(prisma: PrismaService): Promise<HealthIndicatorResult> {
     const start = Date.now();
     try {
-      await this.prisma.$queryRaw`SELECT 1`;
-      return { status: 'up', latencyMs: Date.now() - start };
+      await prisma.$queryRaw`SELECT 1`;
+      return this.getStatus('database', true, { latencyMs: Date.now() - start });
     } catch (err) {
-      return { status: 'down', message: (err as Error).message, latencyMs: Date.now() - start };
+      return this.getStatus('database', false, {
+        message: (err as Error).message,
+        latencyMs: Date.now() - start,
+      });
     }
   }
+}
 
-  private async checkRedis(): Promise<HealthIndicatorResult> {
+/**
+ * Redis health indicator — issues a `PING` and reports
+ * `{ redis: { status, latencyMs, message? } }`.
+ */
+class RedisHealthIndicator extends HealthIndicator {
+  async check(redis: RedisService): Promise<HealthIndicatorResult> {
     const start = Date.now();
     try {
-      const reply = await this.redis.ping();
-      if (reply !== 'PONG') {
-        return { status: 'down', message: `unexpected reply: ${reply}`, latencyMs: Date.now() - start };
-      }
-      return { status: 'up', latencyMs: Date.now() - start };
+      const reply = await redis.ping();
+      const isHealthy = reply === 'PONG';
+      return this.getStatus('redis', isHealthy, {
+        latencyMs: Date.now() - start,
+        ...(isHealthy ? {} : { message: `unexpected reply: ${reply}` }),
+      });
     } catch (err) {
-      return { status: 'down', message: (err as Error).message, latencyMs: Date.now() - start };
+      return this.getStatus('redis', false, {
+        message: (err as Error).message,
+        latencyMs: Date.now() - start,
+      });
     }
   }
 }

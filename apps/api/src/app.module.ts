@@ -3,6 +3,7 @@ import { ConfigModule } from '@nestjs/config';
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core';
 import { ThrottlerGuard, ThrottlerModule } from '@nestjs/throttler';
 import { ThrottlerStorageRedisService } from '@nest-lab/throttler-storage-redis';
+import { TerminusModule } from '@nestjs/terminus';
 import Redis from 'ioredis';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
@@ -32,6 +33,7 @@ import { AuditModule } from './audit/audit.module';
     TenantModule,
     AppLoggerModule,
     AuditModule,
+    TerminusModule,
     ThrottlerModule.forRootAsync({
       useFactory: () => {
         const url = process.env.REDIS_URL ?? 'redis://localhost:6379';
