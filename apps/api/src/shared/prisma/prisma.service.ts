@@ -97,11 +97,14 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
    * already filters by tenant. Use `forTenant()` for explicit transactional
    * semantics: bulk imports, multi-step writes, anything spanning >1 model.
    */
-  async forTenant<T>(tenantId: string, fn: (tx: ExtendedPrismaClient) => Promise<T>): Promise<T> {
-    return this.client.$transaction(async (tx) => {
+  async forTenant<T>(
+    tenantId: string,
+    fn: (tx: Prisma.TransactionClient) => Promise<T>,
+  ): Promise<T> {
+    return this.client.$transaction(async (tx: Prisma.TransactionClient) => {
       // tx is a TransactionClient; SET LOCAL works on the underlying session.
       await tx.$executeRawUnsafe(`SET LOCAL app.current_institution_id = '${tenantId}'`);
-      return fn(tx as unknown as ExtendedPrismaClient);
+      return fn(tx);
     });
   }
 
