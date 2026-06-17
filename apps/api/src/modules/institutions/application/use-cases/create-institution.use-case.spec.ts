@@ -1,6 +1,5 @@
 import { ConflictException } from '@nestjs/common'
 import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
-import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
 import type { User } from '../../../auth/domain/entities/user.entity'
 import { CreateInstitutionUseCase } from './create-institution.use-case'
 import type {

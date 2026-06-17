@@ -33,7 +33,7 @@ describe('UpdateUserUseCase', () => {
 
   it('updates a user (happy path)', async () => {
     users.findByIdInInstitution.mockResolvedValue(baseUser)
-    users.updateInInstitution.mockResolvedValue({ ...baseUser, fullName: 'New' })
+    users.updateInInstitution.mockResolvedValue({ ...baseUser, fullName: 'New' } as unknown as User)
 
     const result = await useCase.execute('i-1', 'actor-1', 'u-1', { fullName: 'New' })
     expect(result.fullName).toBe('New')
