@@ -28,15 +28,21 @@ export interface TenantContextValue {
 const storage = new AsyncLocalStorage<TenantContextValue>();
 
 /**
- * Run `fn` inside a tenant context. The context is automatically propagated
- * through every `await` and Promise chain. `TenantMiddleware` calls this
- * with the value resolved from the subdomain.
- *
- * Worker jobs (BullMQ) must call this at the top of their processor
- * (see design §2.2, R-Proposal-7).
+ * Run `fn` inside a tenant context (creates a new async scope). Use this
+ * for BullMQ worker jobs and other async work that has no parent context.
  */
 export function runWithTenantContext<T>(ctx: TenantContextValue, fn: () => Promise<T> | T): Promise<T> | T {
   return storage.run(ctx, fn);
+}
+
+/**
+ * Set the tenant context for the current async context WITHOUT creating a
+ * new scope. Use this in HTTP middleware: the context propagates through
+ * every subsequent `await` in the request pipeline (Node 16+ preserves
+ * AsyncLocalStorage across microtasks automatically).
+ */
+export function enterTenantContext(ctx: TenantContextValue): void {
+  storage.enterWith(ctx);
 }
 
 /** Read the current tenant context, or undefined if we're outside one. */
@@ -54,6 +60,7 @@ export function patchTenantContext(patch: Partial<TenantContextValue>): void {
 
 export const TenantContext = {
   run: runWithTenantContext,
+  enter: enterTenantContext,
   get: getTenantContext,
   patch: patchTenantContext,
 };

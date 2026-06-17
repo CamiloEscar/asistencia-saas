@@ -12,6 +12,6 @@ import { TenantResolverService } from './tenant-resolver.service';
 })
 export class TenantModule {}
 
-export { TenantContext, runWithTenantContext, getTenantContext, patchTenantContext } from './tenant.context';
+export { TenantContext, runWithTenantContext, enterTenantContext, getTenantContext, patchTenantContext } from './tenant.context';
 export { TenantResolverService } from './tenant-resolver.service';
 export { TenantMiddleware } from './tenant.middleware';

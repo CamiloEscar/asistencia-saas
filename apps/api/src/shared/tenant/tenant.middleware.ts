@@ -1,6 +1,6 @@
 import { Injectable, Logger, NestMiddleware, UnauthorizedException } from '@nestjs/common';
 import type { NextFunction, Request, Response } from 'express';
-import { runWithTenantContext } from './tenant.context';
+import { enterTenantContext } from './tenant.context';
 import { TenantResolverService } from './tenant-resolver.service';
 
 /**
@@ -13,9 +13,9 @@ import { TenantResolverService } from './tenant-resolver.service';
  *   3. Look up the institution via TenantResolverService (Redis-cached 60s).
  *   4. If status = INACTIVE, return 403.
  *   5. If not found, return 404.
- *   6. Otherwise, run the rest of the request inside `runWithTenantContext`,
- *      so the AsyncLocalStorage is populated for the Prisma extension and
- *      any downstream code that calls `getTenantContext()`.
+ *   6. Otherwise, call `enterTenantContext(...)` so the AsyncLocalStorage
+ *      is populated for the rest of the request pipeline (Node 16+ preserves
+ *      AsyncLocalStorage across microtasks/awaits).
  *
  * The middleware is the single chokepoint: a request that did NOT go
  * through here will fail at the Prisma layer with `TenantContextMissingError`.
@@ -41,7 +41,6 @@ export class TenantMiddleware implements NestMiddleware {
     try {
       resolved = await this.resolver.resolveBySubdomain(rawSubdomain);
     } catch (err) {
-      // NotFoundException passes through; bubble up everything else.
       throw err;
     }
 
@@ -55,17 +54,16 @@ export class TenantMiddleware implements NestMiddleware {
     // Stash on the request for handlers that want to read it directly.
     (req as Request & { tenant?: typeof resolved }).tenant = resolved;
 
-    // Propagate the rest of the pipeline inside the AsyncLocalStorage scope.
-    runWithTenantContext(
-      {
-        tenantId: resolved.id,
-        subdomain: resolved.subdomain,
-        timezone: resolved.timezone,
-        requestId,
-      },
-      () => {
-        next();
-      },
-    );
+    // enterWith (not run) so the context persists into the async pipeline
+    // that NestJS drives after next() — every await inside controllers and
+    // Prisma extensions will see this context.
+    enterTenantContext({
+      tenantId: resolved.id,
+      subdomain: resolved.subdomain,
+      timezone: resolved.timezone,
+      requestId,
+    });
+
+    next();
   }
 }
