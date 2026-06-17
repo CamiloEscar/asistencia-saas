@@ -10,6 +10,7 @@ import { AppController } from './app.controller'
 import { AppService } from './app.service'
 import { AuthModule } from './modules/auth/auth.module'
 import { InstitutionsModule } from './modules/institutions/institutions.module'
+import { UsersModule } from './modules/users/users.module'
 import { JwtAuthGuard } from './modules/auth/infrastructure/guards/jwt-auth.guard'
 import { RolesGuard } from './modules/auth/infrastructure/guards/roles.guard'
 import { TenantGuard } from './modules/auth/infrastructure/guards/tenant.guard'
@@ -52,6 +53,7 @@ import { AuditModule } from './audit/audit.module'
     AuditModule,
     AuthModule,
     InstitutionsModule,
+    UsersModule,
     TerminusModule,
     ThrottlerModule.forRootAsync({
       useFactory: () => {

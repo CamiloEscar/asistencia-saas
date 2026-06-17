@@ -1,9 +1,4 @@
-import {
-  Inject,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from '@nestjs/common'
+import { Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
 import type { TenantResolverService } from '../../../../shared/tenant/tenant-resolver.service'
 import {
   INSTITUTION_REPOSITORY,

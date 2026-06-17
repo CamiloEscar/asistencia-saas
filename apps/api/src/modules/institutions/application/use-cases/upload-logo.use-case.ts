@@ -1,10 +1,9 @@
-import {
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { Inject, Injectable, NotFoundException } from '@nestjs/common'
 import type { Express } from 'express'
-import type { CloudinaryService, CloudinaryUploadResult } from '../../../../shared/cloudinary/cloudinary.service'
+import type {
+  CloudinaryService,
+  CloudinaryUploadResult,
+} from '../../../../shared/cloudinary/cloudinary.service'
 import {
   INSTITUTION_REPOSITORY,
   type IInstitutionRepository,
@@ -37,10 +36,10 @@ export class UploadLogoUseCase {
     const folder = `institutions/${institutionId}/logo`
     const publicId = 'logo'
 
-    const result: CloudinaryUploadResult = await this.cloudinary.uploadImage(
-      file.buffer,
-      { folder, publicId },
-    )
+    const result: CloudinaryUploadResult = await this.cloudinary.uploadImage(file.buffer, {
+      folder,
+      publicId,
+    })
 
     return this.institutions.updateLogo(institutionId, result.url)
   }

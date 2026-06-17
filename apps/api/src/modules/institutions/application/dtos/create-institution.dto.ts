@@ -27,11 +27,7 @@ export const CreateInstitutionDtoSchema = z.object({
   address: z.string().trim().max(200).optional(),
   city: z.string().trim().max(100).optional(),
   province: z.string().trim().max(100).optional(),
-  country: z
-    .string()
-    .trim()
-    .length(2, 'Country must be an ISO 3166-1 alpha-2 code')
-    .toUpperCase(),
+  country: z.string().trim().length(2, 'Country must be an ISO 3166-1 alpha-2 code').toUpperCase(),
   timezone: z.string().trim().min(1).default('America/Argentina/Buenos_Aires'),
   adminEmail: z.string().trim().toLowerCase().email('Invalid admin email format'),
   adminFullName: z.string().trim().min(1, 'Admin full name is required').max(200),

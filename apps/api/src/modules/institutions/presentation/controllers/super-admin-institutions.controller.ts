@@ -25,8 +25,14 @@ import {
   type CreateInstitutionDto,
   type CreateInstitutionResponse,
 } from '../../application/dtos/create-institution.dto'
-import { ListInstitutionsQueryDtoSchema, type ListInstitutionsQueryDto } from '../../application/dtos/list-institutions.query.dto'
-import { UpdateInstitutionDtoSchema, type UpdateInstitutionDto } from '../../application/dtos/update-institution.dto'
+import {
+  ListInstitutionsQueryDtoSchema,
+  type ListInstitutionsQueryDto,
+} from '../../application/dtos/list-institutions.query.dto'
+import {
+  UpdateInstitutionDtoSchema,
+  type UpdateInstitutionDto,
+} from '../../application/dtos/update-institution.dto'
 import {
   ALLOWED_LOGO_MIME_TYPES,
   MAX_LOGO_BYTES,
@@ -161,7 +167,9 @@ export class SuperAdminInstitutionsController {
     if (file.size > MAX_LOGO_BYTES) {
       throw new BadRequestException({ message: 'File exceeds 2MB limit' })
     }
-    if (!ALLOWED_LOGO_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_LOGO_MIME_TYPES)[number])) {
+    if (
+      !ALLOWED_LOGO_MIME_TYPES.includes(file.mimetype as (typeof ALLOWED_LOGO_MIME_TYPES)[number])
+    ) {
       throw new BadRequestException({ message: 'Only JPEG and PNG are allowed' })
     }
     const updated = await this.uploadLogoUseCase.execute(id, file)

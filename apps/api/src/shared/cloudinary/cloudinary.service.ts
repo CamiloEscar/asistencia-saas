@@ -139,9 +139,7 @@ export class CloudinaryService {
     try {
       await cloudinary.uploader.destroy(publicId)
     } catch (err) {
-      this.logger.warn(
-        `Cloudinary delete failed for ${publicId}: ${(err as Error).message}`,
-      )
+      this.logger.warn(`Cloudinary delete failed for ${publicId}: ${(err as Error).message}`)
     }
   }
 

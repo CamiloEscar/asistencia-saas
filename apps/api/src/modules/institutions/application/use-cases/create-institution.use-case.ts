@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common'
 import { randomBytes } from 'node:crypto'
 import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
 import { USER_REPOSITORY } from '../../../auth/domain/repositories/user.repository.interface'
@@ -13,7 +8,10 @@ import {
   INSTITUTION_REPOSITORY,
   type IInstitutionRepository,
 } from '../../domain/repositories/institution.repository.interface'
-import type { CreateInstitutionDto, CreateInstitutionResponse } from '../dtos/create-institution.dto'
+import type {
+  CreateInstitutionDto,
+  CreateInstitutionResponse,
+} from '../dtos/create-institution.dto'
 
 /**
  * CreateInstitutionUseCase — creates a new institution AND its
