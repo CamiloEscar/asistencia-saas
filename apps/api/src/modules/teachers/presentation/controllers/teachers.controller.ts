@@ -24,9 +24,20 @@ import type { ListTeachersUseCase } from '../../application/use-cases/list-teach
 import type { GetTeacherUseCase } from '../../application/use-cases/get-teacher.use-case'
 import type { UpdateTeacherUseCase } from '../../application/use-cases/update-teacher.use-case'
 import type { DeactivateTeacherUseCase } from '../../application/use-cases/deactivate-teacher.use-case'
-import { CreateTeacherDtoSchema, type CreateTeacherDto, type CreateTeacherResponse } from '../../application/dtos/create-teacher.dto'
-import { UpdateTeacherDtoSchema, type UpdateTeacherDto } from '../../application/dtos/update-teacher.dto'
-import { ListTeachersQueryDtoSchema, type ListTeachersQueryDto } from '../../application/dtos/list-teachers.query.dto'
+import type { MyCoursesUseCase } from '../../../courses/application/use-cases/my-courses.use-case'
+import {
+  CreateTeacherDtoSchema,
+  type CreateTeacherDto,
+  type CreateTeacherResponse,
+} from '../../application/dtos/create-teacher.dto'
+import {
+  UpdateTeacherDtoSchema,
+  type UpdateTeacherDto,
+} from '../../application/dtos/update-teacher.dto'
+import {
+  ListTeachersQueryDtoSchema,
+  type ListTeachersQueryDto,
+} from '../../application/dtos/list-teachers.query.dto'
 
 /**
  * TeachersController — `/api/teachers/*` endpoints + `/api/teachers/me/courses`.
@@ -129,22 +140,35 @@ export class TeachersController {
 
 /**
  * MyCoursesController — `/api/me/courses` for the authenticated
- * TEACHER. Returns the courses the caller is assigned to in the
- * current active semester, ordered by next session.
+ * TEACHER. Returns the courses the caller is assigned to,
+ * filtered to the institution's active roster (deletedAt IS NULL)
+ * and ordered by code.
  *
  * Per spec REQ-TEACHER-005-03, this endpoint is forbidden to
  * STUDENT/ADMIN — only TEACHER can call it. The @Roles decorator
  * enforces that; the global RolesGuard returns 403 otherwise.
+ *
+ * The actual query lives in the courses module's MyCoursesUseCase
+ * (single source of truth for course-listing logic). This
+ * controller is a thin presentation layer.
  */
 @Controller('me')
 @UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
 @Roles('TEACHER')
 export class MyCoursesController {
-  // The full implementation lands in Phase 10 (courses module)
-  // when the course_teachers table is in scope. For now we return
-  // a placeholder shape so the route is wired and discoverable.
+  constructor(private readonly myCoursesUseCase: MyCoursesUseCase) {}
+
   @Get('courses')
-  myCourses(@CurrentUser() _user: TokenClaims): Promise<{ data: unknown[]; nextCursor: null }> {
-    return Promise.resolve({ data: [], nextCursor: null })
+  async myCourses(@CurrentUser() user: TokenClaims): Promise<unknown> {
+    const ctx = getTenantContext()
+    if (!ctx) {
+      throw new Error('Tenant context missing — TenantMiddleware did not run')
+    }
+    const result = await this.myCoursesUseCase.execute(ctx.tenantId, user.sub)
+    return {
+      data: result.data.map((c) => c.toPublicJson()),
+      nextCursor: result.nextCursor,
+      hasMore: result.hasMore,
+    }
   }
 }

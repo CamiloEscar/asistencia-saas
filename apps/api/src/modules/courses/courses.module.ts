@@ -15,6 +15,7 @@ import { EnrollStudentsUseCase } from './application/use-cases/enroll-students.u
 import { UnenrollStudentUseCase } from './application/use-cases/unenroll-student.use-case'
 import { UnassignTeacherUseCase } from './application/use-cases/unassign-teacher.use-case'
 import { ListEnrolledStudentsUseCase } from './application/use-cases/list-enrolled-students.use-case'
+import { MyCoursesUseCase } from './application/use-cases/my-courses.use-case'
 import { COURSE_REPOSITORY } from './domain/repositories/course.repository.interface'
 import { PrismaCourseRepository } from './infrastructure/persistence/prisma-course.repository'
 import { CoursesController } from './presentation/controllers/courses.controller'
@@ -38,10 +39,11 @@ import { CoursesController } from './presentation/controllers/courses.controller
     UnenrollStudentUseCase,
     UnassignTeacherUseCase,
     ListEnrolledStudentsUseCase,
+    MyCoursesUseCase,
     JwtAuthGuard,
     RolesGuard,
     TenantGuard,
   ],
-  exports: [COURSE_REPOSITORY],
+  exports: [COURSE_REPOSITORY, MyCoursesUseCase],
 })
 export class CoursesModule {}
