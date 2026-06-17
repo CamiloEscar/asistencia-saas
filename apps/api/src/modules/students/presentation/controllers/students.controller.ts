@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Get,
@@ -7,8 +8,13 @@ import {
   Patch,
   Post,
   Query,
+  UploadedFile,
   UseGuards,
+  UseInterceptors,
 } from '@nestjs/common'
+import { FileInterceptor } from '@nestjs/platform-express'
+import { Throttle } from '@nestjs/throttler'
+import type { Express } from 'express'
 import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
@@ -21,6 +27,9 @@ import type { ListStudentsUseCase } from '../../application/use-cases/list-stude
 import type { GetStudentUseCase } from '../../application/use-cases/get-student.use-case'
 import type { UpdateStudentUseCase } from '../../application/use-cases/update-student.use-case'
 import type { DeactivateStudentUseCase } from '../../application/use-cases/deactivate-student.use-case'
+import type { BulkImportStudentsUseCase } from '../../application/use-cases/bulk-import-students.use-case'
+import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator'
+import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
 import {
   CreateStudentDtoSchema,
   type CreateStudentDto,
@@ -34,6 +43,10 @@ import {
   ListStudentsQueryDtoSchema,
   type ListStudentsQueryDto,
 } from '../../application/dtos/list-students.query.dto'
+import {
+  BulkImportStudentsDtoSchema,
+  type BulkImportStudentsDto,
+} from '../../application/dtos/bulk-import.dto'
 
 /**
  * StudentsController — `/api/students/*` endpoints. Scoped to the
@@ -54,6 +67,7 @@ export class StudentsController {
     private readonly getUseCase: GetStudentUseCase,
     private readonly updateUseCase: UpdateStudentUseCase,
     private readonly deactivateUseCase: DeactivateStudentUseCase,
+    private readonly bulkImportUseCase: BulkImportStudentsUseCase,
   ) {}
 
   // ─── GET /students ─────────────────────────────────────────────────────
@@ -117,6 +131,32 @@ export class StudentsController {
     const institutionId = this.requireTenantId()
     const s = await this.deactivateUseCase.execute(institutionId, id)
     return s.toPublicJson()
+  }
+
+  // ─── POST /students/bulk (multipart CSV upload) ──────────────────────
+  @Post('bulk')
+  @Roles('INSTITUTION_ADMIN')
+  @UseInterceptors(FileInterceptor('file'))
+  @Throttle({ default: { limit: 5, ttl: 60 * 60 * 1000 } })
+  @Audit({ action: 'STUDENTS_BULK_IMPORTED', entityType: 'Student' })
+  async bulk(
+    @UploadedFile() file: Express.Multer.File,
+    @Body(new ZodValidationPipe(BulkImportStudentsDtoSchema)) dto: BulkImportStudentsDto,
+    @CurrentUser() actor: TokenClaims,
+  ): Promise<unknown> {
+    if (!file) {
+      throw new BadRequestException({ message: 'CSV file is required', error: 'Bad Request' })
+    }
+    const institutionId = this.requireTenantId()
+    return this.bulkImportUseCase.execute(file.buffer, institutionId, actor.sub, dto)
+  }
+
+  // ─── GET /students/bulk/:jobId/status (async job polling) ────────────
+  @Get('bulk/:jobId/status')
+  @Roles('INSTITUTION_ADMIN')
+  async bulkStatus(@Param('jobId') jobId: string): Promise<unknown> {
+    const institutionId = this.requireTenantId()
+    return this.bulkImportUseCase.getJobStatus(institutionId, jobId)
   }
 
   private requireTenantId(): string {
