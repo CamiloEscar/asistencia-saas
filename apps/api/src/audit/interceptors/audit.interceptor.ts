@@ -4,9 +4,9 @@ import { PrismaClient } from '@prisma/client';
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common';
 import type { Request } from 'express';
 import { tap } from 'rxjs/operators';
-import { SUPER_ADMIN_PRISMA } from '../shared/prisma/prisma.service';
-import { getTenantContext } from '../shared/tenant/tenant.context';
-import { AUDIT_METADATA_KEY, AuditMetadata } from './decorators/audit.decorator';
+import { SUPER_ADMIN_PRISMA } from '../../shared/prisma/prisma.service';
+import { getTenantContext } from '../../shared/tenant/tenant.context';
+import { AUDIT_METADATA_KEY, AuditMetadata } from '../decorators/audit.decorator';
 
 /**
  * AuditInterceptor — runs after every controller method that carries
