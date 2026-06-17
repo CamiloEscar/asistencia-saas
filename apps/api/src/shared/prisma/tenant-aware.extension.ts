@@ -73,24 +73,31 @@ export const tenantAwareExtension = Prisma.defineExtension((client) => {
             );
           }
 
-          const a = (args ?? {}) as Record<string, unknown>;
           const tenantId = ctx.tenantId;
+          // Build a new args object instead of mutating `args` in place.
+          // This sidesteps Prisma's strict `JsInputValue` typing on the
+          // `query` callback's `args` parameter — we accept the inputs as
+          // `Record<string, unknown>`, merge in `institutionId`, and cast
+          // the result back to the original args shape when we re-issue
+          // the query. No `as any`, no Prisma-internal type imports.
+          const a = (args ?? {}) as Record<string, unknown>;
+          const next: Record<string, unknown> = { ...a };
 
           if (READ_OPS.has(operation)) {
-            args.where = mergeWhereWithInstitutionId(a.where, tenantId);
+            next.where = mergeWhereWithInstitutionId(a.where, tenantId);
           } else if (operation === 'create') {
-            args.data = mergeDataWithInstitutionId(a.data, tenantId);
+            next.data = mergeDataWithInstitutionId(a.data, tenantId);
           } else if (operation === 'createMany' || operation === 'createManyAndReturn') {
-            args.data = mergeCreateManyDataWithInstitutionId(a.data, tenantId);
+            next.data = mergeCreateManyDataWithInstitutionId(a.data, tenantId);
           } else if (operation === 'upsert') {
-            args.where = mergeWhereWithInstitutionId(a.where, tenantId);
-            args.create = mergeDataWithInstitutionId(a.create, tenantId);
-            args.update = a.update;
+            next.where = mergeWhereWithInstitutionId(a.where, tenantId);
+            next.create = mergeDataWithInstitutionId(a.create, tenantId);
+            next.update = a.update;
           } else if (WRITE_OPS.has(operation)) {
-            args.where = mergeWhereWithInstitutionId(a.where, tenantId);
+            next.where = mergeWhereWithInstitutionId(a.where, tenantId);
           }
 
-          return query(args);
+          return query(next as typeof args);
         },
       },
     },
