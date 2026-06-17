@@ -2,13 +2,12 @@
   "extends": "../../packages/tsconfig/nest.json",
   "compilerOptions": {
     "outDir": "./dist",
-    "rootDir": "./src",
     "baseUrl": "./",
     "paths": {
       "@app/*": ["src/*"],
       "@asistencia/shared": ["../../packages/shared/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist", "test"]
 }
