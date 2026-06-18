@@ -8,7 +8,8 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "preview": "vite preview",
-    "lint": "eslint src --ext .ts,.tsx",
+    "lint": "eslint src e2e scripts playwright.config.ts --ext .ts,.tsx --max-warnings=0",
+    "lint:fix": "eslint src e2e scripts playwright.config.ts --ext .ts,.tsx --fix",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -55,6 +56,8 @@
   },
   "devDependencies": {
     "@asistencia/eslint-config": "workspace:*",
+    "@axe-core/playwright": "^4.10.0",
+    "@playwright/test": "^1.48.0",
     "@testing-library/jest-dom": "^6.5.0",
     "@testing-library/react": "^16.0.1",
     "@testing-library/user-event": "^14.6.1",

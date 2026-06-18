@@ -16,7 +16,6 @@ export default [
       '**/dist/**',
       '**/node_modules/**',
       '**/coverage/**',
-      '**/*.config.{js,ts,mjs,cjs}',
     ],
   },
   js.configs.recommended,
