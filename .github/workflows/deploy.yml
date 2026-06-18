@@ -1,0 +1,95 @@
+name: Deploy
+
+on:
+  # Auto-deploy on push to main (only after CI passes — see workflow_run below)
+  push:
+    branches: [main]
+  # Manual trigger from the Actions tab
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: 'Git ref to deploy (branch, tag, or SHA)'
+        required: false
+        default: 'main'
+
+# Only auto-deploy if the CI workflow passed.
+concurrency:
+  group: deploy-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  DEPLOY_SCRIPT: infra/scripts/deploy.sh
+
+jobs:
+  deploy:
+    name: Deploy to VPS
+    runs-on: ubuntu-latest
+    # Use environment for manual approval (set up in GitHub Settings → Environments)
+    environment:
+      name: production
+      url: https://app.com
+
+    # Don't run on push if the CI workflow failed.
+    # `workflow_run` is the cleanest way to gate on CI status.
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'push' && github.ref == 'refs/heads/main')
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event.inputs.ref || github.ref }}
+
+      - name: Setup SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.DEPLOY_KEY }}
+
+      # Optional: add a known_hosts entry to avoid the prompt
+      - name: Add VPS to known_hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H "${{ secrets.DEPLOY_HOST }}" >> ~/.ssh/known_hosts
+
+      - name: Run deploy script
+        run: |
+          ssh -o StrictHostKeyChecking=yes \
+              ${DEPLOY_USER:-deploy}@${{ secrets.DEPLOY_HOST }} \
+              "cd /opt/asistencia-saas && \
+               git fetch origin ${{ github.event.inputs.ref || github.ref }} && \
+               git checkout ${{ github.event.inputs.ref || github.ref }} && \
+               bash ${{ env.DEPLOY_SCRIPT }}"
+
+      - name: Smoke test
+        if: success()
+        run: |
+          echo "Waiting for app.com to be healthy..."
+          for i in $(seq 1 30); do
+            if curl -fsS https://app.com/health > /dev/null 2>&1; then
+              echo "Production is healthy"
+              exit 0
+            fi
+            sleep 2
+          done
+          echo "Production did not become healthy in 60s"
+          exit 1
+
+      # Optional: notify Slack/Discord on success or failure
+      # - name: Notify on success
+      #   if: success()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       { "text": "✅ asistencia-saas deployed to production" }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
+      #   if-env: SLACK_WEBHOOK
+
+      # - name: Notify on failure
+      #   if: failure()
+      #   uses: slackapi/slack-github-action@v1.27.0
+      #   with:
+      #     payload: |
+      #       { "text": "❌ asistencia-saas DEPLOY FAILED — ${{ github.run_id }}" }
+      #   env:
+      #     SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK }}
