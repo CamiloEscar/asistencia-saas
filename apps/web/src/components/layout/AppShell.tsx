@@ -22,7 +22,7 @@ export function AppShell() {
   return (
     <div className="flex min-h-screen w-full bg-muted/20">
       <Sidebar role={user.role} />
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col md:ml-0">
         <Topbar />
         <main
           id="main-content"
