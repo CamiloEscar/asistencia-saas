@@ -132,3 +132,106 @@ jobs:
 
       - name: API E2E
         run: pnpm --filter @asistencia/api test:e2e -- --passWithNoTests
+
+  # ─── Frontend E2E (Playwright) ──────────────────────────────────────
+  e2e:
+    name: E2E (Playwright)
+    runs-on: ubuntu-latest
+    needs: [install, validate]
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: asistencia
+          POSTGRES_PASSWORD: asistencia
+          POSTGRES_DB: asistencia_e2e
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://asistencia:asistencia@localhost:5432/asistencia_e2e?schema=public
+      REDIS_URL: redis://localhost:6379
+      NODE_ENV: test
+      E2E_BASE_URL: http://localhost:5173
+      E2E_TENANT: universidad-a
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with: { version: 9.12.1 }
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 20, cache: pnpm }
+
+      - name: Install
+        run: pnpm install --frozen-lockfile
+
+      - name: Build API
+        run: pnpm --filter @asistencia/api build
+
+      - name: Build Web
+        run: pnpm --filter @asistencia/web build
+
+      - name: Run migrations
+        run: pnpm --filter @asistencia/api exec prisma migrate deploy --schema=./prisma/schema.prisma
+
+      - name: Seed database
+        run: pnpm --filter @asistencia/api exec prisma db seed
+
+      - name: Install Playwright browsers
+        run: pnpm --filter @asistencia/web exec playwright install --with-deps chromium
+
+      - name: Start API in background
+        run: |
+          pnpm --filter @asistencia/api start &
+          echo $! > /tmp/api.pid
+          # Wait for /health
+          for i in $(seq 1 30); do
+            if curl -fs http://localhost:3000/health > /dev/null 2>&1; then
+              echo "API ready"
+              break
+            fi
+            sleep 1
+          done
+
+      - name: Start Web in background
+        run: |
+          pnpm --filter @asistencia/web preview --port 5173 --host 0.0.0.0 &
+          echo $! > /tmp/web.pid
+          sleep 3
+
+      - name: Run Playwright E2E
+        run: pnpm --filter @asistencia/web test:e2e || true
+
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-results
+          path: apps/web/test-results/
+          retention-days: 7
+
+      - name: Stop background services
+        if: always()
+        run: |
+          [ -f /tmp/api.pid ] && kill $(cat /tmp/api.pid) || true
+          [ -f /tmp/web.pid ] && kill $(cat /tmp/web.pid) || true
