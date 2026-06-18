@@ -44,8 +44,10 @@ export const Paths = {
   courseEdit: (id: string) => `/courses/${id}/edit`,
 
   // Attendance (teacher)
-  takeAttendance: (sessionId: string) => `/sessions/${sessionId}/take-attendance`,
+  takeAttendance: (sessionId: string) => `/attendance/take/${sessionId}`,
   editAttendance: (sessionId: string) => `/sessions/${sessionId}/edit-attendance`,
+  attendanceHistory: '/attendance/history',
+  attendanceTake: '/attendance/take',
 
   // History (student)
   myAttendance: '/me/attendance',

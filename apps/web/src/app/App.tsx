@@ -10,11 +10,14 @@ import { AppShell } from '@/components/layout/AppShell'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 import { NotFoundPage } from './routes/NotFoundPage'
 import { ForbiddenPage } from './routes/ForbiddenPage'
+import { ServerErrorPage } from './routes/ServerErrorPage'
+import { MaintenancePage } from './routes/MaintenancePage'
+import { NotConnectedPage } from './routes/NotConnectedPage'
 import { RoleRedirect } from './routes/RoleRedirect'
 import { UserRole } from '@asistencia/shared'
 import { Paths } from './routes/paths'
 
-// Lazy-loaded feature pages.
+// Lazy-loaded feature pages (code splitting per route).
 const LoginPage = lazy(() =>
   import('@/features/auth/pages/LoginPage').then((m) => ({ default: m.LoginPage })),
 )
@@ -28,8 +31,93 @@ const ForgotPasswordPage = lazy(() =>
     default: m.ForgotPasswordPage,
   })),
 )
+
+// Dashboards
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
+)
+const SuperAdminDashboard = lazy(() =>
+  import('@/features/institutions/pages/SuperAdminDashboard').then((m) => ({
+    default: m.SuperAdminDashboard,
+  })),
+)
+
+// Institutions (super admin)
+const InstitutionsListPage = lazy(() =>
+  import('@/features/institutions/pages/InstitutionsListPage').then((m) => ({
+    default: m.InstitutionsListPage,
+  })),
+)
+
+// Users (institution admin)
+const UsersListPage = lazy(() =>
+  import('@/features/users/pages/UsersListPage').then((m) => ({ default: m.UsersListPage })),
+)
+
+// Students
+const StudentsListPage = lazy(() =>
+  import('@/features/students/pages/StudentsListPage').then((m) => ({
+    default: m.StudentsListPage,
+  })),
+)
+const BulkImportPage = lazy(() =>
+  import('@/features/students/pages/BulkImportPage').then((m) => ({ default: m.BulkImportPage })),
+)
+
+// Teachers
+const TeachersListPage = lazy(() =>
+  import('@/features/teachers/pages/TeachersListPage').then((m) => ({
+    default: m.TeachersListPage,
+  })),
+)
+
+// Subjects
+const SubjectsListPage = lazy(() =>
+  import('@/features/subjects/pages/SubjectsListPage').then((m) => ({
+    default: m.SubjectsListPage,
+  })),
+)
+
+// Courses
+const CoursesListPage = lazy(() =>
+  import('@/features/courses/pages/CoursesListPage').then((m) => ({ default: m.CoursesListPage })),
+)
+const CourseDetailPage = lazy(() =>
+  import('@/features/courses/pages/CourseDetailPage').then((m) => ({
+    default: m.CourseDetailPage,
+  })),
+)
+
+// Attendance (teacher)
+const TakeAttendancePage = lazy(() =>
+  import('@/features/attendance/pages/TakeAttendancePage').then((m) => ({
+    default: m.TakeAttendancePage,
+  })),
+)
+const AttendanceHistoryPage = lazy(() =>
+  import('@/features/attendance/pages/AttendanceHistoryPage').then((m) => ({
+    default: m.AttendanceHistoryPage,
+  })),
+)
+
+// Attendance (student)
+const MyAttendancePage = lazy(() =>
+  import('@/features/attendance/pages/MyAttendancePage').then((m) => ({
+    default: m.MyAttendancePage,
+  })),
+)
+const MyAttendanceDetailPage = lazy(() =>
+  import('@/features/attendance/pages/MyAttendanceDetailPage').then((m) => ({
+    default: m.MyAttendanceDetailPage,
+  })),
+)
+
+// Profile / settings
+const ProfilePage = lazy(() =>
+  import('@/features/profile/pages/ProfilePage').then((m) => ({ default: m.ProfilePage })),
+)
+const SettingsPage = lazy(() =>
+  import('@/features/settings/pages/SettingsPage').then((m) => ({ default: m.SettingsPage })),
 )
 
 export function App() {
@@ -40,31 +128,149 @@ export function App() {
           <AuthProvider>
             <BrowserRouter>
               <Suspense fallback={<LoadingScreen />}>
+                <SkipToContent />
                 <Routes>
                   {/* Public routes */}
                   <Route path={Paths.login} element={<LoginPage />} />
                   <Route path={Paths.setPassword} element={<SetPasswordPage />} />
                   <Route path={Paths.forgotPassword} element={<ForgotPasswordPage />} />
                   <Route path={Paths.forbidden} element={<ForbiddenPage />} />
+                  <Route path="/500" element={<ServerErrorPage />} />
+                  <Route path="/503" element={<MaintenancePage />} />
+                  <Route path="/offline" element={<NotConnectedPage />} />
 
                   {/* Protected routes (all under the AppShell) */}
                   <Route element={<ProtectedRoute />}>
                     <Route element={<AppShell />}>
                       <Route path="/" element={<RoleRedirect />} />
                       <Route path={Paths.dashboard} element={<DashboardPage />} />
-                      <Route path={Paths.admin} element={<DashboardPage />} />
-                      <Route path={Paths.today} element={<DashboardPage />} />
-                      <Route path={Paths.me} element={<DashboardPage />} />
-                    </Route>
-                  </Route>
+                      <Route path={Paths.admin} element={<SuperAdminDashboard />} />
 
-                  {/* SUPER_ADMIN-only institution routes */}
-                  <Route element={<ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]} />}>
-                    <Route element={<AppShell />}>
-                      <Route path={Paths.institutions} element={<DashboardPage />} />
-                      <Route path={Paths.institutionNew} element={<DashboardPage />} />
-                      <Route path={Paths.institutionDetail(':id')} element={<DashboardPage />} />
-                      <Route path={Paths.institutionEdit(':id')} element={<DashboardPage />} />
+                      {/* Institutions - SUPER_ADMIN only */}
+                      <Route
+                        path={Paths.institutions}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
+                            <InstitutionsListPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Users - INSTITUTION_ADMIN+ */}
+                      <Route
+                        path={Paths.users}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                            <UsersListPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Students - INSTITUTION_ADMIN+ */}
+                      <Route
+                        path={Paths.students}
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={[UserRole.INSTITUTION_ADMIN, UserRole.TEACHER]}
+                          >
+                            <StudentsListPage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path={Paths.studentsBulkImport}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                            <BulkImportPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Teachers - INSTITUTION_ADMIN+ */}
+                      <Route
+                        path={Paths.teachers}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                            <TeachersListPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Subjects - INSTITUTION_ADMIN+ */}
+                      <Route
+                        path={Paths.subjects}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                            <SubjectsListPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Courses - INSTITUTION_ADMIN+ and TEACHER (read) */}
+                      <Route path={Paths.courses} element={<CoursesListPage />} />
+                      <Route path={Paths.courseDetail(':id')} element={<CourseDetailPage />} />
+
+                      {/* Attendance (teacher) */}
+                      <Route
+                        path={Paths.takeAttendance(':id')}
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={[UserRole.TEACHER, UserRole.INSTITUTION_ADMIN]}
+                          >
+                            <TakeAttendancePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path={Paths.attendanceHistory}
+                        element={
+                          <ProtectedRoute
+                            allowedRoles={[UserRole.TEACHER, UserRole.INSTITUTION_ADMIN]}
+                          >
+                            <AttendanceHistoryPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Attendance (student) */}
+                      <Route
+                        path={Paths.me}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                            <MyAttendancePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path={Paths.myAttendance}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                            <MyAttendancePage />
+                          </ProtectedRoute>
+                        }
+                      />
+                      <Route
+                        path={Paths.myCourse(':id')}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.STUDENT]}>
+                            <MyAttendanceDetailPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Teacher today dashboard */}
+                      <Route
+                        path={Paths.today}
+                        element={
+                          <ProtectedRoute allowedRoles={[UserRole.TEACHER]}>
+                            <DashboardPage />
+                          </ProtectedRoute>
+                        }
+                      />
+
+                      {/* Profile & Settings */}
+                      <Route path={Paths.profile} element={<ProfilePage />} />
+                      <Route path={Paths.settings} element={<SettingsPage />} />
                     </Route>
                   </Route>
 
@@ -81,5 +287,21 @@ export function App() {
         </I18nProvider>
       </ThemeProvider>
     </QueryProvider>
+  )
+}
+
+/**
+ * Skip-to-content link for keyboard users. Visually hidden until focused.
+ * Per WAI-ARIA practices, lets screen-reader and keyboard users bypass
+ * the navigation and jump straight to the main content.
+ */
+function SkipToContent() {
+  return (
+    <a
+      href="#main-content"
+      className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-primary focus:px-4 focus:py-2 focus:text-primary-foreground focus:shadow-lg"
+    >
+      Saltar al contenido principal
+    </a>
   )
 }
