@@ -1,0 +1,17 @@
+{
+  "pageHeader": {
+    "title": "{{title}}",
+    "subtitle": "{{subtitle}}"
+  },
+  "empty": {
+    "title": "Sin datos",
+    "description": "No hay elementos para mostrar.",
+    "action": "Crear el primero"
+  },
+  "error": {
+    "title": "Algo salió mal",
+    "description": "No pudimos cargar la información.",
+    "retry": "Reintentar"
+  },
+  "loading": "Cargando..."
+}

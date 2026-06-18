@@ -1,17 +1,109 @@
 {
-  "appName": "asistencia-saas",
-  "loading": "Cargando...",
-  "error": "Error",
-  "success": "Éxito",
-  "cancel": "Cancelar",
-  "save": "Guardar",
-  "delete": "Eliminar",
-  "edit": "Editar",
-  "create": "Crear",
-  "search": "Buscar",
-  "back": "Volver",
-  "next": "Siguiente",
-  "previous": "Anterior",
-  "yes": "Sí",
-  "no": "No"
+  "app": {
+    "name": "Asistencia SaaS",
+    "tagline": "Gestión de asistencia multi-tenant"
+  },
+  "nav": {
+    "dashboard": "Panel",
+    "courses": "Cursos",
+    "students": "Alumnos",
+    "teachers": "Profesores",
+    "users": "Usuarios",
+    "institutions": "Instituciones",
+    "subjects": "Materias",
+    "attendance": "Asistencia",
+    "profile": "Perfil",
+    "settings": "Configuración",
+    "logout": "Cerrar sesión",
+    "back": "Volver"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "create": "Crear",
+    "search": "Buscar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "retry": "Reintentar",
+    "noData": "Sin datos",
+    "confirm": "Confirmar",
+    "back": "Volver",
+    "next": "Siguiente",
+    "previous": "Anterior",
+    "actions": "Acciones",
+    "status": "Estado",
+    "date": "Fecha",
+    "name": "Nombre",
+    "email": "Email",
+    "yes": "Sí",
+    "no": "No",
+    "all": "Todas",
+    "filter": "Filtrar",
+    "clear": "Limpiar",
+    "submit": "Enviar",
+    "close": "Cerrar",
+    "open": "Abrir",
+    "details": "Detalles",
+    "total": "Total",
+    "subtotal": "Subtotal",
+    "optional": "opcional"
+  },
+  "auth": {
+    "login": {
+      "title": "Iniciar sesión",
+      "subtitle": "Ingresá tus credenciales para continuar",
+      "email": "Email",
+      "emailPlaceholder": "tu@email.com",
+      "password": "Contraseña",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Ingresar",
+      "submitting": "Ingresando...",
+      "forgotPassword": "¿Olvidaste tu contraseña?",
+      "setPassword": "Activar cuenta",
+      "noAccount": "¿No tenés cuenta? Contactá al administrador de tu institución.",
+      "institutionLabel": "Institución"
+    },
+    "logout": "Cerrar sesión",
+    "me": "Sesión actual",
+    "setPassword": {
+      "title": "Activar cuenta",
+      "subtitle": "Creá una contraseña para tu cuenta",
+      "newPassword": "Nueva contraseña",
+      "confirmPassword": "Confirmar contraseña",
+      "submit": "Activar cuenta",
+      "success": "Cuenta activada con éxito"
+    },
+    "forgotPassword": {
+      "title": "Recuperar contraseña",
+      "subtitle": "Te enviaremos un enlace para restablecer tu contraseña",
+      "email": "Email",
+      "submit": "Enviar enlace",
+      "successMessage": "Si la cuenta existe, se generó un enlace de recuperación.",
+      "backToLogin": "Volver al inicio de sesión"
+    }
+  },
+  "roles": {
+    "SUPER_ADMIN": "Super Administrador",
+    "INSTITUTION_ADMIN": "Administrador Institucional",
+    "TEACHER": "Profesor",
+    "STUDENT": "Alumno"
+  },
+  "attendanceStatus": {
+    "PRESENT": "Asistió",
+    "ABSENT": "Ausente",
+    "LATE": "Tardanza",
+    "JUSTIFIED": "Justificado"
+  },
+  "institutionStatus": {
+    "ACTIVE": "Activa",
+    "INACTIVE": "Inactiva"
+  },
+  "sessionStatus": {
+    "SCHEDULED": "Programada",
+    "OPEN": "Abierta",
+    "CLOSED": "Cerrada",
+    "CANCELLED": "Cancelada"
+  }
 }

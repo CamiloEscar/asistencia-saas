@@ -1,0 +1,65 @@
+{
+  "dashboard": {
+    "title": "Panel",
+    "welcome": "Bienvenido, {{name}}",
+    "kpi": {
+      "totalInstitutions": "Instituciones",
+      "totalUsers": "Usuarios",
+      "activeInstitutions": "Activas",
+      "inactiveInstitutions": "Inactivas",
+      "totalStudents": "Alumnos",
+      "totalTeachers": "Profesores",
+      "totalCourses": "Cursos",
+      "todaysAttendance": "Asistencias de hoy",
+      "myCourses": "Mis cursos",
+      "studentsToTake": "Alumnos para tomar asistencia",
+      "attendanceTaken": "Asistencias tomadas",
+      "overallAttendance": "Asistencia general"
+    },
+    "quickActions": "Acciones rápidas",
+    "recentActivity": "Actividad reciente",
+    "recentInstitutions": "Instituciones recientes",
+    "createInstitution": "Crear institución",
+    "addStudent": "Agregar alumno",
+    "addTeacher": "Agregar profesor",
+    "createCourse": "Crear curso",
+    "importStudents": "Importar alumnos",
+    "viewAll": "Ver todo",
+    "noActivity": "Sin actividad reciente"
+  },
+  "superAdmin": {
+    "title": "Panel de Super Administrador",
+    "subtitle": "Gestión de instituciones",
+    "institutionsTable": {
+      "name": "Nombre",
+      "subdomain": "Subdominio",
+      "status": "Estado",
+      "plan": "Plan",
+      "createdAt": "Creado"
+    },
+    "create": {
+      "title": "Crear institución",
+      "success": "Institución creada con éxito"
+    }
+  },
+  "institutionAdmin": {
+    "title": "Panel del Administrador"
+  },
+  "teacher": {
+    "title": "Mis clases",
+    "summary": "{{total}} sesiones hoy, {{taken}} con asistencia registrada",
+    "openSession": "Abrir sesión",
+    "takeAttendance": "Tomar asistencia",
+    "editAttendance": "Editar asistencia",
+    "noSessions": "No tenés clases programadas para hoy"
+  },
+  "student": {
+    "title": "Mi panel",
+    "overallAttendance": "Asistencia general",
+    "perCourse": "Por curso",
+    "recentAbsences": "Mis ausencias recientes",
+    "alerts": "Cursos con asistencia baja",
+    "noEnrollments": "No estás inscripto en ningún curso todavía.",
+    "viewDetails": "Ver detalle"
+  }
+}

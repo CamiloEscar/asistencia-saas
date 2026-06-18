@@ -1,28 +1,13 @@
-import i18n from 'i18next';
-import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
-import esCommon from '../../locales/es/common.json';
-import esErrors from '../../locales/es/errors.json';
+import { initI18n } from './i18n-setup'
 
 /**
- * I18n provider. Default locale is `es` (Spanish). Locales for `en` and `pt`
- * exist as empty objects to keep the structure ready for post-MVP expansion
- * (per spec REQ-X-006).
+ * I18n provider. The i18next instance is initialised at module load
+ * (singleton, see `./i18n.config.ts`), and `react-i18next` exposes the
+ * `useTranslation` hook. This component is a render-noop — it exists
+ * so the provider tree is explicit in `App.tsx`.
  */
-void i18n
-  .use(LanguageDetector)
-  .use(initReactI18next)
-  .init({
-    resources: {
-      es: { common: esCommon, errors: esErrors },
-    },
-    fallbackLng: 'es',
-    defaultNS: 'common',
-    ns: ['common', 'errors'],
-    interpolation: { escapeValue: false }, // React already escapes
-    detection: { order: ['localStorage', 'navigator'], caches: ['localStorage'] },
-  });
+void initI18n()
 
 export function I18nProvider({ children }: { children: React.ReactNode }) {
-  return <>{children}</>;
+  return <>{children}</>
 }
