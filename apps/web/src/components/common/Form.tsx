@@ -6,10 +6,14 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import type { SubmitButtonProps, FormErrorProps } from './Form.types'
 
 /**
- * <Form> wrapper. Pass the `useForm` return value and the children
+ * <AppForm> wrapper. Pass the `useForm` return value and the children
  * get access to the form context (errors, watch, setValue, etc.).
+ *
+ * Named `AppForm` to avoid name collision with the shadcn `<Form>`
+ * primitive (which is just `FormProvider` re-exported from
+ * `@/components/ui/form`).
  */
-export function Form<T extends FieldValues>(props: {
+export function AppForm<T extends FieldValues>(props: {
   form: UseFormReturn<T>
   onSubmit: (values: T) => void | Promise<void>
   children: ReactNode
