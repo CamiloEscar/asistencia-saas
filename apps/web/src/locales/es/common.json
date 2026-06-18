@@ -48,7 +48,32 @@
     "details": "Detalles",
     "total": "Total",
     "subtotal": "Subtotal",
-    "optional": "opcional"
+    "optional": "opcional",
+    "required": "obligatorio",
+    "activate": "Activar",
+    "deactivate": "Desactivar",
+    "select": "Seleccionar",
+    "deselect": "Deseleccionar",
+    "allChecked": "Todos marcados",
+    "noneChecked": "Ninguno marcado",
+    "more": "más",
+    "less": "menos",
+    "from": "Desde",
+    "to": "Hasta",
+    "and": "y",
+    "or": "o",
+    "notFound": "No encontrado",
+    "or": "o",
+    "updatedAt": "Actualizado",
+    "createdAt": "Creado",
+    "refresh": "Actualizar",
+    "menu": "Menú",
+    "expand": "Expandir",
+    "collapse": "Colapsar",
+    "showMore": "Ver más",
+    "showLess": "Ver menos",
+    "of": "de",
+    "results": "resultados"
   },
   "auth": {
     "login": {
@@ -105,5 +130,36 @@
     "OPEN": "Abierta",
     "CLOSED": "Cerrada",
     "CANCELLED": "Cancelada"
+  },
+  "daysOfWeek": {
+    "short": {
+      "0": "Dom",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mié",
+      "4": "Jue",
+      "5": "Vie",
+      "6": "Sáb"
+    },
+    "long": {
+      "0": "Domingo",
+      "1": "Lunes",
+      "2": "Martes",
+      "3": "Miércoles",
+      "4": "Jueves",
+      "5": "Viernes",
+      "6": "Sábado"
+    }
+  },
+  "pagination": {
+    "first": "Primera",
+    "last": "Última",
+    "page": "Página",
+    "of": "de",
+    "rowsPerPage": "Filas por página",
+    "showing": "Mostrando {{from}}-{{to}} de {{total}}"
+  },
+  "breadcrumbs": {
+    "home": "Inicio"
   }
 }

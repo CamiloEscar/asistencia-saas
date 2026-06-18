@@ -1,0 +1,28 @@
+{
+  "required": "Este campo es obligatorio",
+  "email": "Email inválido",
+  "minLength": "Mínimo {{min}} caracteres",
+  "maxLength": "Máximo {{max}} caracteres",
+  "min": "El valor mínimo es {{min}}",
+  "max": "El valor máximo es {{max}}",
+  "pattern": "Formato inválido",
+  "url": "URL inválida",
+  "password": {
+    "minLength": "Mínimo 10 caracteres",
+    "uppercase": "Debe incluir al menos una mayúscula",
+    "lowercase": "Debe incluir al menos una minúscula",
+    "digit": "Debe incluir al menos un número",
+    "special": "Debe incluir al menos un carácter especial",
+    "match": "Las contraseñas no coinciden"
+  },
+  "legajo": "Legajo debe tener 3-20 caracteres alfanuméricos",
+  "subdomain": "Subdominio inválido (3-63 caracteres, sin guiones al inicio/fin)",
+  "date": "Fecha inválida",
+  "dateRange": "Rango de fechas inválido",
+  "number": "Debe ser un número",
+  "integer": "Debe ser un número entero",
+  "positive": "Debe ser un número positivo",
+  "unique": "Este valor ya está en uso",
+  "notFound": "No encontrado",
+  "oneOf": "Seleccioná una opción válida"
+}
