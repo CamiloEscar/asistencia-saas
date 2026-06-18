@@ -102,7 +102,7 @@ USER nodejs
 
 EXPOSE 3000
 
-HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
+HEALTHCHECK --interval=30s --timeout=5s --start-period=30s --retries=3 \
   CMD wget -q -O- http://localhost:3000/health || exit 1
 
 # Migrations are run by the operator before starting the API (see deploy.sh /
