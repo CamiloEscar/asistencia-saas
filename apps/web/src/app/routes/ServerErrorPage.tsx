@@ -9,14 +9,20 @@ import { AlertTriangle, RefreshCw, Home } from 'lucide-react'
  */
 export function ServerErrorPage() {
   const error = useRouteError()
-  console.error('[ServerErrorPage] Caught error:', error)
+  // Log to the browser console for debugging; never expose stack traces
+  // to the end user in production.
+  if (error) console.error('[ServerErrorPage] Caught error:', error)
 
   const handleRetry = () => {
     window.location.reload()
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-screen items-center justify-center bg-background p-4 focus:outline-none"
+    >
       <div className="max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-destructive/10 p-4">
@@ -42,6 +48,6 @@ export function ServerErrorPage() {
           </Button>
         </div>
       </div>
-    </div>
+    </main>
   )
 }

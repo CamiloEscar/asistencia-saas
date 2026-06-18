@@ -12,7 +12,11 @@ export function MaintenancePage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
+    <main
+      id="main-content"
+      tabIndex={-1}
+      className="flex min-h-screen items-center justify-center bg-background p-4 focus:outline-none"
+    >
       <div className="max-w-md text-center">
         <div className="mb-6 flex justify-center">
           <div className="rounded-full bg-amber-100 p-4 dark:bg-amber-950/30">
@@ -40,6 +44,6 @@ export function MaintenancePage() {
           </a>
         </p>
       </div>
-    </div>
+    </main>
   )
 }
