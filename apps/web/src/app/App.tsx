@@ -1,9 +1,9 @@
-import { ThemeProvider } from 'next-themes'
 import { lazy, Suspense } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
-import { Toaster } from 'sonner'
 import { I18nProvider } from './providers/I18nProvider'
 import { QueryProvider } from './providers/QueryProvider'
+import { ThemeProvider } from './providers/ThemeProvider'
+import { ToasterProvider } from './providers/ToasterProvider'
 import { LoadingScreen } from '../components/feedback/LoadingScreen'
 import { ProtectedRoute } from './routes/ProtectedRoute'
 
@@ -21,7 +21,7 @@ const NotFoundPage = lazy(() =>
 export function App() {
   return (
     <QueryProvider>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <ThemeProvider>
         <I18nProvider>
           <BrowserRouter>
             <Suspense fallback={<LoadingScreen />}>
@@ -34,7 +34,7 @@ export function App() {
                 <Route path="*" element={<NotFoundPage />} />
               </Routes>
             </Suspense>
-            <Toaster richColors position="top-right" />
+            <ToasterProvider />
           </BrowserRouter>
         </I18nProvider>
       </ThemeProvider>
