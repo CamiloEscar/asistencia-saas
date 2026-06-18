@@ -63,8 +63,8 @@ COPY --from=builder /app/apps/web/dist /usr/share/nginx/html
 COPY infra/docker/nginx/web.conf /etc/nginx/conf.d/default.conf
 
 # Healthcheck on the nginx default endpoint.
-HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
-  CMD wget -q -O- http://localhost/ >/dev/null 2>&1 || exit 1
+HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
+  CMD wget -q --spider http://localhost/ || exit 1
 
 EXPOSE 80
 
