@@ -1,0 +1,106 @@
+{
+  "attendance": {
+    "myCourses": {
+      "title": "Mis cursos",
+      "subtitle": "Cursos en los que das clases",
+      "takeAttendance": "Tomar asistencia",
+      "viewHistory": "Ver historial",
+      "noCourses": "No tenés cursos asignados",
+      "sessionToday": "Hoy",
+      "scheduleLabel": "Horario"
+    },
+    "take": {
+      "title": "Tomar asistencia",
+      "selectCourse": "Seleccioná un curso",
+      "selectDate": "Fecha",
+      "loadRoster": "Cargar lista",
+      "roster": "Lista de alumnos",
+      "summary": "{{present}} presentes · {{absent}} ausentes · {{late}} tardanzas · {{justified}} justificados",
+      "markAll": {
+        "present": "Marcar todos presentes",
+        "absent": "Marcar todos ausentes",
+        "clear": "Limpiar"
+      },
+      "submit": "Guardar asistencia",
+      "submitting": "Guardando...",
+      "success": "Asistencia guardada correctamente",
+      "error": "No se pudo guardar la asistencia",
+      "partial": "Asistencia guardada con errores",
+      "editingBanner": "Editando asistencia del día {{date}}",
+      "observations": "Observaciones",
+      "bulkUpload": "Subir evidencias (drag & drop)",
+      "evidenceUploaded": "Evidencia subida",
+      "evidenceError": "Error al subir evidencia"
+    },
+    "justification": {
+      "title": "Justificación",
+      "late": "Motivo de la tardanza",
+      "justified": "Motivo de la justificación",
+      "placeholder": "Escribí el motivo (máx. 500 caracteres)",
+      "save": "Guardar",
+      "cancel": "Cancelar",
+      "counter": "{{count}}/500",
+      "required": "La justificación es obligatoria"
+    },
+    "history": {
+      "title": "Historial de asistencia",
+      "filters": {
+        "course": "Curso",
+        "allCourses": "Todos los cursos",
+        "dateRange": "Rango de fechas",
+        "student": "Alumno",
+        "allStudents": "Todos los alumnos",
+        "status": "Estado",
+        "allStatuses": "Todos los estados"
+      },
+      "columns": {
+        "date": "Fecha",
+        "student": "Alumno",
+        "course": "Curso",
+        "status": "Estado",
+        "observations": "Observaciones",
+        "actions": "Acciones"
+      },
+      "empty": {
+        "title": "Sin registros",
+        "description": "No hay registros de asistencia para los filtros seleccionados."
+      },
+      "exportCsv": "Exportar CSV"
+    },
+    "myAttendance": {
+      "title": "Mi asistencia",
+      "subtitle": "Resumen de tu asistencia como alumno",
+      "overall": "Asistencia general",
+      "byCourse": "Por curso",
+      "lastAbsences": "Últimas ausencias",
+      "noAbsences": "¡Sin ausencias recientes!",
+      "viewCourse": "Ver curso",
+      "filters": {
+        "range": "Rango de fechas",
+        "ranges": {
+          "7d": "Últimos 7 días",
+          "30d": "Últimos 30 días",
+          "semester": "Semestre actual",
+          "all": "Todo",
+          "custom": "Personalizado"
+        },
+        "customRange": "Rango personalizado"
+      },
+      "empty": {
+        "title": "Sin cursos",
+        "description": "No estás inscripto en ningún curso todavía."
+      }
+    },
+    "courseDetail": {
+      "title": "Detalle del curso",
+      "overall": "Asistencia general",
+      "byStatus": "Por estado",
+      "timeline": "Cronograma",
+      "noSessions": "Sin sesiones registradas"
+    },
+    "summaryCard": {
+      "present": "{{pct}}% presente",
+      "breakdown": "{{present}}P · {{late}}T · {{absent}}A · {{justified}}J"
+    }
+  }
+}

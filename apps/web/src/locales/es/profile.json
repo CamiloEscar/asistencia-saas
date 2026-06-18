@@ -1,0 +1,42 @@
+{
+  "profile": {
+    "title": "Perfil",
+    "subtitle": "Tu información personal y configuración de cuenta",
+    "info": {
+      "title": "Información personal",
+      "email": "Email",
+      "name": "Nombre",
+      "role": "Rol",
+      "institution": "Institución"
+    },
+    "password": {
+      "title": "Cambiar contraseña",
+      "current": "Contraseña actual",
+      "new": "Nueva contraseña",
+      "confirm": "Confirmar nueva contraseña",
+      "submit": "Cambiar contraseña",
+      "submitting": "Cambiando...",
+      "success": "Contraseña actualizada"
+    },
+    "language": {
+      "title": "Idioma",
+      "current": "Idioma actual: Español",
+      "help": "Próximamente disponible"
+    }
+  },
+  "settings": {
+    "title": "Configuración",
+    "subtitle": "Preferencias de la aplicación",
+    "theme": {
+      "title": "Tema",
+      "light": "Claro",
+      "dark": "Oscuro",
+      "system": "Sistema"
+    },
+    "language": {
+      "title": "Idioma",
+      "current": "Español",
+      "help": "Próximamente disponible"
+    }
+  }
+}

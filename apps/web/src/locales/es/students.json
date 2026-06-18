@@ -1,0 +1,90 @@
+{
+  "students": {
+    "list": {
+      "title": "Alumnos",
+      "subtitle": "Listado y gestión de alumnos",
+      "searchPlaceholder": "Buscar por legajo o nombre...",
+      "create": "Crear alumno",
+      "bulkImport": "Importar CSV",
+      "columns": {
+        "legajo": "Legajo",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Email",
+        "career": "Carrera",
+        "isActive": "Estado",
+        "attendance": "Asistencia",
+        "actions": "Acciones"
+      },
+      "filters": {
+        "career": "Carrera",
+        "allCareers": "Todas las carreras",
+        "active": "Solo activos"
+      },
+      "empty": {
+        "title": "Sin alumnos",
+        "description": "Creá el primer alumno o importá un CSV para empezar."
+      }
+    },
+    "create": {
+      "title": "Crear alumno",
+      "subtitle": "Agregá un nuevo alumno a la institución",
+      "fields": {
+        "legajo": "Legajo",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Email (opcional)",
+        "phone": "Teléfono (opcional)",
+        "birthDate": "Fecha de nacimiento (opcional)",
+        "career": "Carrera (opcional)"
+      },
+      "submit": "Crear alumno",
+      "success": "Alumno creado con éxito"
+    },
+    "edit": {
+      "title": "Editar alumno",
+      "submit": "Guardar cambios",
+      "success": "Alumno actualizado"
+    },
+    "bulk": {
+      "title": "Importar alumnos desde CSV",
+      "subtitle": "Carga masiva de alumnos con validación previa",
+      "dropzone": "Arrastrá un archivo CSV o hacé click para seleccionar",
+      "format": "Formato: legajo,nombre,apellido,email,carrera,fechaNacimiento,telefono",
+      "dryRun": "Modo prueba (recomendado)",
+      "dryRunHelp": "Valida el archivo sin guardar cambios. Si todo está OK, desmarcá esta opción para confirmar.",
+      "courseId": "Inscribir en curso (opcional)",
+      "noCourse": "No inscribir",
+      "submit": "Importar",
+      "submitting": "Procesando...",
+      "preview": {
+        "title": "Vista previa",
+        "valid": "Filas válidas",
+        "willSkip": "Se omitirán",
+        "errors": "Errores",
+        "noErrors": "Sin errores"
+      },
+      "result": {
+        "title": "Resultado",
+        "created": "Creados",
+        "skipped": "Omitidos",
+        "errors": "Errores",
+        "jobId": "ID de trabajo",
+        "viewStatus": "Ver estado"
+      },
+      "errorsTable": {
+        "row": "Fila",
+        "field": "Campo",
+        "message": "Mensaje"
+      },
+      "success": "Importación completada",
+      "async": "Importación en proceso. ID: {{jobId}}",
+      "status": {
+        "pending": "Pendiente",
+        "processing": "Procesando",
+        "completed": "Completado",
+        "failed": "Falló"
+      }
+    }
+  }
+}

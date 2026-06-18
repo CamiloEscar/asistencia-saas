@@ -1,0 +1,57 @@
+{
+  "users": {
+    "list": {
+      "title": "Usuarios",
+      "subtitle": "Administrá los usuarios de tu institución",
+      "searchPlaceholder": "Buscar por nombre o email...",
+      "create": "Crear usuario",
+      "columns": {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Email",
+        "role": "Rol",
+        "isActive": "Estado",
+        "actions": "Acciones"
+      },
+      "filters": {
+        "role": "Rol",
+        "all": "Todos",
+        "active": "Solo activos"
+      },
+      "empty": {
+        "title": "Sin usuarios",
+        "description": "Creá el primer usuario para empezar."
+      }
+    },
+    "create": {
+      "title": "Crear usuario",
+      "subtitle": "Crea un nuevo usuario en la institución",
+      "fields": {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Email",
+        "role": "Rol",
+        "tempPassword": "Contraseña temporal (opcional)",
+        "tempPasswordHelp": "Si la dejás vacía, se generará un enlace de activación"
+      },
+      "submit": "Crear usuario",
+      "success": "Usuario creado con éxito",
+      "successLink": "Enlace de activación (envialo al usuario):",
+      "copyLink": "Copiar enlace",
+      "copied": "Enlace copiado",
+      "passwordShown": "Contraseña temporal: {{password}}"
+    },
+    "edit": {
+      "title": "Editar usuario",
+      "submit": "Guardar cambios",
+      "success": "Usuario actualizado"
+    },
+    "actions": {
+      "edit": "Editar",
+      "deactivate": "Desactivar",
+      "reactivate": "Reactivar",
+      "resetPassword": "Restablecer contraseña",
+      "resetPasswordSuccess": "Nueva contraseña temporal: {{password}}"
+    }
+  }
+}

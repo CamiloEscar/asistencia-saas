@@ -1,0 +1,96 @@
+{
+  "courses": {
+    "list": {
+      "title": "Cursos",
+      "subtitle": "Cursos de la institución",
+      "searchPlaceholder": "Buscar por nombre o código...",
+      "create": "Crear curso",
+      "columns": {
+        "code": "Código",
+        "name": "Nombre",
+        "subject": "Materia",
+        "teacher": "Profesor",
+        "schedule": "Horario",
+        "semester": "Semestre",
+        "startDate": "Inicio",
+        "endDate": "Fin",
+        "students": "Alumnos",
+        "isActive": "Estado",
+        "actions": "Acciones"
+      },
+      "filters": {
+        "subject": "Materia",
+        "teacher": "Profesor",
+        "allSubjects": "Todas las materias",
+        "allTeachers": "Todos los profesores",
+        "active": "Solo activos"
+      },
+      "empty": {
+        "title": "Sin cursos",
+        "description": "Creá el primer curso para empezar."
+      }
+    },
+    "create": {
+      "title": "Crear curso",
+      "subtitle": "Creá un nuevo curso con su horario semanal",
+      "fields": {
+        "code": "Código",
+        "name": "Nombre",
+        "description": "Descripción (opcional)",
+        "subjectId": "Materia",
+        "teacherIds": "Profesores",
+        "semester": "Semestre",
+        "startDate": "Fecha de inicio",
+        "endDate": "Fecha de fin",
+        "schedule": "Horario semanal",
+        "defaultSessionDurationMin": "Duración por sesión (min)",
+        "initialStudents": "Inscribir alumnos (opcional)"
+      },
+      "schedule": {
+        "title": "Horario semanal",
+        "add": "Agregar bloque",
+        "remove": "Quitar",
+        "day": "Día",
+        "startTime": "Hora inicio",
+        "endTime": "Hora fin",
+        "days": {
+          "0": "Domingo",
+          "1": "Lunes",
+          "2": "Martes",
+          "3": "Miércoles",
+          "4": "Jueves",
+          "5": "Viernes",
+          "6": "Sábado"
+        }
+      },
+      "submit": "Crear curso",
+      "submitting": "Creando...",
+      "success": "Curso creado con éxito"
+    },
+    "detail": {
+      "tabs": {
+        "info": "Información",
+        "students": "Alumnos",
+        "attendance": "Asistencia",
+        "settings": "Configuración"
+      },
+      "enrollStudents": "Inscribir alumnos",
+      "unenroll": "Desinscribir",
+      "unenrollConfirm": "¿Desinscribir a {{name}} del curso?",
+      "unenrollSuccess": "Alumno desinscripto",
+      "noStudents": "No hay alumnos inscriptos en este curso",
+      "summary": {
+        "title": "Resumen de asistencia",
+        "present": "Presentes",
+        "absent": "Ausentes",
+        "late": "Tardanzas",
+        "justified": "Justificados"
+      }
+    },
+    "edit": {
+      "title": "Editar curso",
+      "submit": "Guardar cambios",
+      "success": "Curso actualizado"
+    }
+  }
+}

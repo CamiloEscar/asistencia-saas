@@ -1,0 +1,37 @@
+{
+  "subjects": {
+    "list": {
+      "title": "Materias",
+      "subtitle": "Catálogo de materias de la institución",
+      "searchPlaceholder": "Buscar por nombre o código...",
+      "create": "Crear materia",
+      "columns": {
+        "code": "Código",
+        "name": "Nombre",
+        "description": "Descripción",
+        "actions": "Acciones"
+      },
+      "empty": {
+        "title": "Sin materias",
+        "description": "Creá la primera materia para empezar."
+      }
+    },
+    "create": {
+      "title": "Crear materia",
+      "subtitle": "Agregá una nueva materia al catálogo",
+      "fields": {
+        "code": "Código",
+        "codeHelp": "Mayúsculas, números y guiones (ej: MAT101)",
+        "name": "Nombre",
+        "description": "Descripción (opcional)"
+      },
+      "submit": "Crear materia",
+      "success": "Materia creada con éxito"
+    },
+    "edit": {
+      "title": "Editar materia",
+      "submit": "Guardar cambios",
+      "success": "Materia actualizada"
+    }
+  }
+}

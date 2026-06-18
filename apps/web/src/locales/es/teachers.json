@@ -1,0 +1,40 @@
+{
+  "teachers": {
+    "list": {
+      "title": "Profesores",
+      "subtitle": "Listado de profesores y cursos asignados",
+      "searchPlaceholder": "Buscar por nombre o email...",
+      "create": "Crear profesor",
+      "columns": {
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "email": "Email",
+        "phone": "Teléfono",
+        "courses": "Cursos",
+        "isActive": "Estado",
+        "actions": "Acciones"
+      },
+      "empty": {
+        "title": "Sin profesores",
+        "description": "Creá el primer profesor para empezar."
+      }
+    },
+    "create": {
+      "title": "Crear profesor",
+      "subtitle": "Agregá un nuevo profesor a la institución",
+      "fields": {
+        "email": "Email",
+        "firstName": "Nombre",
+        "lastName": "Apellido",
+        "phone": "Teléfono (opcional)"
+      },
+      "submit": "Crear profesor",
+      "success": "Profesor creado con éxito"
+    },
+    "edit": {
+      "title": "Editar profesor",
+      "submit": "Guardar cambios",
+      "success": "Profesor actualizado"
+    }
+  }
+}
