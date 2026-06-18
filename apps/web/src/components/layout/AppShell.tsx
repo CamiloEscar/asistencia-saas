@@ -12,6 +12,9 @@ import { Topbar } from './Topbar'
  *
  * Components inside the shell get a max-width container and vertical
  * padding via the inner `<main>` class.
+ *
+ * A11y: `<main id="main-content" tabIndex={-1}>` is the skip-to-content
+ * target. The skip link in App.tsx jumps here on activation.
  */
 export function AppShell() {
   const { user } = useAuth()
@@ -21,7 +24,11 @@ export function AppShell() {
       <Sidebar role={user.role} />
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar />
-        <main className="flex-1 px-4 py-6 sm:px-6 lg:px-8">
+        <main
+          id="main-content"
+          tabIndex={-1}
+          className="flex-1 px-4 py-6 focus:outline-none sm:px-6 lg:px-8"
+        >
           <div className="mx-auto w-full max-w-6xl">
             <Outlet />
           </div>

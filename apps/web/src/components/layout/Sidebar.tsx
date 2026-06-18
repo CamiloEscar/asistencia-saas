@@ -80,6 +80,7 @@ export function Sidebar({ role }: SidebarProps) {
             <NavLink
               key={item.to}
               to={item.to}
+              aria-label={t(item.labelKey)}
               className={({ isActive }) =>
                 cn(
                   'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
