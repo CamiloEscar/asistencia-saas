@@ -1,0 +1,244 @@
+# Production docker-compose for asistencia-saas.
+#
+# Topology:
+#   postgres   - data persistence
+#   redis      - cache + refresh tokens + BullMQ queue
+#   pgbouncer  - connection pooling for the API
+#   api        - NestJS HTTP server
+#   worker     - BullMQ consumer (bulk imports)
+#   web        - static SPA assets (served by nginx)
+#   nginx      - TLS termination + reverse proxy
+#
+# Deploy: `docker compose -f infra/docker/docker-compose.prod.yml up -d`
+# Health:  curl https://app.com/health
+#
+# Secrets (jwt-*.pem) must be placed at infra/docker/secrets/ before
+# the first run. They are NEVER committed (see .gitignore).
+name: asistencia-saas-prod
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-asistencia}
+      POSTGRES_USER: ${DB_USER:-app_user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?DB_PASSWORD is required}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/init:/docker-entrypoint-initdb.d:ro
+    networks:
+      - asistencia-net
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U ${DB_USER:-app_user} -d ${DB_NAME:-asistencia}
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    # Resource limits
+    deploy:
+      resources:
+        limits:
+          memory: 1G
+        reservations:
+          memory: 256M
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    command:
+      - redis-server
+      - --maxmemory
+      - 256mb
+      - --maxmemory-policy
+      - allkeys-lru
+      - --save
+      - '60 1000'
+      - --appendonly
+      - 'yes'
+      - --requirepass
+      - ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+    volumes:
+      - redisdata:/data
+    networks:
+      - asistencia-net
+    healthcheck:
+      test:
+        - CMD
+        - redis-cli
+        - -a
+        - ${REDIS_PASSWORD:?REDIS_PASSWORD is required}
+        - ping
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+    deploy:
+      resources:
+        limits:
+          memory: 384M
+        reservations:
+          memory: 128M
+
+  pgbouncer:
+    image: bitnami/pgbouncer:1.22.1
+    restart: unless-stopped
+    environment:
+      PGBOUNCER_DATABASE: ${DB_NAME:-asistencia}
+      PGBOUNCER_USERNAME: ${DB_USER:-app_user}
+      PGBOUNCER_PASSWORD: ${DB_PASSWORD}
+      PGBOUNCER_AUTH_TYPE: md5
+      PGBOUNCER_POOL_MODE: transaction
+      PGBOUNCER_MAX_CLIENT_CONN: 200
+      PGBOUNCER_DEFAULT_POOL_SIZE: 25
+      PGBOUNCER_SERVER_IDLE_TIMEOUT: 600
+      PGBOUNCER_QUERY_WAIT_TIMEOUT: 120
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - asistencia-net
+    healthcheck:
+      test: ['CMD', 'pgbouncer', '-V']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  api:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+      target: api
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgres://${DB_USER:-app_user}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME:-asistencia}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/0
+      REDIS_REFRESH_DB: 1
+      REDIS_ACTIVATION_DB: 2
+      REDIS_BULLMQ_DB: 3
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt-public.pem
+      CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
+      CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
+      CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.app.com}
+      COOKIE_SECURE: 'true'
+      CORS_ORIGINS: ${CORS_ORIGINS:-https://app.com,https://*.app.com}
+      THROTTLE_TTL: ${THROTTLE_TTL:-60}
+      THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    secrets:
+      - jwt-private.pem
+      - jwt-public.pem
+    networks:
+      - asistencia-net
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '-O-', 'http://localhost:3000/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  worker:
+    build:
+      context: ../..
+      dockerfile: infra/docker/api.Dockerfile
+      target: worker
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgres://${DB_USER:-app_user}:${DB_PASSWORD}@pgbouncer:6432/${DB_NAME:-asistencia}?schema=public
+      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379/3
+      JWT_PRIVATE_KEY_PATH: /run/secrets/jwt-private.pem
+      JWT_PUBLIC_KEY_PATH: /run/secrets/jwt-public.pem
+    depends_on:
+      pgbouncer:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    secrets:
+      - jwt-private.pem
+      - jwt-public.pem
+    networks:
+      - asistencia-net
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+        reservations:
+          memory: 256M
+
+  web:
+    build:
+      context: ../..
+      dockerfile: infra/docker/web.Dockerfile
+      args:
+        VITE_API_URL: ${VITE_API_URL:-https://app.com}
+    restart: unless-stopped
+    networks:
+      - asistencia-net
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:80/']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  nginx:
+    build:
+      context: ./nginx
+    restart: unless-stopped
+    ports:
+      - '80:80'
+      - '443:443'
+    volumes:
+      # Wildcard certs (managed by the user's Python bot, not by us)
+      - /etc/nginx/ssl/wildcard.pem:/etc/nginx/ssl/wildcard.pem:ro
+      - /etc/nginx/ssl/wildcard.key:/etc/nginx/ssl/wildcard.key:ro
+    depends_on:
+      - api
+      - web
+    networks:
+      - asistencia-net
+    healthcheck:
+      test: ['CMD', 'wget', '-q', '--spider', 'https://localhost/health']
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+        reservations:
+          memory: 64M
+
+volumes:
+  pgdata:
+    name: asistencia-pgdata-prod
+  redisdata:
+    name: asistencia-redisdata-prod
+
+networks:
+  asistencia-net:
+    name: asistencia-net-prod
+    driver: bridge
+
+secrets:
+  jwt-private.pem:
+    file: ./secrets/jwt-private.pem
+  jwt-public.pem:
+    file: ./secrets/jwt-public.pem
