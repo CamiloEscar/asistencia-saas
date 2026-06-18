@@ -29,6 +29,12 @@ coverage/
 .nyc_output/
 *.lcov
 
+# Playwright
+apps/web/playwright-report/
+apps/web/test-results/
+apps/web/blob-report/
+apps/web/playwright/.cache/
+
 # IDE
 .idea/
 .vscode/
