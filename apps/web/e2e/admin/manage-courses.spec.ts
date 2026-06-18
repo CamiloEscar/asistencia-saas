@@ -11,7 +11,7 @@
  *
  * Spec: journey 4 from explore (CRUD round-trip).
  */
-import { test, expect, TEST_TENANT } from './helpers'
+import { test, expect, TEST_TENANT } from '../helpers'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import * as os from 'node:os'

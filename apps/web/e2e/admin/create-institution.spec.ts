@@ -8,7 +8,7 @@
  *
  * Spec: SC-4 (provision institution in < 5 min)
  */
-import { test, expect } from './helpers'
+import { test, expect } from '../helpers'
 
 test.describe('Super admin: create institution', () => {
   test('super admin can create a new institution with initial admin', async ({ page }) => {

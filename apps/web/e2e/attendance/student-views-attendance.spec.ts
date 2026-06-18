@@ -9,7 +9,7 @@
  *
  * Spec: REQ-STUDENT-005, FE-REQ-STU-001..005
  */
-import { test, expect, TEST_TENANT } from './helpers'
+import { test, expect, TEST_TENANT } from '../helpers'
 
 test.describe('Student views attendance', () => {
   test('student sees overall attendance and per-course breakdown', async ({ page }) => {

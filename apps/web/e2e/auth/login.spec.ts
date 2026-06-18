@@ -9,7 +9,7 @@
  *
  * Spec: FE-REQ-AUTH-001..004
  */
-import { test, expect, TEST_TENANT } from './helpers'
+import { test, expect, TEST_TENANT } from '../helpers'
 
 test.describe('Authentication', () => {
   test('valid credentials redirect to role-specific dashboard', async ({ page }) => {

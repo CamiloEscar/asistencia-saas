@@ -7,7 +7,7 @@
  *
  * Spec: REQ-ATT-001..009, SC-1 (60 students ≤ 30s)
  */
-import { test, expect, TEST_TENANT } from './helpers'
+import { test, expect, TEST_TENANT } from '../helpers'
 
 test.describe('Teacher takes attendance (critical path)', () => {
   test('teacher marks a mix of statuses and submits', async ({ page }) => {
