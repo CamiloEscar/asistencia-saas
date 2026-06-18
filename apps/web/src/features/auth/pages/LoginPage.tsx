@@ -1,14 +1,173 @@
-// Placeholder for the FE auth login page. The real implementation is in task 12.12
-// (form with email/password, RHF + Zod, subdomain auto-detect, axios call to /auth/login).
+import { z } from 'zod'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { Building2, KeyRound, Mail } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Form } from '@/components/common/Form'
+import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
+import { useToast } from '@/hooks/use-toast'
+import { useLogin, postLoginRedirect, captureReturnTo } from '@/features/auth/hooks/use-auth'
+import { detectSubdomain } from '@/lib/tenant-detect'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
+import { landingPathForRole, Paths } from '@/app/routes/paths'
+import { toApiError } from '@/features/auth/auth.helpers'
+
+const loginSchema = z.object({
+  email: z.string().email({ message: 'Email inválido' }),
+  password: z.string().min(1, { message: 'Contraseña requerida' }),
+})
+
+type LoginValues = z.infer<typeof loginSchema>
+
+/**
+ * Login page. Subdomain is auto-detected on mount; if missing (e.g.
+ * `app.example.com` plain), we still show the form but with a banner
+ * saying "subdomain not detected".
+ */
 export function LoginPage() {
+  const { t } = useTranslation()
+  const navigate = useNavigate()
+  const [searchParams] = useSearchParams()
+  const login = useLogin()
+  const toast = useToast()
+  const setInstitutionSlug = useAuthStore((s) => s.setInstitutionSlug)
+  const authed = useAuthStore((s) => s.isAuthenticated)
+  const role = useAuthStore((s) => s.user?.role ?? null)
+
+  const detectedSubdomain = detectSubdomain()
+  const [subdomain] = useState<string | null>(detectedSubdomain)
+
+  useEffect(() => {
+    if (subdomain) setInstitutionSlug(subdomain)
+  }, [subdomain, setInstitutionSlug])
+
+  // If already authenticated, bounce to the role landing.
+  useEffect(() => {
+    if (authed && role) {
+      navigate(landingPathForRole(role), { replace: true })
+    }
+  }, [authed, role, navigate])
+
+  const form = useForm<LoginValues>({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { email: '', password: '' },
+    mode: 'onBlur',
+  })
+
+  async function onSubmit(values: LoginValues) {
+    try {
+      const ret = searchParams.get('returnTo')
+      if (ret) captureReturnTo(ret)
+      await login.mutateAsync(values)
+      // Redirect to returnTo if any, else the role landing.
+      const dest = postLoginRedirect(landingPathForRole(role))
+      navigate(dest, { replace: true })
+    } catch (err) {
+      const { status, title, detail } = toApiError(err)
+      const description =
+        status === 403 && title.toLowerCase().includes('inactive')
+          ? t('errors:inactiveInstitution')
+          : (detail ?? title)
+      toast.error(description)
+    }
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center p-6">
-      <div className="w-full max-w-sm space-y-4 text-center">
-        <h1 className="text-2xl font-semibold">asistencia-saas</h1>
-        <p className="text-sm text-muted-foreground">
-          Login (stub — implementación real en task 12.12)
-        </p>
+    <div className="flex min-h-screen items-center justify-center bg-muted/30 p-4">
+      <div className="w-full max-w-sm space-y-6">
+        <header className="text-center">
+          <h1 className="text-2xl font-semibold tracking-tight">{t('app.name')}</h1>
+          <p className="mt-1 text-sm text-muted-foreground">{t('auth.login.subtitle')}</p>
+        </header>
+
+        {!subdomain && (
+          <div className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+            Subdominio no detectado. Verificá la URL.
+          </div>
+        )}
+
+        {subdomain && (
+          <div className="flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
+            <Building2 className="h-4 w-4" />
+            <span>
+              {t('auth.login.institutionLabel')}:{' '}
+              <span className="font-medium text-foreground">{subdomain}</span>
+            </span>
+          </div>
+        )}
+
+        <Form form={form} onSubmit={onSubmit} className="space-y-4">
+          <FormField
+            control={form.control}
+            name="email"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('auth.login.email')}</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      autoComplete="email"
+                      placeholder={t('auth.login.emailPlaceholder')}
+                      className="pl-9"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <FormField
+            control={form.control}
+            name="password"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('auth.login.password')}</FormLabel>
+                <FormControl>
+                  <div className="relative">
+                    <KeyRound className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      autoComplete="current-password"
+                      placeholder={t('auth.login.passwordPlaceholder')}
+                      className="pl-9"
+                      {...field}
+                    />
+                  </div>
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+
+          <Button type="submit" className="w-full" disabled={login.isPending}>
+            {login.isPending ? t('auth.login.submitting') : t('auth.login.submit')}
+          </Button>
+        </Form>
+
+        <div className="space-y-2 text-center text-sm">
+          <Link
+            to={Paths.forgotPassword}
+            className="block text-muted-foreground underline hover:text-foreground"
+          >
+            {t('auth.login.forgotPassword')}
+          </Link>
+          <Link
+            to={Paths.setPassword}
+            className="block text-muted-foreground underline hover:text-foreground"
+          >
+            {t('auth.login.setPassword')}
+          </Link>
+          <p className="pt-2 text-xs text-muted-foreground">{t('auth.login.noAccount')}</p>
+        </div>
       </div>
     </div>
-  );
+  )
 }
