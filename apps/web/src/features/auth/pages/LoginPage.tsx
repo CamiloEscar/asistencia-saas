@@ -7,7 +7,7 @@ import { useTranslation } from 'react-i18next'
 import { Building2, KeyRound, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Form } from '@/components/common/Form'
+import { AppForm } from '@/components/common/Form'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useLogin, postLoginRedirect, captureReturnTo } from '@/features/auth/hooks/use-auth'
@@ -100,7 +100,7 @@ export function LoginPage() {
           </div>
         )}
 
-        <Form form={form} onSubmit={onSubmit} className="space-y-4">
+        <AppForm form={form} onSubmit={onSubmit} className="space-y-4">
           <FormField
             control={form.control}
             name="email"
@@ -150,7 +150,7 @@ export function LoginPage() {
           <Button type="submit" className="w-full" disabled={login.isPending}>
             {login.isPending ? t('auth.login.submitting') : t('auth.login.submit')}
           </Button>
-        </Form>
+        </AppForm>
 
         <div className="space-y-2 text-center text-sm">
           <Link
