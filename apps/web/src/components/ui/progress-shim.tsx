@@ -1,0 +1,27 @@
+import { cn } from '@/lib/utils'
+
+interface ProgressProps {
+  value: number // 0..100
+  className?: string
+}
+
+/**
+ * Lightweight progress bar. We could pull in the @radix-ui/react-progress
+ * primitive, but a div+bar is enough for the dashboard widgets and
+ * saves a dependency. Replace with the shadcn primitive if a richer
+ * API (indeterminate, accessible label, etc.) is needed.
+ */
+export function Progress({ value, className }: ProgressProps) {
+  const clamped = Math.max(0, Math.min(100, value))
+  return (
+    <div
+      role="progressbar"
+      aria-valuemin={0}
+      aria-valuemax={100}
+      aria-valuenow={Math.round(clamped)}
+      className={cn('relative h-2 w-full overflow-hidden rounded-full bg-secondary', className)}
+    >
+      <div className="h-full bg-primary transition-all" style={{ width: `${clamped}%` }} />
+    </div>
+  )
+}
