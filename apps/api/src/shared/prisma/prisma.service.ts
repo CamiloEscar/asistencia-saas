@@ -72,12 +72,6 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
   get $executeRaw(): ExtendedPrismaClient['$executeRaw'] {
     return this.client.$executeRaw.bind(this.client)
   }
-  get $on(): ExtendedPrismaClient['$on'] {
-    return this.client.$on.bind(this.client)
-  }
-  get $use(): ExtendedPrismaClient['$use'] {
-    return this.client.$use.bind(this.client)
-  }
 
   // ─── Model delegates ────────────────────────────────────────────────────
   get institution(): ExtendedPrismaClient['institution'] {
@@ -122,12 +116,18 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
    */
   async forTenant<T>(
     tenantId: string,
-    fn: (tx: Prisma.TransactionClient) => Promise<T>,
+    // El `tx` que pasa $transaction sobre el cliente extendido es
+    // Omit<DynamicClientExtensionThis, '$on' | '$use' | '$extends'>,
+    // estructuralmente idéntico a ExtendedPrismaClient.
+    fn: (tx: ExtendedPrismaClient) => Promise<T>,
   ): Promise<T> {
-    return this.client.$transaction(async (tx: Prisma.TransactionClient) => {
-      // tx is a TransactionClient; SET LOCAL works on the underlying session.
+    return this.client.$transaction(async (tx) => {
+      // tx.$executeRawUnsafe funciona sin cast: solo $on/$use/$extends
+      // están omitidos del tipo del cliente extendido.
       await tx.$executeRawUnsafe(`SET LOCAL app.current_institution_id = '${tenantId}'`)
-      return fn(tx)
+      // Único cast del change (NFR-3): puente entre el tipo nominal de
+      // Prisma y el alias ExtendedPrismaClient. No se propaga.
+      return fn(tx as unknown as ExtendedPrismaClient)
     })
   }
 

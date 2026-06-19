@@ -8,14 +8,12 @@
 // Spec: engram `sdd/attendance-mvp/spec/*`.
 
 generator client {
-  provider        = "prisma-client-js"
-  previewFeatures = ["postgresqlExtensions"]
+  provider = "prisma-client-js"
 }
 
 datasource db {
-  provider   = "postgresql"
-  url        = env("DATABASE_URL")
-  extensions = [pgcrypto, citext, pg_trgm]
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // ─── Enums ────────────────────────────────────────────────────────────────
@@ -49,6 +47,7 @@ enum SessionStatus {
   OPEN
   CLOSED
   CANCELLED
+  COMPLETED
 }
 
 enum RefreshTokenStatus {
@@ -102,7 +101,7 @@ model User {
   updatedAt DateTime  @updatedAt @db.Timestamptz(6)
   deletedAt DateTime? @db.Timestamptz(6)
 
-  institution    Institution?      @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  institution    Institution?       @relation(fields: [institutionId], references: [id], onDelete: Restrict)
   taughtCourses  CourseTeacher[]
   enrollments    Enrollment[]
   attendanceRecs AttendanceRecord[]
@@ -143,23 +142,23 @@ model Subject {
 // ─── Course (an offering of a subject for a semester) ───────────────────
 
 model Course {
-  id                        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  institutionId             String   @db.Uuid
-  subjectId                 String   @db.Uuid
-  code                      String   @db.VarChar(20)
-  name                      String   @db.VarChar(200)
-  description               String?  @db.Text
-  semester                  String   @db.VarChar(20)
-  startDate                 DateTime @db.Date
-  endDate                   DateTime @db.Date
+  id                        String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  institutionId             String    @db.Uuid
+  subjectId                 String    @db.Uuid
+  code                      String    @db.VarChar(20)
+  name                      String    @db.VarChar(200)
+  description               String?   @db.Text
+  semester                  String    @db.VarChar(20)
+  startDate                 DateTime  @db.Date
+  endDate                   DateTime  @db.Date
   schedule                  Json // [{ day: 0-6, startTime: "HH:mm", endTime: "HH:mm" }]
-  defaultSessionDurationMin Int      @default(80)
-  createdAt                 DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt                 DateTime @updatedAt @db.Timestamptz(6)
+  defaultSessionDurationMin Int       @default(80)
+  createdAt                 DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt                 DateTime  @updatedAt @db.Timestamptz(6)
   deletedAt                 DateTime? @db.Timestamptz(6)
 
-  institution Institution    @relation(fields: [institutionId], references: [id], onDelete: Restrict)
-  subject     Subject        @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  institution Institution     @relation(fields: [institutionId], references: [id], onDelete: Restrict)
+  subject     Subject         @relation(fields: [subjectId], references: [id], onDelete: Restrict)
   teachers    CourseTeacher[]
   enrollments Enrollment[]
   sessions    ClassSession[]
@@ -221,7 +220,7 @@ model ClassSession {
   createdAt     DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt     DateTime      @updatedAt @db.Timestamptz(6)
 
-  course     Course            @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  course     Course             @relation(fields: [courseId], references: [id], onDelete: Cascade)
   attendance AttendanceRecord[]
 
   @@unique([courseId, scheduledAt])
@@ -261,6 +260,7 @@ model RefreshToken {
   userId    String             @db.Uuid
   jti       String             @unique @db.VarChar(64)
   familyId  String             @db.Uuid
+  tokenHash String?            @db.VarChar(64)
   status    RefreshTokenStatus @default(active)
   issuedAt  DateTime           @default(now()) @db.Timestamptz(6)
   expiresAt DateTime           @db.Timestamptz(6)

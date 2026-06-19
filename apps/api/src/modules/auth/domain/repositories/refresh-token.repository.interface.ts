@@ -28,7 +28,7 @@ export interface RefreshTokenRecord {
   status: 'active' | 'used' | 'revoked'
   expiresAt: Date
   revokedAt: Date | null
-  tokenHash: string
+  tokenHash: string | null
 }
 
 export interface RefreshTokenRepository {

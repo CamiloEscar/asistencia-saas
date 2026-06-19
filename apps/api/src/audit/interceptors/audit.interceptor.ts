@@ -1,6 +1,6 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import type { Reflector } from '@nestjs/core'
-import type { PrismaClient } from '@prisma/client'
+import { Prisma, type PrismaClient } from '@prisma/client'
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common'
 import type { Request } from 'express'
 import { tap } from 'rxjs/operators'
@@ -92,8 +92,12 @@ export class AuditInterceptor implements NestInterceptor {
         action: metadata.action,
         entityType: metadata.entityType,
         entityId: entityId ?? null,
-        beforeJson: null, // set later when we add before/after diffing (Phase 8+)
-        afterJson: result ? (result as object) : errorMessage ? { error: errorMessage } : null,
+        beforeJson: Prisma.JsonNull, // REQ-INFRA-002: JSON null, not DB null
+        afterJson: result
+          ? (result as Prisma.InputJsonValue)
+          : errorMessage
+            ? ({ error: errorMessage } as Prisma.InputJsonValue)
+            : Prisma.JsonNull,
         ipAddress: (req.ip as string) ?? null,
         userAgent: req.headers['user-agent'] ?? null,
         requestId: (req.headers['x-request-id'] as string) ?? null,

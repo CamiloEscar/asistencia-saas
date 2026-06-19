@@ -96,7 +96,7 @@ export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
     status: string
     expiresAt: Date
     revokedAt: Date | null
-    tokenHash: string
+    tokenHash: string | null
   }): RefreshTokenRecord {
     return {
       id: row.id,
