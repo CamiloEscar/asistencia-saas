@@ -13,7 +13,7 @@ test.describe('Teacher takes attendance (critical path)', () => {
   test('teacher marks a mix of statuses and submits', async ({ page }) => {
     // 1. Login as teacher
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('teacher1@universidad-a.com')
+    await page.getByLabel(/email/i).fill('teacher1@celsius.com')
     await page.getByLabel(/contraseña/i).fill('teacher1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/today|\/dashboard/, { timeout: 10_000 })

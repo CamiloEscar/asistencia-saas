@@ -60,15 +60,15 @@ Browser
   │
   │ GET /api/v1/courses
   │ Cookie: asistencia_access=...
-  │ Header: X-Tenant-Subdomain: universidad-a
+  │ Header: X-Tenant-Subdomain: celsius
   │
   ▼
 Nginx (TLS + headers)
   │
   ▼
 NestJS — TenantMiddleware
-  │ 1. Parse X-Tenant-Subdomain = "universidad-a"
-  │ 2. GET tenant:subdomain:universidad-a (Redis)
+  │ 1. Parse X-Tenant-Subdomain = "celsius"
+  │ 2. GET tenant:subdomain:celsius (Redis)
   │ 3. (on miss) SELECT ... FROM institutions WHERE subdomain=...
   │ 4. enterTenantContext({ tenantId, subdomain, timezone })
   │

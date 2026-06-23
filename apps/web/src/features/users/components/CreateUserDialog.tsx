@@ -27,7 +27,7 @@ import {
   SelectValue,
 } from '@/components/ui'
 import { useToast } from '@/hooks/use-toast'
-import { createUserRequestSchema, userRoleValues, userRoleLabels } from '@asistencia/shared'
+import { createUserRequestSchema, userRoleValues } from '@asistencia/shared'
 import { useCreateUser } from '../api/users.api'
 
 type FormValues = z.infer<typeof createUserRequestSchema>
@@ -154,7 +154,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                           .filter((r) => r !== 'SUPER_ADMIN')
                           .map((r) => (
                             <SelectItem key={r} value={r}>
-                              {userRoleLabels[r]}
+                              {t(`roles.${r}`)}
                             </SelectItem>
                           ))}
                       </SelectContent>

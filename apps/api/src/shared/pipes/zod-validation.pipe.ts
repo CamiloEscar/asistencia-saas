@@ -1,6 +1,7 @@
 import type { ArgumentMetadata, PipeTransform } from '@nestjs/common'
-import { BadRequestException, Injectable } from '@nestjs/common'
-import type { ZodError, ZodSchema } from 'zod'
+import { BadRequestException, Injectable, Optional } from '@nestjs/common'
+import type { ZodError } from 'zod'
+import { type ZodSchema } from 'zod'
 
 /**
  * Generic Zod validation pipe. Accepts a Zod schema in the route metadata
@@ -19,7 +20,7 @@ import type { ZodError, ZodSchema } from 'zod'
  */
 @Injectable()
 export class ZodValidationPipe implements PipeTransform {
-  constructor(private readonly schema?: ZodSchema) {}
+  constructor(@Optional() private readonly schema?: ZodSchema) {}
 
   static create<T>(schema: ZodSchema<T>): ZodValidationPipe {
     return new ZodValidationPipe(schema)

@@ -1,7 +1,7 @@
 /// <reference types="vitest" />
-import { fileURLToPath, URL } from 'node:url';
-import react from '@vitejs/plugin-react';
-import { defineConfig } from 'vite';
+import { fileURLToPath, URL } from 'node:url'
+import react from '@vitejs/plugin-react'
+import { defineConfig } from 'vite'
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -9,7 +9,9 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
-      '@asistencia/shared': fileURLToPath(new URL('../../packages/shared/src/index.ts', import.meta.url)),
+      '@asistencia/shared': fileURLToPath(
+        new URL('../../packages/shared/src/index.ts', import.meta.url),
+      ),
     },
   },
   server: {
@@ -21,7 +23,8 @@ export default defineConfig({
         target: process.env.VITE_API_URL ?? 'http://localhost:3000',
         changeOrigin: true,
         secure: false,
-        // Don't rewrite the path — /api stays /api.
+        // Rewrite /api → /api/v1 to match NestJS global prefix in dev.
+        rewrite: (path) => path.replace(/^\/api/, '/api/v1'),
       },
     },
   },
@@ -36,4 +39,4 @@ export default defineConfig({
     setupFiles: ['./src/test/setup.ts'],
     css: true,
   },
-});
+})

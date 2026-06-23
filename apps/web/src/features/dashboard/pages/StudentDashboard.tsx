@@ -10,7 +10,6 @@ import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
 import { Paths } from '@/app/routes/paths'
 import { useStudentAttendanceSummary, useRecentAbsences } from '../api/student-dashboard.api'
-import { attendanceStatusLabels } from '@asistencia/shared'
 
 export function StudentDashboard() {
   const { t } = useTranslation()
@@ -122,7 +121,7 @@ export function StudentDashboard() {
                   <span className="truncate">{a.courseName}</span>
                   <div className="flex items-center gap-2">
                     <Badge variant={a.status === 'ABSENT' ? 'destructive' : 'warning'}>
-                      {attendanceStatusLabels[a.status]}
+                      {t(`attendanceStatus.${a.status}`)}
                     </Badge>
                     <span className="text-xs text-muted-foreground">
                       {new Date(a.recordedAt).toLocaleDateString('es-AR')}

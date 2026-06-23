@@ -1,10 +1,5 @@
 import { randomBytes } from 'node:crypto'
-import {
-  BadRequestException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
 import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
 import {

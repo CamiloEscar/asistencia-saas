@@ -9,6 +9,7 @@ import { JwtKeysService } from './shared/crypto/jwt-keys.service'
 
 async function bootstrap(): Promise<void> {
   const logger = new Logger('Bootstrap')
+  console.log('[BOOT] 1. Starting bootstrap...')
 
   // Initialize JWT keys BEFORE NestFactory.create() so the Passport
   // strategy constructor (which reads the public key) doesn't throw.
@@ -17,10 +18,12 @@ async function bootstrap(): Promise<void> {
     process.env.JWT_PUBLIC_KEY_PATH ?? './secrets/jwt-public.pem',
   )
   jwtKeys.init()
+  console.log('[BOOT] 2. JWT keys initialized')
 
   const app = await NestFactory.create<NestExpressApplication>(AppModule, {
     bufferLogs: true,
   })
+  console.log('[BOOT] 3. NestFactory created')
 
   // Behind a proxy (Nginx) — trust X-Forwarded-* headers.
   app.set('trust proxy', 1)
@@ -91,7 +94,9 @@ async function bootstrap(): Promise<void> {
   app.setGlobalPrefix(prefix)
 
   const port = Number(process.env.PORT ?? 3000)
+  console.log('[BOOT] 4. About to listen on port', port)
   await app.listen(port)
+  console.log('[BOOT] 5. Listening')
 
   logger.log(`API listening on http://localhost:${port}/${prefix}`)
   logger.log(`Environment: ${process.env.NODE_ENV ?? 'development'}`)

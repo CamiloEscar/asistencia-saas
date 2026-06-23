@@ -42,6 +42,13 @@ export interface AuthState {
    *  first request of a fresh page load (before /auth/me returns). */
   institutionSlug: string | null
   isAuthenticated: boolean
+  /** True while AuthProvider is fetching /auth/me on initial mount. False
+   *  after the first bootstrap attempt resolves (success OR failure).
+   *  ProtectedRoute uses this to avoid redirecting to /login during the
+   *  first frame after a hard refresh, which would create a loop with
+   *  LoginPage's "already authenticated" redirect. */
+  bootstrapping: boolean
+  setBootstrapping: (v: boolean) => void
 
   setUser: (user: AuthUser | null) => void
   setInstitution: (institution: AuthInstitution | null) => void
@@ -58,11 +65,13 @@ export const useAuthStore = create<AuthState>()(
       institution: null,
       institutionSlug: null,
       isAuthenticated: false,
+      bootstrapping: true,
 
       setUser: (user) => set({ user, isAuthenticated: user !== null }),
       setInstitution: (institution) =>
         set({ institution, institutionSlug: institution?.subdomain ?? null }),
       setInstitutionSlug: (institutionSlug) => set({ institutionSlug }),
+      setBootstrapping: (bootstrapping) => set({ bootstrapping }),
       hydrate: (response) =>
         set({
           user: {
@@ -74,6 +83,7 @@ export const useAuthStore = create<AuthState>()(
           institution: response.institution,
           institutionSlug: response.institution?.subdomain ?? null,
           isAuthenticated: true,
+          bootstrapping: false,
         }),
       clearUser: () =>
         set({
@@ -81,6 +91,7 @@ export const useAuthStore = create<AuthState>()(
           institution: null,
           institutionSlug: null,
           isAuthenticated: false,
+          bootstrapping: false,
         }),
     }),
     {

@@ -12,7 +12,7 @@
 //   5. Refresh-token replay AFTER family revocation returns 401.
 //   6. Tampered JWT (institutionId swapped) is rejected by TenantGuard.
 
-import type { INestApplication} from '@nestjs/common';
+import type { INestApplication } from '@nestjs/common'
 import { ValidationPipe } from '@nestjs/common'
 import { Test } from '@nestjs/testing'
 import { AppModule } from '../src/app.module'
@@ -76,7 +76,7 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
       const instA = await raw.institution.create({
         data: {
           name: 'Test A',
-          subdomain: 'universidad-a',
+          subdomain: 'celsius',
           status: 'ACTIVE',
           plan: 'FREE',
           timezone: 'UTC',
@@ -117,7 +117,7 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
           status: 'ACTIVE',
         },
       })
-      tenantA = { id: instA.id, subdomain: 'universidad-a', userId: userA.id, email: 'a@x.com' }
+      tenantA = { id: instA.id, subdomain: 'celsius', userId: userA.id, email: 'a@x.com' }
       tenantB = { id: instB.id, subdomain: 'universidad-b', userId: userB.id, email: 'b@y.com' }
     } finally {
       await raw.$disconnect()
@@ -133,7 +133,7 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
   it('1. login issues a token whose institutionId matches the resolved tenant', async () => {
     const res = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/login')
-      .set('X-Tenant-Subdomain', 'universidad-a')
+      .set('X-Tenant-Subdomain', 'celsius')
       .send({ email: 'a@x.com', password: 'Password123!' })
       .expect(201)
 
@@ -183,7 +183,7 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
   it('5. refresh-token replay AFTER family revocation returns 401', async () => {
     const loginRes = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/login')
-      .set('X-Tenant-Subdomain', 'universidad-a')
+      .set('X-Tenant-Subdomain', 'celsius')
       .send({ email: 'a@x.com', password: 'Password123!' })
       .expect(201)
 
@@ -192,14 +192,14 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
     // First refresh — succeeds.
     await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/refresh')
-      .set('X-Tenant-Subdomain', 'universidad-a')
+      .set('X-Tenant-Subdomain', 'celsius')
       .send({ refreshToken: firstRefresh })
       .expect(201)
 
     // Replay (using the OLD token) — must fail with 401.
     const replay = await request(app.getHttpServer() as Server)
       .post('/api/v1/auth/refresh')
-      .set('X-Tenant-Subdomain', 'universidad-a')
+      .set('X-Tenant-Subdomain', 'celsius')
       .send({ refreshToken: firstRefresh })
       .expect(401)
 
@@ -224,7 +224,7 @@ describe('Cross-tenant isolation E2E (security gate)', () => {
 
     const res = await request(app.getHttpServer() as Server)
       .get('/api/v1/auth/me')
-      .set('X-Tenant-Subdomain', 'universidad-a')
+      .set('X-Tenant-Subdomain', 'celsius')
       .set('Authorization', `Bearer ${tamperedToken}`)
       .expect(403)
 

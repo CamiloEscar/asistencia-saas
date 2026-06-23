@@ -21,13 +21,9 @@ export const attendanceStatusValues = [
   AttendanceStatus.JUSTIFIED,
 ] as const
 
-/** Spanish labels for UI display. */
-export const attendanceStatusLabels: Record<AttendanceStatus, string> = {
-  PRESENT: 'Asistió',
-  ABSENT: 'Ausente',
-  LATE: 'Tardanza',
-  JUSTIFIED: 'Justificado',
-}
+// NOTE: Spanish labels previously lived here as `attendanceStatusLabels`. They
+// have been moved to `apps/web/src/locales/es/common.json` under
+// `attendanceStatus.*` and are rendered via `t('attendanceStatus.<STATUS>')`.
 
 /** Color hint for badges (Tailwind class). Used by StatusChip / Badge variants. */
 export const attendanceStatusColor: Record<

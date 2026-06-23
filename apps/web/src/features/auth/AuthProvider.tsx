@@ -14,6 +14,7 @@ import { useAuthStore } from './stores/auth.store'
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const hydrate = useAuthStore((s) => s.hydrate)
   const clearUser = useAuthStore((s) => s.clearUser)
+  const setBootstrapping = useAuthStore((s) => s.setBootstrapping)
 
   useEffect(() => {
     let cancelled = false
@@ -32,6 +33,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
           clearUser()
         }
+      } finally {
+        if (!cancelled) setBootstrapping(false)
       }
     }
 
@@ -39,7 +42,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true
     }
-  }, [hydrate, clearUser])
+  }, [hydrate, clearUser, setBootstrapping])
 
   // Listen for the api-client's auth-lost event (refresh failed). We
   // re-export it through the store so subscribers (router) can react.

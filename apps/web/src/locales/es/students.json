@@ -28,7 +28,7 @@
     },
     "create": {
       "title": "Crear alumno",
-      "subtitle": "Agregá un nuevo alumno a la institución",
+      "subtitle": "Agrega un nuevo alumno a la institución",
       "fields": {
         "legajo": "Legajo",
         "firstName": "Nombre",
@@ -49,10 +49,10 @@
     "bulk": {
       "title": "Importar alumnos desde CSV",
       "subtitle": "Carga masiva de alumnos con validación previa",
-      "dropzone": "Arrastrá un archivo CSV o hacé click para seleccionar",
+      "dropzone": "Arrastra un archivo CSV o haz click para seleccionar",
       "format": "Formato: legajo,nombre,apellido,email,carrera,fechaNacimiento,telefono",
       "dryRun": "Modo prueba (recomendado)",
-      "dryRunHelp": "Valida el archivo sin guardar cambios. Si todo está OK, desmarcá esta opción para confirmar.",
+      "dryRunHelp": "Valida el archivo sin guardar cambios. Si todo está OK, desmarca esta opción para confirmar.",
       "courseId": "Inscribir en curso (opcional)",
       "noCourse": "No inscribir",
       "submit": "Importar",

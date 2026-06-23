@@ -11,9 +11,7 @@ import {
  */
 @Injectable()
 export class DeactivateTeacherUseCase {
-  constructor(
-    @Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository,
-  ) {}
+  constructor(@Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository) {}
 
   async execute(institutionId: string, id: string): Promise<Teacher> {
     const target = await this.teachers.findByIdInInstitution(institutionId, id)

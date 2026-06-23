@@ -1,6 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import type { Reflector } from '@nestjs/core'
-import { Prisma, type PrismaClient } from '@prisma/client'
+import type { PrismaClient } from '@prisma/client'
+import { Prisma } from '@prisma/client'
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common'
 import type { Request } from 'express'
 import { tap } from 'rxjs/operators'

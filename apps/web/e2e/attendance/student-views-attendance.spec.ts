@@ -15,7 +15,7 @@ test.describe('Student views attendance', () => {
   test('student sees overall attendance and per-course breakdown', async ({ page }) => {
     // 1. Login
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('student1@universidad-a.com')
+    await page.getByLabel(/email/i).fill('student1@celsius.com')
     await page.getByLabel(/contraseña/i).fill('student1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/me/, { timeout: 10_000 })
@@ -31,7 +31,7 @@ test.describe('Student views attendance', () => {
 
   test('student dashboard shows overall attendance percentage', async ({ page }) => {
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('student1@universidad-a.com')
+    await page.getByLabel(/email/i).fill('student1@celsius.com')
     await page.getByLabel(/contraseña/i).fill('student1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/me/, { timeout: 10_000 })

@@ -50,7 +50,7 @@ export const setPasswordRequestSchema = z
       .regex(/[A-Z]/, 'Debe incluir al menos una mayúscula')
       .regex(/[0-9]/, 'Debe incluir al menos un dígito')
       .regex(/[^A-Za-z0-9]/, 'Debe incluir al menos un carácter especial'),
-    confirmPassword: z.string().min(1, 'Confirmá la contraseña'),
+    confirmPassword: z.string().min(1, 'Confirma la contraseña'),
   })
   .refine((data) => data.newPassword === data.confirmPassword, {
     message: 'Las contraseñas no coinciden',

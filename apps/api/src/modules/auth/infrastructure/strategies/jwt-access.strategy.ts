@@ -1,8 +1,8 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common'
+import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
-import { ExtractJwt, Strategy, type StrategyOptions } from 'passport-jwt'
+import { ExtractJwt, Strategy } from 'passport-jwt'
 import type { CookieService } from '../cookies/cookie.service'
-import type { JwtKeysService } from '../../../../shared/crypto/jwt-keys.service'
+import { JwtKeysService } from '../../../../shared/crypto/jwt-keys.service'
 import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
 
 /**
@@ -16,8 +16,11 @@ import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
  */
 @Injectable()
 export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') {
-  constructor(keys: JwtKeysService, cookies: CookieService) {
-    const opts: StrategyOptions = {
+  constructor(
+    @Inject(JwtKeysService) private readonly keys: JwtKeysService,
+    private readonly cookies: CookieService,
+  ) {
+    super({
       jwtFromRequest: ExtractJwt.fromExtractors([
         ExtractJwt.fromAuthHeaderAsBearerToken(),
         (req: unknown): string | null => {
@@ -29,8 +32,7 @@ export class JwtAccessStrategy extends PassportStrategy(Strategy, 'jwt-access') 
       ignoreExpiration: false,
       secretOrKey: keys.getPublicKey(),
       algorithms: ['RS256'],
-    }
-    super(opts)
+    })
   }
 
   validate(payload: TokenClaims): TokenClaims {

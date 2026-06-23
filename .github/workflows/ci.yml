@@ -57,6 +57,12 @@ jobs:
       - name: Typecheck
         run: pnpm -r typecheck
 
+      - name: i18n key coverage (strict)
+        # Guard against missing es locale keys. See
+        # sdd/tenant-celsius-i18n-neutral for context. Use the `:strict`
+        # variant so missing keys fail the build instead of just warning.
+        run: pnpm --filter @asistencia/web check:i18n:strict
+
       - name: Unit tests
         run: pnpm -r test -- --reporter=verbose
 
@@ -164,7 +170,7 @@ jobs:
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       E2E_BASE_URL: http://localhost:5173
-      E2E_TENANT: universidad-a
+      E2E_TENANT: celsius
     steps:
       - uses: actions/checkout@v4
 

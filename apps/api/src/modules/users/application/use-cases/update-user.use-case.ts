@@ -28,9 +28,7 @@ import type { UpdateUserDto } from '../dtos/update-user.dto'
  */
 @Injectable()
 export class UpdateUserUseCase {
-  constructor(
-    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
-  ) {}
+  constructor(@Inject(USER_REPOSITORY) private readonly users: IUserRepository) {}
 
   async execute(
     institutionId: string,
@@ -69,10 +67,7 @@ export class UpdateUserUseCase {
 
     // Email-uniqueness check when changing the email.
     if (input.email !== undefined && input.email.toLowerCase() !== target.email) {
-      const conflict = await this.users.findByEmailInInstitution(
-        institutionId,
-        input.email,
-      )
+      const conflict = await this.users.findByEmailInInstitution(institutionId, input.email)
       if (conflict && conflict.id !== targetUserId) {
         throw new ConflictException({
           message: 'Email already in use in this institution',

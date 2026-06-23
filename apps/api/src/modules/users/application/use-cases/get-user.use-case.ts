@@ -11,9 +11,7 @@ import {
  */
 @Injectable()
 export class GetUserUseCase {
-  constructor(
-    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
-  ) {}
+  constructor(@Inject(USER_REPOSITORY) private readonly users: IUserRepository) {}
 
   async execute(institutionId: string, id: string): Promise<User> {
     const found = await this.users.findByIdInInstitution(institutionId, id)

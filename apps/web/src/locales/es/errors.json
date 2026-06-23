@@ -1,13 +1,13 @@
 {
   "generic": "Algo salió mal. Intentá de nuevo.",
   "unauthorized": "Email o contraseña incorrectos",
-  "forbidden": "No tenés permisos para esta acción",
-  "inactiveInstitution": "La institución está inactiva. Contactá al administrador.",
+  "forbidden": "No tienes permisos para esta acción",
+  "inactiveInstitution": "La institución está inactiva. Contacta al administrador.",
   "notFound": "Recurso no encontrado",
   "validation": "Revisá los datos del formulario",
   "network": "Sin conexión. Revisá tu red.",
   "rateLimited": "Demasiados intentos. Esperá un momento.",
   "serverError": "Error del servidor. Intentá más tarde.",
   "tokenExpired": "El enlace expiró. Solicitá uno nuevo.",
-  "sessionRevoked": "Tu sesión fue revocada por seguridad. Iniciá sesión nuevamente."
+  "sessionRevoked": "Tu sesión fue revocada por seguridad. Inicia sesión nuevamente."
 }

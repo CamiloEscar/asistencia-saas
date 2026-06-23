@@ -28,11 +28,14 @@ import { JwtService } from './jwt.service'
     },
     {
       provide: JwtKeysService,
-      useFactory: () =>
-        new JwtKeysService(
+      useFactory: () => {
+        const svc = new JwtKeysService(
           process.env.JWT_PRIVATE_KEY_PATH ?? './secrets/jwt-private.pem',
           process.env.JWT_PUBLIC_KEY_PATH ?? './secrets/jwt-public.pem',
-        ),
+        )
+        svc.init()
+        return svc
+      },
     },
     {
       provide: JwtService,

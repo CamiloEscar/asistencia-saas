@@ -70,14 +70,6 @@ export const SessionStatus = {
 } as const
 export type SessionStatus = (typeof SessionStatus)[keyof typeof SessionStatus]
 
-/** Spanish labels for session status (used in FE). */
-export const sessionStatusLabels: Record<SessionStatus, string> = {
-  SCHEDULED: 'Programada',
-  OPEN: 'Abierta',
-  CLOSED: 'Cerrada',
-  CANCELLED: 'Cancelada',
-}
-
 export const classSessionSchema = z.object({
   id: z.string().uuid(),
   courseId: z.string().uuid(),

@@ -15,7 +15,7 @@ import { PageHeader } from '@/components/feedback/PageHeader'
 import { DataTable, type DataTableColumn } from '@/components/common/DataTable'
 import { ConfirmDialog } from '@/components/common/ConfirmDialog'
 import { useToast } from '@/hooks/use-toast'
-import { userRoleLabels, type ListUsersQuery, type User } from '@asistencia/shared'
+import { type ListUsersQuery, type User } from '@asistencia/shared'
 import {
   useDeactivateUser,
   useListUsers,
@@ -62,13 +62,13 @@ export function UsersListPage() {
     { header: t('users.list.columns.email'), accessor: 'email' },
     {
       header: t('users.list.columns.role'),
-      accessor: (r) => <Badge variant="secondary">{userRoleLabels[r.role]}</Badge>,
+      accessor: (r) => <Badge variant="secondary">{t(`roles.${r.role}`)}</Badge>,
     },
     {
       header: t('users.list.columns.isActive'),
       accessor: (r) => (
         <Badge variant={r.status === 'ACTIVE' ? 'success' : 'destructive'}>
-          {r.status === 'ACTIVE' ? 'Activo' : 'Inactivo'}
+          {r.status === 'ACTIVE' ? t('institutionStatus.ACTIVE') : t('institutionStatus.INACTIVE')}
         </Badge>
       ),
     },
@@ -179,9 +179,9 @@ export function UsersListPage() {
                 className="h-9 rounded-md border bg-background px-2 text-sm"
               >
                 <option value="">{t('users.list.filters.all')}</option>
-                <option value="INSTITUTION_ADMIN">{userRoleLabels.INSTITUTION_ADMIN}</option>
-                <option value="TEACHER">{userRoleLabels.TEACHER}</option>
-                <option value="STUDENT">{userRoleLabels.STUDENT}</option>
+                <option value="INSTITUTION_ADMIN">{t('roles.INSTITUTION_ADMIN')}</option>
+                <option value="TEACHER">{t('roles.TEACHER')}</option>
+                <option value="STUDENT">{t('roles.STUDENT')}</option>
               </select>
               <label className="flex items-center gap-1 text-xs text-muted-foreground">
                 <input

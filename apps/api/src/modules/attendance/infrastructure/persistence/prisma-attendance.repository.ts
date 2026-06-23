@@ -308,14 +308,12 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
         const s = r.status as AttendanceStatusValue
         entry.counts.set(s, (entry.counts.get(s) ?? 0) + 1)
       }
-      byCourse = Array.from(byCourseMap.entries()).map(
-        ([cid, { code, name, counts }]) => ({
-          courseId: cid,
-          courseCode: code,
-          courseName: name,
-          summary: this.countsToSummary(counts),
-        }),
-      )
+      byCourse = Array.from(byCourseMap.entries()).map(([cid, { code, name, counts }]) => ({
+        courseId: cid,
+        courseCode: code,
+        courseName: name,
+        summary: this.countsToSummary(counts),
+      }))
     }
 
     return { ...overall, ...(byCourse ? { byCourse } : {}) }

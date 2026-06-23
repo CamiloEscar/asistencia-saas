@@ -10,7 +10,6 @@ import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
 import { Paths } from '@/app/routes/paths'
 import { useTeacherToday } from '../api/teacher-dashboard.api'
-import { sessionStatusLabels } from '@asistencia/shared'
 
 function formatTime(iso: string): string {
   return new Date(iso).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit' })
@@ -102,7 +101,7 @@ export function TeacherDashboard() {
                             : 'outline'
                     }
                   >
-                    {sessionStatusLabels[status]}
+                    {t(`sessionStatus.${status}`)}
                   </Badge>
                 </div>
               </CardHeader>

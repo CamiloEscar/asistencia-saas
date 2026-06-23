@@ -1,10 +1,6 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common'
 import type { Job } from 'bullmq'
-import {
-  BULLMQ_REDIS,
-  QUEUE_NAMES,
-  type QueueLifecycle,
-} from '../../../../shared/queue/queue.module'
+import { BULLMQ_REDIS, QueueLifecycle } from '../../../../shared/queue/queue.module'
 import { enterTenantContext } from '../../../../shared/tenant/tenant.context'
 import type { PrismaService } from '../../../../shared/prisma/prisma.service'
 import type { ParsedCsvRow } from '../../../../shared/csv/csv-parser.service'
@@ -46,15 +42,14 @@ export class StudentBulkImportProcessor implements OnModuleInit {
   constructor(
     @Inject(STUDENT_REPOSITORY) private readonly students: IStudentRepository,
     private readonly prisma: PrismaService,
-    @Inject(QUEUE_NAMES.STUDENT_BULK_IMPORT)
-    private readonly queueName: string,
     @Inject(BULLMQ_REDIS) private readonly bullmqClient: unknown,
-    private readonly lifecycle: QueueLifecycle,
+    @Inject(QueueLifecycle) private readonly lifecycle: QueueLifecycle,
   ) {}
 
   onModuleInit(): void {
-    this.lifecycle.registerWorker(this.queueName, this.process.bind(this), this.bullmqClient)
-    this.logger.log(`Worker registered for queue "${this.queueName}"`)
+    const queueName = 'student-bulk-import'
+    this.lifecycle.registerWorker(queueName, this.process.bind(this), this.bullmqClient)
+    this.logger.log(`Worker registered for queue "${queueName}"`)
   }
 
   /**

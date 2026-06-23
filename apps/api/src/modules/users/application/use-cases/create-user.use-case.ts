@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  Logger,
-} from '@nestjs/common'
+import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common'
 import { randomBytes } from 'node:crypto'
 import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
 import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'

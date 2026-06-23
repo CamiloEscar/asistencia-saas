@@ -15,7 +15,7 @@ test.describe('Authentication', () => {
   test('valid credentials redirect to role-specific dashboard', async ({ page }) => {
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
 
-    await page.getByLabel(/email/i).fill('admin@universidad-a.com')
+    await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('admin1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
 
@@ -27,7 +27,7 @@ test.describe('Authentication', () => {
   test('invalid credentials show an error message', async ({ page }) => {
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
 
-    await page.getByLabel(/email/i).fill('admin@universidad-a.com')
+    await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('wrong-password')
     await page.getByRole('button', { name: /ingresar/i }).click()
 

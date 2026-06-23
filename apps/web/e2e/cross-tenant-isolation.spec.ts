@@ -19,7 +19,7 @@ test.describe('Cross-tenant isolation (defence-in-depth)', () => {
   }) => {
     // 1. Log in as an admin from institution A
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('admin@universidad-a.com')
+    await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('admin1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/dashboard/)
@@ -51,7 +51,7 @@ test.describe('Cross-tenant isolation (defence-in-depth)', () => {
   test('user A cannot navigate to a URL of institution B course', async ({ page }) => {
     // 1. Log in as institution A admin
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('admin@universidad-a.com')
+    await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('admin1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/dashboard/)

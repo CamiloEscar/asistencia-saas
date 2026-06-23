@@ -62,20 +62,20 @@ The API is now at `http://localhost:3000/api/v1` and the SPA at `http://localhos
 ### Default dev URLs (subdomain routing)
 
 - `http://app.localhost:5173` → super-admin entry (no tenant)
-- `http://universidad-a.app.localhost:5173` → institution A's login
+- `http://celsius.app.localhost:5173` → institution A (Celsius) login
 - `http://universidad-b.app.localhost:5173` → institution B's login
 
 Chrome and Firefox resolve `*.localhost` natively. Safari does not — see the [README troubleshooting](../../README.md#browser-support) section.
 
 ### Useful commands
 
-| Command | What it does |
-| --- | --- |
-| `docker compose -f infra/docker/docker-compose.yml logs -f` | Tail logs from all dev services |
-| `docker compose -f infra/docker/docker-compose.yml exec postgres psql -U asistencia -d asistencia_saas` | Open psql against the dev DB |
-| `docker compose -f infra/docker/docker-compose.yml exec redis redis-cli` | Open redis-cli against the dev cache |
-| `http://localhost:8080` | Adminer (DB UI; login: `postgres` / `asistencia` / `asistencia_saas`) |
-| `pnpm --filter @asistencia/api exec prisma studio` | Open Prisma Studio (separate UI on port 5555) |
+| Command                                                                                                 | What it does                                                          |
+| ------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- |
+| `docker compose -f infra/docker/docker-compose.yml logs -f`                                             | Tail logs from all dev services                                       |
+| `docker compose -f infra/docker/docker-compose.yml exec postgres psql -U asistencia -d asistencia_saas` | Open psql against the dev DB                                          |
+| `docker compose -f infra/docker/docker-compose.yml exec redis redis-cli`                                | Open redis-cli against the dev cache                                  |
+| `http://localhost:8080`                                                                                 | Adminer (DB UI; login: `postgres` / `asistencia` / `asistencia_saas`) |
+| `pnpm --filter @asistencia/api exec prisma studio`                                                      | Open Prisma Studio (separate UI on port 5555)                         |
 
 ## Tear down
 

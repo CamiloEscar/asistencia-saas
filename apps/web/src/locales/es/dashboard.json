@@ -51,7 +51,7 @@
     "openSession": "Abrir sesión",
     "takeAttendance": "Tomar asistencia",
     "editAttendance": "Editar asistencia",
-    "noSessions": "No tenés clases programadas para hoy"
+    "noSessions": "No tienes clases programadas para hoy"
   },
   "student": {
     "title": "Mi panel",

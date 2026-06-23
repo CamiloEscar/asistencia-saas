@@ -89,7 +89,7 @@ function flushQueue(error: unknown, success = false): void {
 function performRefresh(): Promise<unknown> {
   if (refreshPromise) return refreshPromise
   isRefreshing = true
-  refreshPromise = apiClient.post('/auth/refresh', null, { withCredentials: true }).finally(() => {
+  refreshPromise = apiClient.post('/auth/refresh', {}, { withCredentials: true }).finally(() => {
     isRefreshing = false
     // Allow a future refresh cycle.
     refreshPromise = null

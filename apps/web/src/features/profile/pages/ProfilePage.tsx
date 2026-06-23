@@ -26,7 +26,6 @@ import {
 import { PageHeader } from '@/components/feedback/PageHeader'
 import { useToast } from '@/hooks/use-toast'
 import { useAuth } from '@/features/auth/use-auth'
-import { userRoleLabels } from '@asistencia/shared'
 
 type ProfileFormValues = z.infer<typeof updateMeRequestSchema>
 
@@ -47,7 +46,7 @@ export function ProfilePage() {
   const updateMe = useMutation({
     mutationFn: async (data: ProfileFormValues) => {
       const { data: res } = await apiClient.patch<{
-        user: { id: string; email: string; fullName: string; role: typeof userRoleLabels }
+        user: { id: string; email: string; fullName: string; role: string }
       }>('/users/me', data)
       return res
     },
@@ -80,7 +79,7 @@ export function ProfilePage() {
             </div>
             <div>
               <div className="text-xs text-muted-foreground">{t('profile.info.role')}</div>
-              <div className="font-medium">{userRoleLabels[user.role]}</div>
+              <div className="font-medium">{t(`roles.${user.role}`)}</div>
             </div>
             {institution && (
               <div>

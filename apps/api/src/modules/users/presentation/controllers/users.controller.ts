@@ -24,9 +24,16 @@ import type { GetUserUseCase } from '../../application/use-cases/get-user.use-ca
 import type { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case'
 import type { DeactivateUserUseCase } from '../../application/use-cases/deactivate-user.use-case'
 import type { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case'
-import { CreateUserDtoSchema, type CreateUserDto, type CreateUserResponse } from '../../application/dtos/create-user.dto'
+import {
+  CreateUserDtoSchema,
+  type CreateUserDto,
+  type CreateUserResponse,
+} from '../../application/dtos/create-user.dto'
 import { UpdateUserDtoSchema, type UpdateUserDto } from '../../application/dtos/update-user.dto'
-import { ListUsersQueryDtoSchema, type ListUsersQueryDto } from '../../application/dtos/list-users.query.dto'
+import {
+  ListUsersQueryDtoSchema,
+  type ListUsersQueryDto,
+} from '../../application/dtos/list-users.query.dto'
 import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 
 /**

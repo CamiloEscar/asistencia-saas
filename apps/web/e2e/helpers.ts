@@ -8,16 +8,16 @@ export { test, expect } from '@playwright/test'
 export { AxeBuilder } from '@axe-core/playwright'
 
 /** Test tenant subdomain used by default across all specs. */
-export const TEST_TENANT = 'universidad-a'
+export const TEST_TENANT = 'celsius'
 export const TEST_TENANT_B = 'universidad-b'
 
 /** Test credentials — created by the seed script (prisma/seed.ts). */
 export const TEST_USERS = {
   superAdmin: { email: 'super@asistencia-saas.com', password: 'super1234' },
-  admin: { email: 'admin@universidad-a.com', password: 'admin1234' },
+  admin: { email: 'admin@celsius.com', password: 'admin1234' },
   adminB: { email: 'admin@universidad-b.com', password: 'admin1234' },
-  teacher: { email: 'teacher1@universidad-a.com', password: 'teacher1234' },
-  student: { email: 'student1@universidad-a.com', password: 'student1234' },
+  teacher: { email: 'teacher1@celsius.com', password: 'teacher1234' },
+  student: { email: 'student1@celsius.com', password: 'student1234' },
 } as const
 
 /**

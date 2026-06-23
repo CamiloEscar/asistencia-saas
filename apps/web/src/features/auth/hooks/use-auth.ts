@@ -38,7 +38,7 @@ export function useLogin() {
       const { data } = await apiClient.post<LoginResponse>('/auth/login', credentials)
       return data
     },
-    onSuccess: async (data) => {
+    onSuccess: async (_data) => {
       // Manually call /auth/me so the store has the institution
       // context. Cheaper than overloading the login response.
       const me = await apiClient
@@ -46,7 +46,6 @@ export function useLogin() {
         .then((r) => r.data)
         .catch(() => null)
       if (me) hydrate(me)
-      hydrate({ user: data.user, institution: null })
       await queryClient.invalidateQueries({ queryKey: authKeys.me })
     },
   })
@@ -58,7 +57,7 @@ export function useLogout() {
 
   return useMutation({
     mutationFn: async () => {
-      await apiClient.post('/auth/logout', null)
+      await apiClient.post('/auth/logout', {})
     },
     onSettled: () => {
       clearUser()
@@ -76,7 +75,7 @@ export function useRefresh() {
   const hydrate = useAuthStore((s) => s.hydrate)
   return useMutation({
     mutationFn: async () => {
-      const { data } = await apiClient.post<LoginResponse>('/auth/refresh', null)
+      const { data } = await apiClient.post<LoginResponse>('/auth/refresh', {})
       return data
     },
     onSuccess: async () => {

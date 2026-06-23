@@ -2,8 +2,8 @@
  * Subdomain detection from `window.location.hostname`.
  *
  * Recognised shapes (MVP):
- *  - `universidad-a.app.localhost:5173` → "universidad-a"
- *  - `universidad-a.app.com`            → "universidad-a"
+ *  - `celsius.app.localhost:5173` → "celsius"
+ *  - `celsius.app.com`            → "celsius"
  *  - `app.example.com` (no subdomain)   → null
  *  - `localhost:5173` (no subdomain)    → null
  *
@@ -24,6 +24,12 @@ export function detectSubdomain(): string | null {
   if (hostname.endsWith('.app.localhost')) {
     const sub = hostname.replace('.app.localhost', '')
     return sub.length > 0 ? sub : null
+  }
+
+  // System alias: super-admin lives in the "__system__" institution and logs in
+  // from `system.app.localhost` (dev) or `system.app.com` (prod).
+  if (hostname === 'system.app.localhost' || hostname === 'system.app.com') {
+    return '__system__'
   }
 
   return null

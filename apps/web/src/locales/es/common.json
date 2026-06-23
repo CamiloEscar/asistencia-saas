@@ -78,7 +78,7 @@
   "auth": {
     "login": {
       "title": "Iniciar sesión",
-      "subtitle": "Ingresá tus credenciales para continuar",
+      "subtitle": "Ingresa tus credenciales para continuar",
       "email": "Email",
       "emailPlaceholder": "tu@email.com",
       "password": "Contraseña",
@@ -87,7 +87,7 @@
       "submitting": "Ingresando...",
       "forgotPassword": "¿Olvidaste tu contraseña?",
       "setPassword": "Activar cuenta",
-      "noAccount": "¿No tenés cuenta? Contactá al administrador de tu institución.",
+      "noAccount": "¿No tienes cuenta? Contacta al administrador de tu institución.",
       "institutionLabel": "Institución"
     },
     "logout": "Cerrar sesión",

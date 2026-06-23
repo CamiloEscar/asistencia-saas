@@ -75,6 +75,15 @@ temp/
 .turbo/
 .parcel-cache/
 
+# Secrets - NEVER commit
+*.pem
+*.key
+*.p12
+*.pfx
+apps/api/keys/
+apps/api/secrets/
+apps/api/dist/keys/
+
 # Misc
 .history/
 *.pid

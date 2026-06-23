@@ -18,7 +18,7 @@
     },
     "create": {
       "title": "Crear materia",
-      "subtitle": "Agregá una nueva materia al catálogo",
+      "subtitle": "Agrega una nueva materia al catálogo",
       "fields": {
         "code": "Código",
         "codeHelp": "Mayúsculas, números y guiones (ej: MAT101)",

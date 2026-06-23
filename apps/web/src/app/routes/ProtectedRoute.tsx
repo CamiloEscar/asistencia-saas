@@ -2,6 +2,7 @@ import { Navigate, Outlet, useLocation } from 'react-router-dom'
 import type { UserRole } from '@asistencia/shared'
 import type { ReactNode } from 'react'
 import { useAuth } from '@/features/auth/use-auth'
+import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { LoadingScreen } from '@/components/feedback/LoadingScreen'
 import { Paths } from './paths'
 
@@ -33,11 +34,12 @@ export function ProtectedRoute({ allowedRoles, children }: ProtectedRouteProps) 
   const { user, isAuthenticated } = useAuth()
   const location = useLocation()
 
-  // No user in store. Wait for the AuthProvider to finish bootstrapping
-  // (it clears the store on a 401 from /auth/me, but on first paint we
-  // can't yet tell the difference). Show a spinner for ~1 frame.
+  // No user in store yet. If the AuthProvider is still bootstrapping,
+  // show a spinner — the user may exist after /auth/me completes.
+  // Only redirect to /login once bootstrapping has settled.
+  const bootstrapping = useAuthStore((s) => s.bootstrapping)
   if (!user) {
-    if (isAuthenticated) {
+    if (bootstrapping || isAuthenticated) {
       return <LoadingScreen />
     }
     const returnTo = encodeURIComponent(location.pathname + location.search)

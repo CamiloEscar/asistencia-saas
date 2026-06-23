@@ -2,9 +2,7 @@ import { ConflictException } from '@nestjs/common'
 import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
 import type { User } from '../../../auth/domain/entities/user.entity'
 import { CreateInstitutionUseCase } from './create-institution.use-case'
-import type {
-  IInstitutionRepository,
-} from '../../domain/repositories/institution.repository.interface'
+import type { IInstitutionRepository } from '../../domain/repositories/institution.repository.interface'
 
 /**
  * Unit tests for `CreateInstitutionUseCase`. The use case is the
@@ -43,11 +41,7 @@ describe('CreateInstitutionUseCase', () => {
       verify: jest.fn(),
     } as unknown as jest.Mocked<PasswordHasherService>
 
-    useCase = new CreateInstitutionUseCase(
-      institutions,
-      users as unknown as never,
-      passwordHasher,
-    )
+    useCase = new CreateInstitutionUseCase(institutions, users as unknown as never, passwordHasher)
   })
 
   it('creates an institution and an initial admin user (happy path)', async () => {
@@ -57,7 +51,7 @@ describe('CreateInstitutionUseCase', () => {
       toPublicJson: () => ({
         id: 'inst-1',
         name: 'Universidad A',
-        subdomain: 'universidad-a',
+        subdomain: 'celsius',
         status: 'ACTIVE' as const,
         plan: 'FREE',
         timezone: 'America/Argentina/Buenos_Aires',
@@ -78,7 +72,7 @@ describe('CreateInstitutionUseCase', () => {
 
     const result = await useCase.execute({
       name: 'Universidad A',
-      subdomain: 'universidad-a',
+      subdomain: 'celsius',
       email: 'admin@a.com',
       country: 'AR',
       adminEmail: 'admin@a.com',
@@ -107,7 +101,7 @@ describe('CreateInstitutionUseCase', () => {
     await expect(
       useCase.execute({
         name: 'Universidad A',
-        subdomain: 'universidad-a',
+        subdomain: 'celsius',
         email: 'admin@a.com',
         country: 'AR',
         adminEmail: 'admin@a.com',

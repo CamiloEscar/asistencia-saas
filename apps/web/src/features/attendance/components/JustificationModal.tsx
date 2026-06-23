@@ -19,7 +19,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui'
-import { AttendanceStatus, attendanceStatusLabels } from '@asistencia/shared'
+import { AttendanceStatus } from '@asistencia/shared'
 
 interface JustificationModalProps {
   open: boolean
@@ -80,7 +80,7 @@ export function JustificationModal({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{t('attendance.justification.title')}</DialogTitle>
-          <DialogDescription>{attendanceStatusLabels[initialStatus]}</DialogDescription>
+          <DialogDescription>{t(`attendanceStatus.${initialStatus}`)}</DialogDescription>
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit(handleSave)} className="space-y-3">

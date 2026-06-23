@@ -6,7 +6,7 @@
 
 A two-app monorepo (`pnpm` workspaces) with a NestJS API and a Vite + React SPA.
 Each institution (tenant) gets isolated users, teachers, students, courses, subjects, and attendance records.
-Tenant resolution happens via subdomain (e.g. `universidad-a.app.com` → institution `universidad-a`).
+Tenant resolution happens via subdomain (e.g. `celsius.app.com` → institution `celsius`).
 
 **Defense-in-depth multi-tenancy**: Prisma extension → PgBouncer SET LOCAL → PostgreSQL Row-Level Security. See `infra/README.md` and the SDD artifacts for details.
 
@@ -99,20 +99,20 @@ The web app is on http://localhost:5173 and the API on http://localhost:3000.
 
 For multi-tenant local dev, use the `*.app.localhost` domain pattern:
 
-- Universidad A: http://universidad-a.app.localhost:5173
+- Celsius: http://celsius.app.localhost:5173
 - Universidad B: http://universidad-b.app.localhost:5173
 
 > **Safari caveat**: `*.app.localhost` works in Chrome and Firefox. Safari requires `*.localhost` (TLD) or `/etc/hosts` entries. Use Chrome/Firefox for local dev.
 
 ### Test users (after seed)
 
-| Role              | Email                        | Password      |
-| ----------------- | ---------------------------- | ------------- |
-| Super Admin       | `super@asistencia-saas.com`  | `super1234`   |
-| Admin (Univ. A)   | `admin@universidad-a.com`    | `admin1234`   |
-| Admin (Univ. B)   | `admin@universidad-b.com`    | `admin1234`   |
-| Teacher (Univ. A) | `teacher1@universidad-a.com` | `teacher1234` |
-| Student (Univ. A) | `student1@universidad-a.com` | `student1234` |
+| Role              | Email                       | Password      |
+| ----------------- | --------------------------- | ------------- |
+| Super Admin       | `super@asistencia-saas.com` | `super1234`   |
+| Admin (Celsius)   | `admin@celsius.com`         | `admin1234`   |
+| Admin (Univ. B)   | `admin@universidad-b.com`   | `admin1234`   |
+| Teacher (Celsius) | `teacher1@celsius.com`      | `teacher1234` |
+| Student (Celsius) | `student1@celsius.com`      | `student1234` |
 
 ## Testing
 

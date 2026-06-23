@@ -13,6 +13,8 @@ import esSubjects from '../../locales/es/subjects.json'
 import esCourses from '../../locales/es/courses.json'
 import esAttendance from '../../locales/es/attendance.json'
 import esProfile from '../../locales/es/profile.json'
+import esUi from '../../locales/es/ui.json'
+import esValidation from '../../locales/es/validation.json'
 
 /**
  * I18next singleton configuration. Default locale is `es` (Spanish).
@@ -39,6 +41,8 @@ export function initI18n() {
       'courses',
       'attendance',
       'profile',
+      'ui',
+      'validation',
     ]
     ns.forEach((n) => {
       if (!i18n.hasLoadedNamespace(n)) {
@@ -60,6 +64,8 @@ export function initI18n() {
     'courses',
     'attendance',
     'profile',
+    'ui',
+    'validation',
   ]
   void i18n
     .use(LanguageDetector)
@@ -79,6 +85,8 @@ export function initI18n() {
           courses: esCourses,
           attendance: esAttendance,
           profile: esProfile,
+          ui: esUi,
+          validation: esValidation,
         },
       },
       fallbackLng: 'es',

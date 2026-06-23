@@ -1,6 +1,11 @@
 import { Controller, Get } from '@nestjs/common'
-import type { HealthCheckResult, HealthCheckService, HealthIndicatorResult } from '@nestjs/terminus'
-import { HealthCheck, HealthIndicator } from '@nestjs/terminus'
+import type { HealthCheckService } from '@nestjs/terminus'
+import {
+  HealthCheck,
+  HealthIndicator,
+  type HealthCheckResult,
+  type HealthIndicatorResult,
+} from '@nestjs/terminus'
 import { SkipThrottle } from '@nestjs/throttler'
 import type { PrismaService } from './shared/prisma/prisma.service'
 import type { RedisService } from './shared/redis/redis.service'

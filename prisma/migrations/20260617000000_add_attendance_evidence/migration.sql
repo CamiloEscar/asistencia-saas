@@ -7,4 +7,4 @@
 -- backfill needed (existing rows keep evidence_url = NULL).
 
 ALTER TABLE "attendance_records"
-  ADD COLUMN "evidence_url" TEXT;
+  ADD COLUMN "evidenceUrl" TEXT;

@@ -6,7 +6,6 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Tooltip } from '@/components/ui/tooltip'
 import { cn } from '@/lib/utils'
-import { attendanceStatusLabels } from '@asistencia/shared'
 import type { RosterEntry } from '../api/attendance.api'
 
 const VARIANTS: Record<
@@ -58,6 +57,7 @@ export function StatusChip({
   hasJustification,
   ariaLabel,
 }: StatusChipProps) {
+  const { t } = useTranslation()
   const v = VARIANTS[status]
   return (
     <button
@@ -71,7 +71,7 @@ export function StatusChip({
       )}
     >
       {v.icon}
-      <span>{attendanceStatusLabels[status]}</span>
+      <span>{t(`attendanceStatus.${status}`)}</span>
       {hasJustification && (
         <Tooltip content="Tiene justificación">
           <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-current" />

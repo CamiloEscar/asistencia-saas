@@ -23,9 +23,7 @@ import type { ListAttendanceQueryDto } from '../dtos/list-attendance.query.dto'
  */
 @Injectable()
 export class ListAttendanceUseCase {
-  constructor(
-    @Inject(ATTENDANCE_REPOSITORY) private readonly attendance: IAttendanceRepository,
-  ) {}
+  constructor(@Inject(ATTENDANCE_REPOSITORY) private readonly attendance: IAttendanceRepository) {}
 
   async execute(
     query: ListAttendanceQueryDto,

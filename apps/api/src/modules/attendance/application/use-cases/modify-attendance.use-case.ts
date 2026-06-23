@@ -75,9 +75,7 @@ export class ModifyAttendanceUseCase {
     if (ctx.actorRole === 'TEACHER') {
       const tenantCtx = getTenantContext()
       const timezone = tenantCtx?.timezone ?? 'America/Argentina/Buenos_Aires'
-      const sessionDay = DateTime.fromJSDate(session.scheduledAt)
-        .setZone(timezone)
-        .startOf('day')
+      const sessionDay = DateTime.fromJSDate(session.scheduledAt).setZone(timezone).startOf('day')
       const today = DateTime.now().setZone(timezone).startOf('day')
       if (!sessionDay.equals(today)) {
         throw new ForbiddenException({

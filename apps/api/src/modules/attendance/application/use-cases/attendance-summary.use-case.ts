@@ -19,9 +19,7 @@ import type { AttendanceSummaryQueryDto } from '../dtos/attendance-summary.query
  */
 @Injectable()
 export class AttendanceSummaryUseCase {
-  constructor(
-    @Inject(ATTENDANCE_REPOSITORY) private readonly attendance: IAttendanceRepository,
-  ) {}
+  constructor(@Inject(ATTENDANCE_REPOSITORY) private readonly attendance: IAttendanceRepository) {}
 
   async executeCourse(
     institutionId: string,
@@ -81,12 +79,7 @@ export class AttendanceSummaryUseCase {
           error: 'Forbidden',
         })
       }
-      return this.executeStudent(
-        institutionId,
-        query.studentId,
-        query.studentCourseId,
-        dateRange,
-      )
+      return this.executeStudent(institutionId, query.studentId, query.studentCourseId, dateRange)
     }
     if (query.teacherId) {
       return this.executeTeacher(institutionId, query.teacherId, dateRange)

@@ -46,20 +46,14 @@ export class PrismaUserRepository implements IUserRepository {
     return row ? this.toEntity(row as unknown as UserProps) : null
   }
 
-  async findByEmailInInstitution(
-    institutionId: string,
-    email: string,
-  ): Promise<User | null> {
+  async findByEmailInInstitution(institutionId: string, email: string): Promise<User | null> {
     const row = await this.prisma.user.findFirst({
       where: { email: email.toLowerCase(), institutionId },
     })
     return row ? this.toEntity(row as unknown as UserProps) : null
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListUsersInput,
-  ): Promise<ListUsersResult> {
+  async listInInstitution(institutionId: string, input: ListUsersInput): Promise<ListUsersResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
     const where: UserWhereInput = { institutionId }
     if (input.role) where.role = input.role

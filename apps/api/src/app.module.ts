@@ -1,4 +1,5 @@
 import type { MiddlewareConsumer, NestModule } from '@nestjs/common'
+import { RequestMethod } from '@nestjs/common'
 import { Module } from '@nestjs/common'
 import { ConfigModule } from '@nestjs/config'
 import { APP_FILTER, APP_GUARD, APP_PIPE } from '@nestjs/core'
@@ -110,6 +111,12 @@ export class AppModule implements NestModule {
    * interceptors → pipes → controller.
    */
   configure(consumer: MiddlewareConsumer): void {
-    consumer.apply(TenantMiddleware).forRoutes('api/*', 'auth/*', '.well-known/*')
+    consumer
+      .apply(TenantMiddleware)
+      .exclude(
+        { path: 'health', method: RequestMethod.ALL },
+        { path: 'super/(.*)', method: RequestMethod.ALL },
+      )
+      .forRoutes('*')
   }
 }

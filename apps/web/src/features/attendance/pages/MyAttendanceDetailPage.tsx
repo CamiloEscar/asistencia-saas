@@ -21,7 +21,7 @@ import { ErrorState } from '@/components/feedback/ErrorState'
 import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
 import { Tooltip } from '@/components/ui/tooltip'
 import { Paths } from '@/app/routes/paths'
-import { attendanceStatusLabels, attendanceStatusColor } from '@asistencia/shared'
+import { attendanceStatusColor } from '@asistencia/shared'
 import { useMyCourseHistory } from '../api/student-attendance.api'
 import { AttendanceSummaryCard } from '../components/AttendanceSummaryCard'
 import { AttendanceProgressBar } from '../components/AttendanceProgressBar'
@@ -168,7 +168,7 @@ export function MyAttendanceDetailPage() {
                     )}
                   </div>
                   <Badge variant={attendanceStatusColor[s.status]}>
-                    {attendanceStatusLabels[s.status]}
+                    {t(`attendanceStatus.${s.status}`)}
                   </Badge>
                 </li>
               ))}

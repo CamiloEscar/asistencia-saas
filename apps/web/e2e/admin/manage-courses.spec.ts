@@ -22,7 +22,7 @@ test.describe('Institution admin: course creation with bulk import', () => {
   }) => {
     // 1. Login
     await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('admin@universidad-a.com')
+    await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('admin1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/dashboard/, { timeout: 10_000 })

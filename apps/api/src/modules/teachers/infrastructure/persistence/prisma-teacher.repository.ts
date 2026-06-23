@@ -35,10 +35,7 @@ export class PrismaTeacherRepository implements ITeacherRepository {
     return row ? Teacher.fromUser(row as unknown as User) : null
   }
 
-  async findByEmailInInstitution(
-    institutionId: string,
-    email: string,
-  ): Promise<Teacher | null> {
+  async findByEmailInInstitution(institutionId: string, email: string): Promise<Teacher | null> {
     const row = await this.prisma.user.findFirst({
       where: { email: email.toLowerCase(), institutionId, role: 'TEACHER' },
     })

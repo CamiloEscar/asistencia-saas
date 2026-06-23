@@ -4,13 +4,13 @@
     "subtitle": "Cursos en los que das clases",
     "takeAttendance": "Tomar asistencia",
     "viewHistory": "Ver historial",
-    "noCourses": "No tenés cursos asignados",
+    "noCourses": "No tienes cursos asignados",
     "sessionToday": "Hoy",
     "scheduleLabel": "Horario"
   },
   "take": {
     "title": "Tomar asistencia",
-    "selectCourse": "Seleccioná un curso",
+    "selectCourse": "Selecciona un curso",
     "selectDate": "Fecha",
     "loadRoster": "Cargar lista",
     "roster": "Lista de alumnos",

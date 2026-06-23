@@ -21,10 +21,7 @@ export const userRoleValues = [
   UserRole.STUDENT,
 ] as const
 
-/** Human-readable Spanish labels for each role (used in UI). */
-export const userRoleLabels: Record<UserRole, string> = {
-  SUPER_ADMIN: 'Super Administrador',
-  INSTITUTION_ADMIN: 'Administrador Institucional',
-  TEACHER: 'Profesor',
-  STUDENT: 'Alumno',
-}
+// NOTE: Human-readable labels previously lived here as `userRoleLabels`. They
+// have been moved to `apps/web/src/locales/es/common.json` under `roles.*` and
+// are rendered via `t('roles.<ROLE>')` from feature code. Keeping this file
+// (with `UserRole` enum + `userRoleValues`) because shared DTOs depend on them.

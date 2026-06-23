@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { Download } from 'lucide-react'
 import type { AttendanceRecord, ListAttendanceQuery } from '@asistencia/shared'
-import { AttendanceStatus, attendanceStatusLabels, attendanceStatusColor } from '@asistencia/shared'
+import { AttendanceStatus, attendanceStatusColor } from '@asistencia/shared'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { PageHeader } from '@/components/feedback/PageHeader'
@@ -18,13 +18,13 @@ function formatDate(iso: string | Date): string {
   })
 }
 
-function exportCsv(rows: AttendanceRecord[]): void {
+function exportCsv(rows: AttendanceRecord[], t: (key: string) => string): void {
   const header = ['Fecha', 'Alumno', 'Curso', 'Estado', 'Justificación']
   const lines = rows.map((r) => [
     formatDate(r.recordedAt),
     r.studentName ?? r.studentId,
     r.courseName ?? '',
-    attendanceStatusLabels[r.status],
+    t(`attendanceStatus.${r.status}`),
     r.justificationText ?? '',
   ])
   const csv = [header, ...lines]
@@ -75,7 +75,7 @@ export function AttendanceHistoryPage() {
     {
       header: t('attendance.history.columns.status'),
       accessor: (r) => (
-        <Badge variant={attendanceStatusColor[r.status]}>{attendanceStatusLabels[r.status]}</Badge>
+        <Badge variant={attendanceStatusColor[r.status]}>{t(`attendanceStatus.${r.status}`)}</Badge>
       ),
     },
     {
@@ -95,7 +95,7 @@ export function AttendanceHistoryPage() {
       <PageHeader
         title={t('attendance.history.title')}
         actions={
-          <Button variant="outline" onClick={() => exportCsv(rows)}>
+          <Button variant="outline" onClick={() => exportCsv(rows, t)}>
             <Download className="mr-2 h-4 w-4" />
             {t('attendance.history.exportCsv')}
           </Button>
@@ -151,7 +151,7 @@ export function AttendanceHistoryPage() {
                 <option value="">{t('attendance.history.filters.allStatuses')}</option>
                 {Object.values(AttendanceStatus).map((s) => (
                   <option key={s} value={s}>
-                    {attendanceStatusLabels[s]}
+                    {t(`attendanceStatus.${s}`)}
                   </option>
                 ))}
               </select>

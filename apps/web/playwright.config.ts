@@ -42,7 +42,7 @@ export default defineConfig({
     // Use a stable tenant subdomain for tests. In CI, the e2e setup
     // creates this tenant + admin user via the API seed.
     extraHTTPHeaders: {
-      'X-Tenant-Subdomain': process.env.E2E_TENANT ?? 'universidad-a',
+      'X-Tenant-Subdomain': process.env.E2E_TENANT ?? 'celsius',
     },
   },
   projects: [

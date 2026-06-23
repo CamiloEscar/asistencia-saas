@@ -1,9 +1,4 @@
-import {
-  ConflictException,
-  Inject,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common'
+import { ConflictException, Inject, Injectable, NotFoundException } from '@nestjs/common'
 import {
   USER_REPOSITORY,
   type IUserRepository,
@@ -20,9 +15,7 @@ import type { User } from '../../../auth/domain/entities/user.entity'
  */
 @Injectable()
 export class DeactivateUserUseCase {
-  constructor(
-    @Inject(USER_REPOSITORY) private readonly users: IUserRepository,
-  ) {}
+  constructor(@Inject(USER_REPOSITORY) private readonly users: IUserRepository) {}
 
   async execute(institutionId: string, targetUserId: string): Promise<User> {
     const target = await this.users.findByIdInInstitution(institutionId, targetUserId)
