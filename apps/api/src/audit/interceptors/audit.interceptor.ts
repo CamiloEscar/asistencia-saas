@@ -41,26 +41,18 @@ export class AuditInterceptor implements NestInterceptor {
       tap({
         next: (result: unknown) => {
           // Fire-and-forget. Don't block the response.
-          void this.writeAudit(req, req.user?.id, metadata, result).catch(
-            (err) => {
-              this.logger.error(
-                `Failed to write audit log for ${metadata.action}: ${(err as Error).message}`,
-                (err as Error).stack,
-              )
-            },
-          )
+          void this.writeAudit(req, req.user?.id, metadata, result).catch((err) => {
+            this.logger.error(
+              `Failed to write audit log for ${metadata.action}: ${(err as Error).message}`,
+              (err as Error).stack,
+            )
+          })
         },
         error: (err: Error) => {
           // Still audit failed actions so we have a trail. The action stays
           // the same; we don't add FAILED_ prefix to keep the action taxonomy
           // stable. The HTTP status code in the request carries the failure signal.
-          void this.writeAudit(
-            req,
-            req.user?.id,
-            metadata,
-            null,
-            err.message,
-          ).catch((writeErr) => {
+          void this.writeAudit(req, req.user?.id, metadata, null, err.message).catch((writeErr) => {
             this.logger.error(
               `Failed to write audit log for ${metadata.action}: ${(writeErr as Error).message}`,
               (writeErr as Error).stack,

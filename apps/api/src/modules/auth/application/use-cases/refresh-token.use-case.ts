@@ -1,15 +1,15 @@
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import type { Request } from 'express'
-import  { JwtService } from '../../../../shared/crypto/jwt.service'
+import { JwtService } from '../../../../shared/crypto/jwt.service'
 import { type TokenClaims } from '../../../../shared/crypto/jwt.service'
 import { CookieService } from '../../infrastructure/cookies/cookie.service'
-import  { ReuseDetectionService } from '../../infrastructure/services/reuse-detection.service'
+import { ReuseDetectionService } from '../../infrastructure/services/reuse-detection.service'
 import { REFRESH_TOKEN_REPOSITORY } from '../../domain/repositories/refresh-token.repository.interface'
 import { USER_REPOSITORY } from '../../domain/repositories/user.repository.interface'
-import  { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository.interface'
-import  { UserRepository } from '../../domain/repositories/user.repository.interface'
+import { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository.interface'
+import { UserRepository } from '../../domain/repositories/user.repository.interface'
 import type { RefreshResponse } from '../dtos/refresh.dto'
-import  { LoginUseCase } from './login.use-case'
+import { LoginUseCase } from './login.use-case'
 
 export interface RefreshInput {
   refreshToken?: string
@@ -81,7 +81,12 @@ export class RefreshTokenUseCase {
       if (!dbRecord || dbRecord.status !== 'active' || dbRecord.expiresAt < new Date()) {
         throw new UnauthorizedException({ message: 'Invalid refresh token' })
       }
-      await this.reuse.issueActive({ userId, jti: claims.jti, familyId, expirySeconds: refreshTtlSec })
+      await this.reuse.issueActive({
+        userId,
+        jti: claims.jti,
+        familyId,
+        expirySeconds: refreshTtlSec,
+      })
     }
 
     const oldRow = await this.refreshTokens.findByHash(this.refreshTokens.hashToken(rawToken))

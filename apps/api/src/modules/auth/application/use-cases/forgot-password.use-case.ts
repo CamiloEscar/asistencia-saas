@@ -1,7 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
 import { USER_REPOSITORY } from '../../domain/repositories/user.repository.interface'
-import  { UserRepository } from '../../domain/repositories/user.repository.interface'
-import  { SetPasswordUseCase } from './set-password.use-case'
+import { UserRepository } from '../../domain/repositories/user.repository.interface'
+import { SetPasswordUseCase } from './set-password.use-case'
 import type { ForgotPasswordResponse } from '../dtos/forgot-password.dto'
 
 /**
@@ -27,9 +27,7 @@ export class ForgotPasswordUseCase {
     private readonly setPassword: SetPasswordUseCase,
   ) {}
 
-  async execute(input: {
-    email: string
-  }): Promise<ForgotPasswordResponse> {
+  async execute(input: { email: string }): Promise<ForgotPasswordResponse> {
     let userId: string | null = null
 
     try {

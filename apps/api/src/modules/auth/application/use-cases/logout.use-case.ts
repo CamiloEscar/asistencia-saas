@@ -1,8 +1,8 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import  { JwtService } from '../../../../shared/crypto/jwt.service'
+import { JwtService } from '../../../../shared/crypto/jwt.service'
 import { REFRESH_TOKEN_REPOSITORY } from '../../domain/repositories/refresh-token.repository.interface'
-import  { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository.interface'
-import  { ReuseDetectionService } from '../../infrastructure/services/reuse-detection.service'
+import { RefreshTokenRepository } from '../../domain/repositories/refresh-token.repository.interface'
+import { ReuseDetectionService } from '../../infrastructure/services/reuse-detection.service'
 
 export interface LogoutInput {
   userId: string

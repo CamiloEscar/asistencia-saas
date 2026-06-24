@@ -119,9 +119,7 @@ class InMemoryStudentRepository implements IStudentRepository {
     r.status = isActive ? 'ACTIVE' : 'INACTIVE'
     return this.toStudent(r) as never
   }
-  async bulkUpsert(
-    rows: Array<Omit<CreateStudentInput, 'passwordHash'> & { row: number }>,
-  ) {
+  async bulkUpsert(rows: Array<Omit<CreateStudentInput, 'passwordHash'> & { row: number }>) {
     let created = 0
     let skipped = 0
     for (const r of rows) {

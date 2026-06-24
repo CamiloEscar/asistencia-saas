@@ -45,9 +45,7 @@ describe('Student use cases', () => {
     it('creates a student (happy path)', async () => {
       students.findByLegajo.mockResolvedValue(null)
       students.findByEmail.mockResolvedValue(null)
-      students.create.mockImplementation(async (input) =>
-        makeStudent({ email: input.email }),
-      )
+      students.create.mockImplementation(async (input) => makeStudent({ email: input.email }))
 
       const useCase = new CreateStudentUseCase(students, passwordHasher, setPassword)
       const result = await useCase.execute({
@@ -89,9 +87,9 @@ describe('Student use cases', () => {
       students.findByLegajo.mockResolvedValue(makeStudent({ id: 'other', legajo: '2024-002' }))
 
       const useCase = new UpdateStudentUseCase(students)
-      await expect(
-        useCase.execute('u-1', { legajo: '2024-002' }),
-      ).rejects.toBeInstanceOf(ConflictException)
+      await expect(useCase.execute('u-1', { legajo: '2024-002' })).rejects.toBeInstanceOf(
+        ConflictException,
+      )
     })
   })
 

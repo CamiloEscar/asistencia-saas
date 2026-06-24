@@ -17,12 +17,12 @@ import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard'
 import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
 import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator'
 import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
-import  { CreateTeacherUseCase } from '../../application/use-cases/create-teacher.use-case'
-import  { ListTeachersUseCase } from '../../application/use-cases/list-teachers.use-case'
-import  { GetTeacherUseCase } from '../../application/use-cases/get-teacher.use-case'
-import  { UpdateTeacherUseCase } from '../../application/use-cases/update-teacher.use-case'
-import  { DeactivateTeacherUseCase } from '../../application/use-cases/deactivate-teacher.use-case'
-import  { MyCoursesUseCase } from '../../../courses/application/use-cases/my-courses.use-case'
+import { CreateTeacherUseCase } from '../../application/use-cases/create-teacher.use-case'
+import { ListTeachersUseCase } from '../../application/use-cases/list-teachers.use-case'
+import { GetTeacherUseCase } from '../../application/use-cases/get-teacher.use-case'
+import { UpdateTeacherUseCase } from '../../application/use-cases/update-teacher.use-case'
+import { DeactivateTeacherUseCase } from '../../application/use-cases/deactivate-teacher.use-case'
+import { MyCoursesUseCase } from '../../../courses/application/use-cases/my-courses.use-case'
 import {
   CreateTeacherDtoSchema,
   type CreateTeacherDto,

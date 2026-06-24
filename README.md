@@ -98,11 +98,11 @@ For local dev, just use `http://localhost:5173` — no subdomain routing require
 
 ### Test users (after seed)
 
-| Role              | Email                       | Password      |
-| ----------------- | --------------------------- | ------------- |
-| Admin             | `admin@asistencia.local`    | `admin1234`   |
-| Teacher           | `teacher1@asistencia.local` | `teacher1234` |
-| Student           | `student1@asistencia.local` | `student1234` |
+| Role    | Email                       | Password      |
+| ------- | --------------------------- | ------------- |
+| Admin   | `admin@asistencia.local`    | `admin1234`   |
+| Teacher | `teacher1@asistencia.local` | `teacher1234` |
+| Student | `student1@asistencia.local` | `student1234` |
 
 ## Testing
 
@@ -191,12 +191,12 @@ To restore a database backup, use `pg_restore` against the postgres container (s
 
 ## Troubleshooting
 
-| Symptom                                  | Likely cause                                  | Fix                                                                |
-| ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
-| `401` on every request                   | `JwtAuthGuard` ordering                       | Confirm `JwtAuthGuard` runs after the cookie parser in `main.ts`   |
-| Cookie not set on production             | Missing `Domain` mismatch                     | Set `COOKIE_DOMAIN` to your domain (empty for localhost)           |
-| Slow bulk import                         | Worker not running                            | Check `docker compose ps worker`; verify BullMQ connection         |
-| Refresh fails with 401 in cluster        | Lua script not loaded on every node           | Verify `SCRIPT LOAD` runs on every Redis instance on boot          |
+| Symptom                           | Likely cause                        | Fix                                                              |
+| --------------------------------- | ----------------------------------- | ---------------------------------------------------------------- |
+| `401` on every request            | `JwtAuthGuard` ordering             | Confirm `JwtAuthGuard` runs after the cookie parser in `main.ts` |
+| Cookie not set on production      | Missing `Domain` mismatch           | Set `COOKIE_DOMAIN` to your domain (empty for localhost)         |
+| Slow bulk import                  | Worker not running                  | Check `docker compose ps worker`; verify BullMQ connection       |
+| Refresh fails with 401 in cluster | Lua script not loaded on every node | Verify `SCRIPT LOAD` runs on every Redis instance on boot        |
 
 ## Documentation
 

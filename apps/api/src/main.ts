@@ -54,13 +54,7 @@ async function bootstrap(): Promise<void> {
     },
     credentials: true,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: [
-      'Content-Type',
-      'Authorization',
-      'X-Request-ID',
-      'X-Confirm',
-      'X-CSRF-Token',
-    ],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-ID', 'X-Confirm', 'X-CSRF-Token'],
     exposedHeaders: ['X-Request-ID', 'X-RateLimit-Remaining', 'X-API-Version'],
   })
 
