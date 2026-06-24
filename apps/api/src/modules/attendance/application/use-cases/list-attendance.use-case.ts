@@ -1,5 +1,4 @@
 import { Inject, Injectable } from '@nestjs/common'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 import {
   ATTENDANCE_REPOSITORY,
   type IAttendanceRepository,
@@ -11,7 +10,7 @@ import type { ListAttendanceQueryDto } from '../dtos/list-attendance.query.dto'
 /**
  * ListAttendanceUseCase — cursor-paginated list with role-based
  * filtering. Per spec REQ-ATT-003:
- *   - INSTITUTION_ADMIN / SUPER_ADMIN → all records in the institution
+ *   - INSTITUTION_ADMIN / SUPER_ADMIN → all records
  *   - TEACHER → only records for sessions whose course is assigned to
  *     the teacher
  *   - STUDENT → only their own records
@@ -27,11 +26,10 @@ export class ListAttendanceUseCase {
 
   async execute(
     query: ListAttendanceQueryDto,
-    institutionId: string,
+    caller: { role: string; userId: string },
   ): Promise<ListAttendanceResult> {
-    const ctx = getTenantContext()
-    const role = ctx?.role
-    const userId = ctx?.userId
+    const role = caller.role
+    const userId = caller.userId
 
     let forRole: 'ADMIN' | 'TEACHER' | 'STUDENT'
     if (role === 'TEACHER') forRole = 'TEACHER'
@@ -50,6 +48,6 @@ export class ListAttendanceUseCase {
       forRole,
       ...(userId ? { forUserId: userId } : {}),
     }
-    return this.attendance.listInInstitution(institutionId, input)
+    return this.attendance.list(input)
   }
 }

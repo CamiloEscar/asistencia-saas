@@ -1,7 +1,7 @@
 import { randomBytes } from 'node:crypto'
 import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common'
-import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
-import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
+import  { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
+import  { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
 import {
   USER_REPOSITORY,
   type IUserRepository,
@@ -28,7 +28,6 @@ export class ResetPasswordUseCase {
   ) {}
 
   async execute(
-    institutionId: string,
     actorUserId: string,
     targetUserId: string,
   ): Promise<{ temporaryPassword: string; setPasswordLink?: string }> {
@@ -40,14 +39,14 @@ export class ResetPasswordUseCase {
       })
     }
 
-    const target = await this.users.findByIdInInstitution(institutionId, targetUserId)
+    const target = await this.users.findById(targetUserId)
     if (!target) {
       throw new NotFoundException({ message: 'User not found', error: 'Not Found' })
     }
 
     const newPassword = this.generateTemporaryPassword()
     const newHash = await this.passwordHasher.hash(newPassword)
-    await this.users.setPasswordHashInInstitution(institutionId, targetUserId, newHash)
+    await this.users.setPasswordHash(targetUserId, newHash)
 
     // Optionally issue a set-password signed link so the user can
     // pick their own password. Best-effort.

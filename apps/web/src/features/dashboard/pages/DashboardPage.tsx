@@ -2,8 +2,7 @@ import { Navigate } from 'react-router-dom'
 import { LoadingScreen } from '@/components/feedback/LoadingScreen'
 import { useAuth } from '@/features/auth/use-auth'
 import { Paths } from '@/app/routes/paths'
-import { SuperAdminDashboard } from '@/features/institutions/pages/SuperAdminDashboard'
-import { InstitutionAdminDashboard } from './InstitutionAdminDashboard'
+import { AdminDashboard } from './AdminDashboard'
 import { TeacherDashboard } from './TeacherDashboard'
 import { StudentDashboard } from './StudentDashboard'
 
@@ -21,10 +20,8 @@ export function DashboardPage() {
   }
 
   switch (user.role) {
-    case 'SUPER_ADMIN':
-      return <SuperAdminDashboard />
-    case 'INSTITUTION_ADMIN':
-      return <InstitutionAdminDashboard />
+    case 'ADMIN':
+      return <AdminDashboard />
     case 'TEACHER':
       return <TeacherDashboard />
     case 'STUDENT':

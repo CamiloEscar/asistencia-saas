@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import {
   User,
   type UserProps,
@@ -24,38 +24,29 @@ import type {
 type UserWhereInput = Record<string, unknown>
 type UserUpdateInput = Record<string, unknown>
 
-/**
- * Prisma implementation of `IUserRepository`. Uses the
- * tenant-aware `PrismaService` so the extension automatically
- * injects `institutionId` into every WHERE clause.
- *
- * Every read/write is additionally scoped to the caller's
- * institutionId via the method signature — this is belt-and-suspenders
- * defense in depth alongside the Prisma extension AND the RLS policy.
- */
 @Injectable()
 export class PrismaUserRepository implements IUserRepository {
   private readonly logger = new Logger(PrismaUserRepository.name)
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<User | null> {
+  async findById(id: string): Promise<User | null> {
     const row = await this.prisma.user.findFirst({
-      where: { id, institutionId },
+      where: { id },
     })
     return row ? this.toEntity(row as unknown as UserProps) : null
   }
 
-  async findByEmailInInstitution(institutionId: string, email: string): Promise<User | null> {
+  async findByEmail(email: string): Promise<User | null> {
     const row = await this.prisma.user.findFirst({
-      where: { email: email.toLowerCase(), institutionId },
+      where: { email: email.toLowerCase() },
     })
     return row ? this.toEntity(row as unknown as UserProps) : null
   }
 
-  async listInInstitution(institutionId: string, input: ListUsersInput): Promise<ListUsersResult> {
+  async list(input: ListUsersInput): Promise<ListUsersResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: UserWhereInput = { institutionId }
+    const where: UserWhereInput = {}
     if (input.role) where.role = input.role
     if (input.isActive !== null && input.isActive !== undefined) {
       where.status = input.isActive ? 'ACTIVE' : 'INACTIVE'
@@ -87,14 +78,13 @@ export class PrismaUserRepository implements IUserRepository {
     }
   }
 
-  async createInInstitution(input: CreateUserInput): Promise<User> {
+  async create(input: CreateUserInput): Promise<User> {
     const row = await this.prisma.user.create({
       data: {
         email: input.email.toLowerCase(),
         passwordHash: input.passwordHash,
         fullName: input.fullName,
         role: input.role,
-        institutionId: input.institutionId,
         legajo: input.legajo ?? null,
         phone: input.phone ?? null,
         birthDate: input.birthDate ?? null,
@@ -104,11 +94,7 @@ export class PrismaUserRepository implements IUserRepository {
     return this.toEntity(row as unknown as UserProps)
   }
 
-  async updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateUserInput,
-  ): Promise<User> {
+  async update(id: string, input: UpdateUserInput): Promise<User> {
     const data: UserUpdateInput = {}
     if (input.fullName !== undefined) data.fullName = input.fullName
     if (input.email !== undefined) data.email = input.email.toLowerCase()
@@ -120,38 +106,30 @@ export class PrismaUserRepository implements IUserRepository {
     if (input.legajo !== undefined) data.legajo = input.legajo
 
     const row = await this.prisma.user.update({
-      where: { id, institutionId },
+      where: { id },
       data,
     })
     return this.toEntity(row as unknown as UserProps)
   }
 
-  async setActiveInInstitution(
-    institutionId: string,
-    id: string,
-    isActive: boolean,
-  ): Promise<User> {
+  async setActive(id: string, isActive: boolean): Promise<User> {
     const row = await this.prisma.user.update({
-      where: { id, institutionId },
+      where: { id },
       data: { status: isActive ? 'ACTIVE' : 'INACTIVE' },
     })
     return this.toEntity(row as unknown as UserProps)
   }
 
-  async setPasswordHashInInstitution(
-    institutionId: string,
-    id: string,
-    passwordHash: string,
-  ): Promise<User> {
+  async setPasswordHash(id: string, passwordHash: string): Promise<User> {
     const row = await this.prisma.user.update({
-      where: { id, institutionId },
+      where: { id },
       data: { passwordHash },
     })
     return this.toEntity(row as unknown as UserProps)
   }
 
-  async countByRoleInInstitution(institutionId: string, role: UserRole): Promise<number> {
-    return this.prisma.user.count({ where: { institutionId, role, status: 'ACTIVE' } })
+  async countByRole(role: UserRole): Promise<number> {
+    return this.prisma.user.count({ where: { role, status: 'ACTIVE' } })
   }
 
   toEntity(props: UserProps): User {

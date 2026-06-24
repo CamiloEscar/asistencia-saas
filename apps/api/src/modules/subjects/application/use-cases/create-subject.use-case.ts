@@ -6,9 +6,8 @@ import {
 import type { CreateSubjectDto, CreateSubjectResponse } from '../dtos/create-subject.dto'
 
 /**
- * CreateSubjectUseCase — creates a subject in the caller's
- * institution. Validates the code format (uppercase alphanumeric +
- * hyphens, 2-20 chars) and uniqueness within the institution
+ * CreateSubjectUseCase — creates a subject. Validates the code format
+ * (uppercase alphanumeric + hyphens, 2-20 chars) and uniqueness
  * (REQ-SUBJECT-002-02).
  *
  * Codes are stored in their canonical (uppercase) form so the
@@ -21,20 +20,19 @@ export class CreateSubjectUseCase {
 
   constructor(@Inject(SUBJECT_REPOSITORY) private readonly subjects: ISubjectRepository) {}
 
-  async execute(input: CreateSubjectDto, institutionId: string): Promise<CreateSubjectResponse> {
+  async execute(input: CreateSubjectDto): Promise<CreateSubjectResponse> {
     const code = input.code.toUpperCase()
 
-    const existing = await this.subjects.findByCodeInInstitution(institutionId, code)
+    const existing = await this.subjects.findByCode(code)
     if (existing) {
       throw new ConflictException({
-        message: 'Subject code already in use in this institution',
+        message: 'Subject code already in use',
         error: 'Conflict',
         field: 'code',
       })
     }
 
-    const subject = await this.subjects.createInInstitution({
-      institutionId,
+    const subject = await this.subjects.create({
       code,
       name: input.name,
       description: input.description ?? null,

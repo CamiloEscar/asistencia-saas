@@ -1,12 +1,10 @@
-import { Inject, Injectable, Logger } from '@nestjs/common'
-import type { Reflector } from '@nestjs/core'
-import type { PrismaClient } from '@prisma/client'
+import { Injectable, Logger } from '@nestjs/common'
+import { Reflector } from '@nestjs/core'
+import { PrismaService } from '../../shared/prisma/prisma.service'
 import { Prisma } from '@prisma/client'
 import type { CallHandler, ExecutionContext, NestInterceptor } from '@nestjs/common'
 import type { Request } from 'express'
 import { tap } from 'rxjs/operators'
-import { SUPER_ADMIN_PRISMA } from '../../shared/prisma/prisma.service'
-import { getTenantContext } from '../../shared/tenant/tenant.context'
 import type { AuditMetadata } from '../decorators/audit.decorator'
 import { AUDIT_METADATA_KEY } from '../decorators/audit.decorator'
 
@@ -24,7 +22,7 @@ export class AuditInterceptor implements NestInterceptor {
 
   constructor(
     private readonly reflector: Reflector,
-    @Inject(SUPER_ADMIN_PRISMA) private readonly prisma: PrismaClient,
+    private readonly prisma: PrismaService,
   ) {}
 
   intercept(context: ExecutionContext, next: CallHandler) {
@@ -39,13 +37,11 @@ export class AuditInterceptor implements NestInterceptor {
     const req = context
       .switchToHttp()
       .getRequest<Request & { user?: { id: string; role: string } }>()
-    const tenantCtx = getTenantContext()
-
     return next.handle().pipe(
       tap({
         next: (result: unknown) => {
           // Fire-and-forget. Don't block the response.
-          void this.writeAudit(req, tenantCtx?.tenantId, req.user?.id, metadata, result).catch(
+          void this.writeAudit(req, req.user?.id, metadata, result).catch(
             (err) => {
               this.logger.error(
                 `Failed to write audit log for ${metadata.action}: ${(err as Error).message}`,
@@ -60,7 +56,6 @@ export class AuditInterceptor implements NestInterceptor {
           // stable. The HTTP status code in the request carries the failure signal.
           void this.writeAudit(
             req,
-            tenantCtx?.tenantId,
             req.user?.id,
             metadata,
             null,
@@ -78,7 +73,6 @@ export class AuditInterceptor implements NestInterceptor {
 
   private async writeAudit(
     req: Request & { params?: Record<string, string>; body?: Record<string, unknown> },
-    institutionId: string | undefined,
     actorUserId: string | undefined,
     metadata: AuditMetadata,
     result: unknown,
@@ -88,7 +82,6 @@ export class AuditInterceptor implements NestInterceptor {
 
     await this.prisma.auditLog.create({
       data: {
-        institutionId: institutionId ?? null,
         actorUserId: actorUserId ?? null,
         action: metadata.action,
         entityType: metadata.entityType,

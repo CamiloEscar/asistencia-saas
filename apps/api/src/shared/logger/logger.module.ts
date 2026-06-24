@@ -3,19 +3,14 @@ import type { MiddlewareConsumer, NestModule } from '@nestjs/common'
 import { Global, Module } from '@nestjs/common'
 import { LoggerModule } from 'nestjs-pino'
 import type { Request, Response } from 'express'
-import { getTenantContext } from '../tenant/tenant.context'
 
 /**
  * Structured logging via Pino. JSON in production, pretty in dev.
  * Redacts sensitive fields: `password`, `authorization`, `cookie`, `token`,
  * `refresh_token`, `access_token`, `*.password`, `req.headers.cookie`.
  *
- * Every log line includes (when present in AsyncLocalStorage):
- *   - institutionId
- *   - userId
- *   - role
+ * Every log line includes:
  *   - requestId
- *   - subdomain
  */
 @Global()
 @Module({
@@ -47,13 +42,8 @@ import { getTenantContext } from '../tenant/tenant.context'
           censor: '[REDACTED]',
         },
         customProps: (req) => {
-          const ctx = getTenantContext()
           return {
             requestId: (req.headers['x-request-id'] as string) ?? randomUUID(),
-            institutionId: ctx?.tenantId,
-            subdomain: ctx?.subdomain,
-            userId: ctx?.userId,
-            role: ctx?.role,
           }
         },
         genReqId: (req, res) => {

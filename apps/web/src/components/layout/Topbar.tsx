@@ -27,7 +27,7 @@ function initialsOf(name: string): string {
 
 export function Topbar() {
   const { t } = useTranslation()
-  const { user, institution } = useAuth()
+  const { user } = useAuth()
   const navigate = useNavigate()
   const logout = useLogout()
 
@@ -36,12 +36,7 @@ export function Topbar() {
   return (
     <header className="sticky top-0 z-30 flex h-14 items-center justify-between border-b bg-background/80 px-4 backdrop-blur">
       <div className="flex items-center gap-3">
-        <span className="text-sm font-semibold">{institution?.name ?? t('app.name')}</span>
-        {user.role !== 'SUPER_ADMIN' && institution && (
-          <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-            {institution.subdomain}
-          </span>
-        )}
+        <span className="text-sm font-semibold">{t('app.name')}</span>
       </div>
 
       <div className="flex items-center gap-2">

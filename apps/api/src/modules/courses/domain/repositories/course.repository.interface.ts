@@ -1,17 +1,16 @@
 /**
- * Domain repository contract for courses. Courses are institution-
- * scoped. The implementation handles role-based filtering at the
- * read side (admin all, teacher assigned, student enrolled) and
- * m:n relationships via `Enrollment` and `CourseTeacher` (per the
- * design, the `Enrollment` table replaces what was historically
- * called `CourseStudent`).
+ * Domain repository contract for courses. The implementation
+ * handles role-based filtering at the read side (admin all,
+ * teacher assigned, student enrolled) and m:n relationships via
+ * `Enrollment` and `CourseTeacher` (per the design, the
+ * `Enrollment` table replaces what was historically called
+ * `CourseStudent`).
  */
 import type { Course } from '../entities/course.entity'
 
 export const COURSE_REPOSITORY = Symbol('COURSE_REPOSITORY')
 
 export interface CreateCourseInput {
-  institutionId: string
   subjectId: string
   code: string
   name: string
@@ -69,13 +68,13 @@ export interface AssignedTeacher {
 }
 
 export interface ICourseRepository {
-  findByIdInInstitution(institutionId: string, id: string): Promise<Course | null>
-  findByCodeInInstitution(institutionId: string, code: string): Promise<Course | null>
-  listInInstitution(institutionId: string, input: ListCoursesInput): Promise<ListCoursesResult>
+  findById(id: string): Promise<Course | null>
+  findByCode(code: string): Promise<Course | null>
+  list(input: ListCoursesInput): Promise<ListCoursesResult>
 
-  createInInstitution(input: CreateCourseInput): Promise<Course>
-  updateInInstitution(institutionId: string, id: string, input: UpdateCourseInput): Promise<Course>
-  setDeletedInInstitution(institutionId: string, id: string): Promise<Course>
+  create(input: CreateCourseInput): Promise<Course>
+  update(id: string, input: UpdateCourseInput): Promise<Course>
+  setDeleted(id: string): Promise<Course>
 
   /** Enroll a student in a course. Idempotent (returns existing
    *  enrollment if already enrolled). */
@@ -93,9 +92,8 @@ export interface ICourseRepository {
   listAssignedTeachers(courseId: string): Promise<AssignedTeacher[]>
   countAssignedTeachers(courseId: string): Promise<number>
 
-  /** Check that the subject + teacher belong to the same
-   *  institution. Throws 400 on mismatch. */
-  validateSubjectInInstitution(institutionId: string, subjectId: string): Promise<void>
-  validateTeacherInInstitution(institutionId: string, teacherId: string): Promise<void>
-  validateStudentInInstitution(institutionId: string, studentId: string): Promise<void>
+  /** Check that the subject / teacher / student exist. Throws 400 if not found. */
+  validateSubjectExists(subjectId: string): Promise<void>
+  validateTeacherExists(teacherId: string): Promise<void>
+  validateStudentExists(studentId: string): Promise<void>
 }

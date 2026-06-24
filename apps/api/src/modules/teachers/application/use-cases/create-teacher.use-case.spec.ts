@@ -13,12 +13,12 @@ describe('CreateTeacherUseCase', () => {
 
   beforeEach(() => {
     teachers = {
-      findByIdInInstitution: jest.fn(),
-      findByEmailInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
-      createInInstitution: jest.fn(),
-      updateInInstitution: jest.fn(),
-      setActiveInInstitution: jest.fn(),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      list: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      setActive: jest.fn(),
     } as unknown as jest.Mocked<ITeacherRepository>
     passwordHasher = {
       hash: jest.fn().mockResolvedValue('hashed'),
@@ -29,37 +29,35 @@ describe('CreateTeacherUseCase', () => {
   })
 
   it('creates a teacher (happy path)', async () => {
-    teachers.findByEmailInInstitution.mockResolvedValue(null)
+    teachers.findByEmail.mockResolvedValue(null)
     const created = {
       id: 't-1',
       email: 't@a.com',
       fullName: 'Teacher',
     } as unknown as Teacher
-    teachers.createInInstitution.mockResolvedValue(created)
+    teachers.create.mockResolvedValue(created)
 
-    const result = await useCase.execute(
-      {
-        email: 't@a.com',
-        fullName: 'Teacher',
-        sendActivationLink: false,
-      } as never,
-      'i-1',
-    )
+    const result = await useCase.execute({
+      email: 't@a.com',
+      fullName: 'Teacher',
+      sendActivationLink: false,
+    } as never)
 
     expect(result.teacher.id).toBe('t-1')
     expect(result.temporaryPassword).toBeDefined()
-    expect(teachers.createInInstitution).toHaveBeenCalledWith(
-      expect.objectContaining({ email: 't@a.com', institutionId: 'i-1' }),
+    expect(teachers.create).toHaveBeenCalledWith(
+      expect.objectContaining({ email: 't@a.com' }),
     )
   })
 
-  it('throws 409 on duplicate email within institution', async () => {
-    teachers.findByEmailInInstitution.mockResolvedValue({ id: 'existing' } as unknown as Teacher)
+  it('throws 409 on duplicate email', async () => {
+    teachers.findByEmail.mockResolvedValue({ id: 'existing' } as unknown as Teacher)
     await expect(
-      useCase.execute(
-        { email: 'dup@a.com', fullName: 'X', sendActivationLink: false } as never,
-        'i-1',
-      ),
+      useCase.execute({
+        email: 'dup@a.com',
+        fullName: 'X',
+        sendActivationLink: false,
+      } as never),
     ).rejects.toBeInstanceOf(ConflictException)
   })
 })

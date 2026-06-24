@@ -2,16 +2,15 @@ import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Building2, KeyRound, Mail } from 'lucide-react'
+import { KeyRound, Mail } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { AppForm } from '@/components/common/Form'
 import { FormControl, FormField, FormItem, FormLabel, FormMessage } from '@/components/ui/form'
 import { useToast } from '@/hooks/use-toast'
 import { useLogin, postLoginRedirect, captureReturnTo } from '@/features/auth/hooks/use-auth'
-import { detectSubdomain } from '@/lib/tenant-detect'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 import { landingPathForRole, Paths } from '@/app/routes/paths'
 import { toApiError } from '@/features/auth/auth.helpers'
@@ -34,16 +33,8 @@ export function LoginPage() {
   const [searchParams] = useSearchParams()
   const login = useLogin()
   const toast = useToast()
-  const setInstitutionSlug = useAuthStore((s) => s.setInstitutionSlug)
   const authed = useAuthStore((s) => s.isAuthenticated)
   const role = useAuthStore((s) => s.user?.role ?? null)
-
-  const detectedSubdomain = detectSubdomain()
-  const [subdomain] = useState<string | null>(detectedSubdomain)
-
-  useEffect(() => {
-    if (subdomain) setInstitutionSlug(subdomain)
-  }, [subdomain, setInstitutionSlug])
 
   // If already authenticated, bounce to the role landing.
   useEffect(() => {
@@ -67,12 +58,8 @@ export function LoginPage() {
       const dest = postLoginRedirect(landingPathForRole(role))
       navigate(dest, { replace: true })
     } catch (err) {
-      const { status, title, detail } = toApiError(err)
-      const description =
-        status === 403 && title.toLowerCase().includes('inactive')
-          ? t('errors:inactiveInstitution')
-          : (detail ?? title)
-      toast.error(description)
+      const { detail, title } = toApiError(err)
+      toast.error(detail ?? title)
     }
   }
 
@@ -83,22 +70,6 @@ export function LoginPage() {
           <h1 className="text-2xl font-semibold tracking-tight">{t('app.name')}</h1>
           <p className="mt-1 text-sm text-muted-foreground">{t('auth.login.subtitle')}</p>
         </header>
-
-        {!subdomain && (
-          <div className="rounded-md border border-amber-500/50 bg-amber-50 p-3 text-sm text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
-            Subdominio no detectado. Verificá la URL.
-          </div>
-        )}
-
-        {subdomain && (
-          <div className="flex items-center justify-center gap-2 rounded-md border bg-background px-3 py-2 text-sm text-muted-foreground">
-            <Building2 className="h-4 w-4" />
-            <span>
-              {t('auth.login.institutionLabel')}:{' '}
-              <span className="font-medium text-foreground">{subdomain}</span>
-            </span>
-          </div>
-        )}
 
         <AppForm form={form} onSubmit={onSubmit} className="space-y-4">
           <FormField

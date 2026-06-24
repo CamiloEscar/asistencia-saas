@@ -14,17 +14,15 @@ import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../../../auth/infrastructure/guards/tenant.guard'
 import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
 import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator'
 import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
-import type { CreateTeacherUseCase } from '../../application/use-cases/create-teacher.use-case'
-import type { ListTeachersUseCase } from '../../application/use-cases/list-teachers.use-case'
-import type { GetTeacherUseCase } from '../../application/use-cases/get-teacher.use-case'
-import type { UpdateTeacherUseCase } from '../../application/use-cases/update-teacher.use-case'
-import type { DeactivateTeacherUseCase } from '../../application/use-cases/deactivate-teacher.use-case'
-import type { MyCoursesUseCase } from '../../../courses/application/use-cases/my-courses.use-case'
+import  { CreateTeacherUseCase } from '../../application/use-cases/create-teacher.use-case'
+import  { ListTeachersUseCase } from '../../application/use-cases/list-teachers.use-case'
+import  { GetTeacherUseCase } from '../../application/use-cases/get-teacher.use-case'
+import  { UpdateTeacherUseCase } from '../../application/use-cases/update-teacher.use-case'
+import  { DeactivateTeacherUseCase } from '../../application/use-cases/deactivate-teacher.use-case'
+import  { MyCoursesUseCase } from '../../../courses/application/use-cases/my-courses.use-case'
 import {
   CreateTeacherDtoSchema,
   type CreateTeacherDto,
@@ -42,12 +40,12 @@ import {
 /**
  * TeachersController — `/api/teachers/*` endpoints + `/api/teachers/me/courses`.
  *
- *   - GET/POST/PATCH/DELETE on `/api/teachers` are INSTITUTION_ADMIN only.
+ *   - GET/POST/PATCH/DELETE on `/api/teachers` are ADMIN only.
  *   - GET `/api/me/courses` (mounted separately) is TEACHER only.
  */
 @Controller('teachers')
-@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
-@Roles('INSTITUTION_ADMIN')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class TeachersController {
   constructor(
     private readonly createUseCase: CreateTeacherUseCase,
@@ -62,8 +60,7 @@ export class TeachersController {
   async list(
     @Query(new ZodValidationPipe(ListTeachersQueryDtoSchema)) query: ListTeachersQueryDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const result = await this.listUseCase.execute(institutionId, {
+    const result = await this.listUseCase.execute({
       cursor: query.cursor,
       limit: query.limit,
       isActive: query.isActive ?? null,
@@ -82,8 +79,7 @@ export class TeachersController {
   async create(
     @Body(new ZodValidationPipe(CreateTeacherDtoSchema)) body: CreateTeacherDto,
   ): Promise<CreateTeacherResponse> {
-    const institutionId = this.requireTenantId()
-    const result = await this.createUseCase.execute(body, institutionId)
+    const result = await this.createUseCase.execute(body)
     return {
       teacher: result.teacher.toPublicJson(),
       ...(result.temporaryPassword ? { temporaryPassword: result.temporaryPassword } : {}),
@@ -94,8 +90,7 @@ export class TeachersController {
   // ─── GET /teachers/:id ─────────────────────────────────────────────────
   @Get(':id')
   async byId(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const t = await this.getUseCase.execute(institutionId, id)
+    const t = await this.getUseCase.execute(id)
     return t.toPublicJson()
   }
 
@@ -106,8 +101,7 @@ export class TeachersController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(UpdateTeacherDtoSchema)) body: UpdateTeacherDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const t = await this.updateUseCase.execute(institutionId, id, body)
+    const t = await this.updateUseCase.execute(id, body)
     return t.toPublicJson()
   }
 
@@ -115,8 +109,7 @@ export class TeachersController {
   @Post(':id/deactivate')
   @Audit({ action: 'TEACHER_DEACTIVATED', entityType: 'User' })
   async deactivate(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const t = await this.deactivateUseCase.execute(institutionId, id)
+    const t = await this.deactivateUseCase.execute(id)
     return t.toPublicJson()
   }
 
@@ -124,17 +117,8 @@ export class TeachersController {
   @Delete(':id')
   @Audit({ action: 'TEACHER_DELETED', entityType: 'User' })
   async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const t = await this.deactivateUseCase.execute(institutionId, id)
+    const t = await this.deactivateUseCase.execute(id)
     return t.toPublicJson()
-  }
-
-  private requireTenantId(): string {
-    const ctx = getTenantContext()
-    if (!ctx) {
-      throw new Error('Tenant context missing — TenantMiddleware did not run')
-    }
-    return ctx.tenantId
   }
 }
 
@@ -153,18 +137,14 @@ export class TeachersController {
  * controller is a thin presentation layer.
  */
 @Controller('me')
-@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 @Roles('TEACHER')
 export class MyCoursesController {
   constructor(private readonly myCoursesUseCase: MyCoursesUseCase) {}
 
   @Get('courses')
   async myCourses(@CurrentUser() user: TokenClaims): Promise<unknown> {
-    const ctx = getTenantContext()
-    if (!ctx) {
-      throw new Error('Tenant context missing — TenantMiddleware did not run')
-    }
-    const result = await this.myCoursesUseCase.execute(ctx.tenantId, user.sub)
+    const result = await this.myCoursesUseCase.execute(user.sub)
     return {
       data: result.data.map((c) => c.toPublicJson()),
       nextCursor: result.nextCursor,

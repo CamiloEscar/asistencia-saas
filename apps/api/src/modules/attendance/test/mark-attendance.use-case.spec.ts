@@ -1,7 +1,6 @@
 import { BadRequestException, ForbiddenException } from '@nestjs/common'
 import { DateTime } from 'luxon'
 import { MarkAttendanceUseCase } from '../application/use-cases/mark-attendance.use-case'
-import { enterTenantContext } from '../../../shared/tenant/tenant.context'
 import type { IAttendanceRepository } from '../domain/repositories/attendance.repository.interface'
 import type { IClassSessionRepository } from '../domain/repositories/class-session.repository.interface'
 import type { ClassSession } from '../domain/entities/class-session.entity'
@@ -20,7 +19,6 @@ import type { ClassSession } from '../domain/entities/class-session.entity'
  */
 describe('MarkAttendanceUseCase', () => {
   const TZ = 'America/Argentina/Buenos_Aires'
-  const institutionId = 'i-1'
   const teacherId = 't-1'
   const adminId = 'a-1'
   const courseId = 'c-1'
@@ -34,7 +32,6 @@ describe('MarkAttendanceUseCase', () => {
 
   const fakeSession: ClassSession = {
     id: sessionId,
-    institutionId,
     courseId,
     scheduledAt: todayDayStart,
     durationMin: 80,
@@ -55,10 +52,10 @@ describe('MarkAttendanceUseCase', () => {
 
   beforeEach(() => {
     attendance = {
-      findByIdInInstitution: jest.fn(),
+      findById: jest.fn(),
       bulkCreateOrUpdate: jest.fn(),
-      updateByIdInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
+      updateById: jest.fn(),
+      list: jest.fn(),
       summaryByCourse: jest.fn(),
       summaryByStudent: jest.fn(),
       summaryByTeacher: jest.fn(),
@@ -66,17 +63,14 @@ describe('MarkAttendanceUseCase', () => {
     } as unknown as jest.Mocked<IAttendanceRepository>
 
     classSessions = {
-      findByIdInInstitution: jest.fn(),
+      findById: jest.fn(),
       findByCourseAndDate: jest.fn(),
       getOrCreateForCourseAndDate: jest.fn().mockResolvedValue(fakeSession),
-      listInInstitution: jest.fn(),
+      list: jest.fn(),
       markCompleted: jest.fn().mockResolvedValue(fakeSession),
       isTeacherAssignedToCourse: jest.fn().mockResolvedValue(true),
       getCourseDefaultDuration: jest.fn().mockResolvedValue(80),
     } as unknown as jest.Mocked<IClassSessionRepository>
-
-    // Reset the AsyncLocalStorage context for each test.
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: TZ })
   })
 
   it('teacher happy path: marks 3 students, all present, completes session', async () => {
@@ -94,7 +88,7 @@ describe('MarkAttendanceUseCase', () => {
         date: todayISO,
         records: [{ studentId: 'stu-1' }, { studentId: 'stu-2' }, { studentId: 'stu-3' }],
       },
-      { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+      { actorUserId: teacherId, actorRole: 'TEACHER' },
     )
 
     expect(result).toMatchObject({
@@ -109,7 +103,6 @@ describe('MarkAttendanceUseCase', () => {
     expect(attendance.bulkCreateOrUpdate).toHaveBeenCalledWith(
       expect.objectContaining({
         sessionId,
-        institutionId,
         recordedBy: teacherId,
       }),
     )
@@ -133,7 +126,7 @@ describe('MarkAttendanceUseCase', () => {
         date: todayISO,
         records: [{ studentId: 'stu-1' }], // no status
       },
-      { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+      { actorUserId: teacherId, actorRole: 'TEACHER' },
     )
     expect(attendance.bulkCreateOrUpdate).toHaveBeenCalled()
   })
@@ -144,7 +137,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: future, records: [{ studentId: 'stu-1' }] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
   })
@@ -155,7 +148,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: yesterday, records: [{ studentId: 'stu-1' }] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(ForbiddenException)
   })
@@ -168,7 +161,7 @@ describe('MarkAttendanceUseCase', () => {
     const useCase = new MarkAttendanceUseCase(attendance, classSessions)
     const result = await useCase.execute(
       { courseId, date: yesterday, records: [{ studentId: 'stu-1' }] },
-      { institutionId, actorUserId: adminId, actorRole: 'INSTITUTION_ADMIN' },
+      { actorUserId: adminId, actorRole: 'ADMIN' },
     )
     expect(result.created).toBe(1)
   })
@@ -179,7 +172,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: todayISO, records: [{ studentId: 'stu-1' }] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(ForbiddenException)
   })
@@ -195,7 +188,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: todayISO, records: [{ studentId: 'stu-1' }] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
     // The bulk upsert must NOT have been called — full rollback.
@@ -207,7 +200,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: todayISO, records: [] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
   })
@@ -217,7 +210,7 @@ describe('MarkAttendanceUseCase', () => {
     await expect(
       useCase.execute(
         { courseId, date: 'not-a-date', records: [{ studentId: 'stu-1' }] },
-        { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+        { actorUserId: teacherId, actorRole: 'TEACHER' },
       ),
     ).rejects.toBeInstanceOf(BadRequestException)
   })
@@ -242,7 +235,7 @@ describe('MarkAttendanceUseCase', () => {
           { studentId: 's4', status: 'JUSTIFIED' },
         ],
       },
-      { institutionId, actorUserId: teacherId, actorRole: 'TEACHER' },
+      { actorUserId: teacherId, actorRole: 'TEACHER' },
     )
     expect(result).toMatchObject({
       presentCount: 1,

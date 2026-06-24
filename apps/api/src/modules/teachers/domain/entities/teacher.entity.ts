@@ -13,7 +13,6 @@ export interface TeacherProps {
   fullName: string
   role: 'TEACHER'
   status: 'ACTIVE' | 'INACTIVE'
-  institutionId: string
   legajo?: string | null
   phone?: string | null
   userId?: string | null // optional link to a User record (if separate)
@@ -36,7 +35,6 @@ export class Teacher {
       fullName: user.fullName,
       role: 'TEACHER',
       status: user.status,
-      institutionId: user.institutionId ?? '',
       legajo: extras?.legajo ?? null,
       phone: extras?.phone ?? null,
     })
@@ -56,9 +54,6 @@ export class Teacher {
   }
   get isActive(): boolean {
     return this.props.status === 'ACTIVE'
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get legajo(): string | null {
     return this.props.legajo ?? null

@@ -5,7 +5,7 @@ import { z } from 'zod'
  * for the bootstrap and is never assignable from the
  * institution-scoped endpoints (REQ-USER-004-02).
  */
-export const INSTITUTION_ASSIGNABLE_ROLES = ['INSTITUTION_ADMIN', 'TEACHER', 'STUDENT'] as const
+export const ASSIGNABLE_ROLES = ['ADMIN', 'TEACHER', 'STUDENT'] as const
 
 export const CreateUserDtoSchema = z.object({
   email: z.string().trim().toLowerCase().email('Invalid email format'),
@@ -13,7 +13,7 @@ export const CreateUserDtoSchema = z.object({
   // return it in the response (no SMTP in MVP).
   password: z.string().min(8).max(128).optional(),
   fullName: z.string().trim().min(1, 'Full name is required').max(200),
-  role: z.enum(INSTITUTION_ASSIGNABLE_ROLES),
+  role: z.enum(ASSIGNABLE_ROLES),
   // Optional student-specific fields
   legajo: z.string().trim().min(1).max(20).optional(),
   phone: z.string().trim().max(30).optional(),
@@ -30,8 +30,7 @@ export const CreateUserResponseSchema = z.object({
     id: z.string().uuid(),
     email: z.string().email(),
     fullName: z.string(),
-    role: z.enum(['INSTITUTION_ADMIN', 'TEACHER', 'STUDENT']),
-    institutionId: z.string().uuid(),
+    role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']),
     legajo: z.string().nullable().optional(),
     phone: z.string().nullable().optional(),
   }),

@@ -1,6 +1,6 @@
 import type { CanActivate, ExecutionContext } from '@nestjs/common'
 import { ForbiddenException, Injectable } from '@nestjs/common'
-import type { Reflector } from '@nestjs/core'
+import { Reflector } from '@nestjs/core'
 import { ROLES_METADATA_KEY, type RoleName } from '../../presentation/decorators/roles.decorator'
 
 /**

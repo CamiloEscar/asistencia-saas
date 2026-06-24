@@ -1,27 +1,14 @@
 /**
- * User roles for the entire system (FE + BE). Mirrors the Prisma enum
- * `UserRole` (apps/api/prisma/schema.prisma).
+ * User roles for the entire system (FE + BE). Mirrors the Prisma enum `UserRole`.
  *
- * RBAC: 4 roles total. SUPER_ADMIN is global; the other 3 are tenant-scoped.
+ * Single-tenant edition: 3 roles (ADMIN, TEACHER, STUDENT).
  */
 export const UserRole = {
-  SUPER_ADMIN: 'SUPER_ADMIN',
-  INSTITUTION_ADMIN: 'INSTITUTION_ADMIN',
+  ADMIN: 'ADMIN',
   TEACHER: 'TEACHER',
   STUDENT: 'STUDENT',
 } as const
 
 export type UserRole = (typeof UserRole)[keyof typeof UserRole]
 
-/** All user roles as a tuple (for Zod enums). */
-export const userRoleValues = [
-  UserRole.SUPER_ADMIN,
-  UserRole.INSTITUTION_ADMIN,
-  UserRole.TEACHER,
-  UserRole.STUDENT,
-] as const
-
-// NOTE: Human-readable labels previously lived here as `userRoleLabels`. They
-// have been moved to `apps/web/src/locales/es/common.json` under `roles.*` and
-// are rendered via `t('roles.<ROLE>')` from feature code. Keeping this file
-// (with `UserRole` enum + `userRoleValues`) because shared DTOs depend on them.
+export const userRoleValues = [UserRole.ADMIN, UserRole.TEACHER, UserRole.STUDENT] as const

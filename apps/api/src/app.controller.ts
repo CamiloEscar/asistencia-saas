@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common'
-import type { HealthCheckService } from '@nestjs/terminus'
+import  { HealthCheckService } from '@nestjs/terminus'
 import {
   HealthCheck,
   HealthIndicator,
@@ -7,8 +7,8 @@ import {
   type HealthIndicatorResult,
 } from '@nestjs/terminus'
 import { SkipThrottle } from '@nestjs/throttler'
-import type { PrismaService } from './shared/prisma/prisma.service'
-import type { RedisService } from './shared/redis/redis.service'
+import { PrismaService } from './shared/prisma/prisma.service'
+import  { RedisService } from './shared/redis/redis.service'
 
 type HealthPayload = HealthCheckResult & {
   uptimeSeconds: number

@@ -6,7 +6,7 @@ import type { ICourseRepository } from '../../domain/repositories/course.reposit
 
 /**
  * Unit tests for course use cases. Covers:
- *   - create-course: cross-tenant rejection
+ *   - create-course: subject validation + duplicate code
  *   - unassign-teacher: last-teacher protection
  */
 describe('Course use cases', () => {
@@ -24,7 +24,6 @@ describe('Course use cases', () => {
 
   const baseEntity = Course.fromPersistence({
     id: 'c-1',
-    institutionId: 'i-1',
     subjectId: 'subj-1',
     code: 'C-101',
     name: 'Course 101',
@@ -38,12 +37,12 @@ describe('Course use cases', () => {
 
   beforeEach(() => {
     courses = {
-      findByIdInInstitution: jest.fn(),
-      findByCodeInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
-      createInInstitution: jest.fn(),
-      updateInInstitution: jest.fn(),
-      setDeletedInInstitution: jest.fn(),
+      findById: jest.fn(),
+      findByCode: jest.fn(),
+      list: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      setDeleted: jest.fn(),
       enrollStudent: jest.fn(),
       unenrollStudent: jest.fn(),
       listEnrolledStudents: jest.fn(),
@@ -52,32 +51,31 @@ describe('Course use cases', () => {
       unassignTeacher: jest.fn(),
       listAssignedTeachers: jest.fn(),
       countAssignedTeachers: jest.fn(),
-      validateSubjectInInstitution: jest.fn(),
-      validateTeacherInInstitution: jest.fn(),
-      validateStudentInInstitution: jest.fn(),
+      validateSubjectExists: jest.fn(),
+      validateTeacherExists: jest.fn(),
+      validateStudentExists: jest.fn(),
     } as unknown as jest.Mocked<ICourseRepository>
   })
 
   describe('CreateCourseUseCase', () => {
-    it('rejects when the subject is from another institution', async () => {
-      courses.validateSubjectInInstitution.mockRejectedValue(
-        new ConflictException({ message: 'Subject does not belong', error: 'Bad Request' }),
+    it('rejects when the subject does not exist', async () => {
+      courses.validateSubjectExists.mockRejectedValue(
+        new ConflictException({ message: 'Subject does not exist', error: 'Bad Request' }),
       )
       const useCase = new CreateCourseUseCase(courses)
-      await expect(useCase.execute(validInput, 'i-1')).rejects.toBeInstanceOf(ConflictException)
+      await expect(useCase.execute(validInput)).rejects.toBeInstanceOf(ConflictException)
     })
 
     it('creates a course when subject + teachers are valid', async () => {
-      courses.validateSubjectInInstitution.mockResolvedValue(undefined)
-      courses.findByCodeInInstitution.mockResolvedValue(null)
-      courses.createInInstitution.mockResolvedValue(baseEntity)
+      courses.validateSubjectExists.mockResolvedValue(undefined)
+      courses.findByCode.mockResolvedValue(null)
+      courses.create.mockResolvedValue(baseEntity)
       courses.assignTeacher.mockResolvedValue(undefined)
       courses.enrollStudent.mockResolvedValue(undefined)
 
       const useCase = new CreateCourseUseCase(courses)
       const result = await useCase.execute(
         Object.assign({}, validInput, { teacherIds: ['t-1'], initialStudentIds: ['s-1'] }),
-        'i-1',
       )
       expect(result.course.code).toBe('C-101')
       expect(courses.assignTeacher).toHaveBeenCalledWith('c-1', 't-1')
@@ -85,11 +83,11 @@ describe('Course use cases', () => {
     })
 
     it('rejects a duplicate course code (409)', async () => {
-      courses.validateSubjectInInstitution.mockResolvedValue(undefined)
-      courses.findByCodeInInstitution.mockResolvedValue(baseEntity)
+      courses.validateSubjectExists.mockResolvedValue(undefined)
+      courses.findByCode.mockResolvedValue(baseEntity)
 
       const useCase = new CreateCourseUseCase(courses)
-      await expect(useCase.execute(validInput, 'i-1')).rejects.toBeInstanceOf(ConflictException)
+      await expect(useCase.execute(validInput)).rejects.toBeInstanceOf(ConflictException)
     })
   })
 

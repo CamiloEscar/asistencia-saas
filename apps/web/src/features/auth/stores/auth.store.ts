@@ -2,24 +2,6 @@ import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { MeResponse, UserRole } from '@asistencia/shared'
 
-/**
- * Tenant + auth context for the entire FE. Persisted to localStorage so
- * a page refresh keeps the user signed in (the access token lives in an
- * HttpOnly cookie managed by the BE — never in localStorage).
- *
- * State shape:
- *  - user: the currently-authenticated user, or null when signed out.
- *  - institution: the active tenant (subdomain + name + timezone), or null
- *    for SUPER_ADMIN (who has no tenant).
- *  - isAuthenticated: derived from `user !== null`.
- *
- * Actions:
- *  - setUser: replaces the user (used by AuthProvider after /auth/me).
- *  - setInstitution: replaces the institution context.
- *  - setInstitutionSlug: updates the subdomain only (cheap, no /me call).
- *  - clearUser: signs the user out locally.
- */
-
 export interface AuthUser {
   id: string
   email: string
@@ -27,33 +9,12 @@ export interface AuthUser {
   role: UserRole
 }
 
-export interface AuthInstitution {
-  id: string
-  name: string
-  subdomain: string
-  timezone: string
-}
-
 export interface AuthState {
   user: AuthUser | null
-  institution: AuthInstitution | null
-  /** Subdomain is the only piece of state the api-client reads on every
-   *  request. We persist it independently so axios has it on the very
-   *  first request of a fresh page load (before /auth/me returns). */
-  institutionSlug: string | null
   isAuthenticated: boolean
-  /** True while AuthProvider is fetching /auth/me on initial mount. False
-   *  after the first bootstrap attempt resolves (success OR failure).
-   *  ProtectedRoute uses this to avoid redirecting to /login during the
-   *  first frame after a hard refresh, which would create a loop with
-   *  LoginPage's "already authenticated" redirect. */
   bootstrapping: boolean
   setBootstrapping: (v: boolean) => void
-
   setUser: (user: AuthUser | null) => void
-  setInstitution: (institution: AuthInstitution | null) => void
-  setInstitutionSlug: (subdomain: string | null) => void
-  /** Apply a /auth/me response in one shot. */
   hydrate: (response: MeResponse) => void
   clearUser: () => void
 }
@@ -62,15 +23,10 @@ export const useAuthStore = create<AuthState>()(
   persist(
     (set) => ({
       user: null,
-      institution: null,
-      institutionSlug: null,
       isAuthenticated: false,
       bootstrapping: true,
 
       setUser: (user) => set({ user, isAuthenticated: user !== null }),
-      setInstitution: (institution) =>
-        set({ institution, institutionSlug: institution?.subdomain ?? null }),
-      setInstitutionSlug: (institutionSlug) => set({ institutionSlug }),
       setBootstrapping: (bootstrapping) => set({ bootstrapping }),
       hydrate: (response) =>
         set({
@@ -80,33 +36,21 @@ export const useAuthStore = create<AuthState>()(
             fullName: response.user.fullName,
             role: response.user.role,
           },
-          institution: response.institution,
-          institutionSlug: response.institution?.subdomain ?? null,
           isAuthenticated: true,
           bootstrapping: false,
         }),
       clearUser: () =>
         set({
           user: null,
-          institution: null,
-          institutionSlug: null,
           isAuthenticated: false,
           bootstrapping: false,
         }),
     }),
     {
       name: 'asistencia-auth',
-      // Persist only what is safe + useful. The user is in an HttpOnly
-      // cookie, but the role/display info is fine to cache locally so
-      // the UI doesn't flicker on first paint.
-      partialize: (state) => ({
-        user: state.user,
-        institution: state.institution,
-        institutionSlug: state.institutionSlug,
-      }),
+      partialize: (state) => ({ user: state.user }),
     },
   ),
 )
 
-/** Selector helper: pick the role without subscribing to the whole store. */
 export const selectUserRole = (s: AuthState) => s.user?.role ?? null

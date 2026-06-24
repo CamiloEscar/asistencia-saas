@@ -17,7 +17,6 @@ import type { ClassSession } from '../entities/class-session.entity'
 export const CLASS_SESSION_REPOSITORY = Symbol('CLASS_SESSION_REPOSITORY')
 
 export interface GetOrCreateSessionInput {
-  institutionId: string
   courseId: string
   /** Local date in the institution's TZ. The repo stores 00:00 local. */
   scheduledAt: Date
@@ -42,7 +41,7 @@ export interface ListClassSessionsResult {
 }
 
 export interface IClassSessionRepository {
-  findByIdInInstitution(institutionId: string, id: string): Promise<ClassSession | null>
+  findById(id: string): Promise<ClassSession | null>
 
   /**
    * Find a session that falls on the same calendar day (in the
@@ -53,7 +52,6 @@ export interface IClassSessionRepository {
    * Returns `null` if no session exists for that (course, day).
    */
   findByCourseAndDate(
-    institutionId: string,
     courseId: string,
     scheduledAt: Date,
   ): Promise<ClassSession | null>
@@ -68,14 +66,11 @@ export interface IClassSessionRepository {
   getOrCreateForCourseAndDate(input: GetOrCreateSessionInput): Promise<ClassSession>
 
   /**
-   * List sessions in the institution. Filterable by course, date
-   * range, status. Used by the teacher "today's sessions" view
-   * and by the admin session manager.
+   * List sessions. Filterable by course, date range, status. Used
+   * by the teacher "today's sessions" view and by the admin session
+   * manager.
    */
-  listInInstitution(
-    institutionId: string,
-    input: ListClassSessionsInput,
-  ): Promise<ListClassSessionsResult>
+  list(input: ListClassSessionsInput): Promise<ListClassSessionsResult>
 
   /** Transition status to COMPLETED. Used after a bulk-mark. */
   markCompleted(id: string): Promise<ClassSession>
@@ -86,7 +81,6 @@ export interface IClassSessionRepository {
    *  same-day modify rule (REQ-ATT-002) without crossing the
    *  course↔attendance module boundary. */
   isTeacherAssignedToCourse(
-    institutionId: string,
     teacherId: string,
     courseId: string,
   ): Promise<boolean>
@@ -95,5 +89,5 @@ export interface IClassSessionRepository {
    *  auto-creating a session in `getOrCreateForCourseAndDate`. The
    *  attendance use case passes the result in if the caller didn't
    *  specify a duration explicitly. */
-  getCourseDefaultDuration(institutionId: string, courseId: string): Promise<number | null>
+  getCourseDefaultDuration(courseId: string): Promise<number | null>
 }

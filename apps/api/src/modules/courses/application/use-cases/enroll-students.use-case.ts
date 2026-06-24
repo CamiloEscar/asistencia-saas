@@ -6,20 +6,18 @@ import {
 
 /**
  * EnrollStudentsUseCase — enrolls a list of students in a course.
- * Idempotent (REQ-COURSE-008-02). Cross-tenant: each studentId is
- * validated against the caller's institution by the repository.
+ * Idempotent (REQ-COURSE-008-02). Each studentId is validated to exist.
  */
 @Injectable()
 export class EnrollStudentsUseCase {
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
   async execute(
-    institutionId: string,
     courseId: string,
     studentIds: string[],
   ): Promise<{ enrolled: string[]; total: number }> {
     for (const studentId of studentIds) {
-      await this.courses.validateStudentInInstitution(institutionId, studentId)
+      await this.courses.validateStudentExists(studentId)
       await this.courses.enrollStudent(courseId, studentId)
     }
     const total = (await this.courses.listEnrolledStudents(courseId)).length

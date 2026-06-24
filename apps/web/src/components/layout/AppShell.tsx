@@ -7,8 +7,7 @@ import { Topbar } from './Topbar'
 /**
  * Authenticated app shell. Layout: sidebar (left) + topbar (top) + main
  * (center). The sidebar collapses below the `md` breakpoint. The
- * topbar is sticky and shows the institution name + user menu + theme
- * toggle.
+ * topbar is sticky and shows the user menu + theme toggle.
  *
  * Components inside the shell get a max-width container and vertical
  * padding via the inner `<main>` class.

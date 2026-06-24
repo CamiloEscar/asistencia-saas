@@ -1,21 +1,18 @@
 # asistencia-saas
 
-> Multi-tenant SaaS platform for educational institutions (universities, institutes) to manage student attendance.
+> Single-tenant SaaS platform for educational institutions (universities, institutes) to manage student attendance.
 
 ## Overview
 
 A two-app monorepo (`pnpm` workspaces) with a NestJS API and a Vite + React SPA.
-Each institution (tenant) gets isolated users, teachers, students, courses, subjects, and attendance records.
-Tenant resolution happens via subdomain (e.g. `celsius.app.com` → institution `celsius`).
-
-**Defense-in-depth multi-tenancy**: Prisma extension → PgBouncer SET LOCAL → PostgreSQL Row-Level Security. See `infra/README.md` and the SDD artifacts for details.
+Built for a single-tenant deploy: one institution per environment, one database, one domain. Multi-tenant isolation primitives (per-request tenant context, RLS, subdomain routing) were removed in favour of simplicity.
 
 ## Architecture
 
 ```
                   ┌────────────────────────────────────────────┐
                   │  Browser (Vite/React on Nginx)             │
-                  │  *.app.com (prod) / *.app.localhost (dev)  │
+                  │  <single domain>                           │
                   └───────────────┬────────────────────────────┘
                                   │ HTTPS (cookies HttpOnly, SameSite=Lax)
                                   ▼
@@ -30,24 +27,24 @@ Tenant resolution happens via subdomain (e.g. `celsius.app.com` → institution 
         │  NestJS API (Node 20)    │   │  Worker (Node 20)        │
         │  Clean Architecture      │   │  BullMQ consumers        │
         │  Prisma + Redis adapter  │   │  (bulk import jobs)      │
-        │  Helmet, throttler, RLS  │   │  runWithContext tenant   │
-        └─────┬───────────────┬────┘   └────────────┬─────────────┘
+        │  Helmet, throttler       │   └────────────┬─────────────┘
+        └─────┬───────────────┬────┘                │
               │               │                     │
               ▼               ▼                     ▼
     ┌─────────────────┐  ┌─────────┐         ┌─────────────┐
     │ PostgreSQL 16   │  │ Redis 7 │         │  (same)     │
-    │ + RLS policies  │  │ 7.2-alp │         │  Redis      │
-    │ 16-shared       │  │ LRU 256m│         │  queue      │
+    │                 │  │         │         │  Redis      │
+    │                 │  │ LRU 256m│         │  queue      │
     └─────────────────┘  └─────────┘         └─────────────┘
 ```
 
 ## Tech Stack
 
 - **Frontend**: React 18, Vite, TypeScript, React Router v6, TanStack Query, Tailwind CSS, Shadcn/UI, React Hook Form + Zod, Zustand, react-i18next (ES only in MVP)
-- **Backend**: NestJS 10, Node.js 20+, TypeScript, Prisma, PostgreSQL 16 with RLS
+- **Backend**: NestJS 10, Node.js 20+, TypeScript, Prisma, PostgreSQL 16
 - **Auth**: JWT RS256 + refresh rotation with reuse detection (Lua atomic), Argon2id
 - **Cache / Queue**: Redis 7 (refresh tokens, activation tokens, throttler, BullMQ)
-- **Storage**: Cloudinary (institution logos)
+- **Storage**: Cloudinary (logo uploads)
 - **Logging**: Pino (structured JSON, redacted) + `audit_log` table for security-relevant events
 - **Validation**: Zod schemas shared FE↔BE (`packages/shared`)
 - **Architecture**: Clean Architecture + DDD + SOLID (backend), feature-based (frontend)
@@ -97,22 +94,15 @@ pnpm dev
 
 The web app is on http://localhost:5173 and the API on http://localhost:3000.
 
-For multi-tenant local dev, use the `*.app.localhost` domain pattern:
-
-- Celsius: http://celsius.app.localhost:5173
-- Universidad B: http://universidad-b.app.localhost:5173
-
-> **Safari caveat**: `*.app.localhost` works in Chrome and Firefox. Safari requires `*.localhost` (TLD) or `/etc/hosts` entries. Use Chrome/Firefox for local dev.
+For local dev, just use `http://localhost:5173` — no subdomain routing required.
 
 ### Test users (after seed)
 
 | Role              | Email                       | Password      |
 | ----------------- | --------------------------- | ------------- |
-| Super Admin       | `super@asistencia-saas.com` | `super1234`   |
-| Admin (Celsius)   | `admin@celsius.com`         | `admin1234`   |
-| Admin (Univ. B)   | `admin@universidad-b.com`   | `admin1234`   |
-| Teacher (Celsius) | `teacher1@celsius.com`      | `teacher1234` |
-| Student (Celsius) | `student1@celsius.com`      | `student1234` |
+| Admin             | `admin@asistencia.local`    | `admin1234`   |
+| Teacher           | `teacher1@asistencia.local` | `teacher1234` |
+| Student           | `student1@asistencia.local` | `student1234` |
 
 ## Testing
 
@@ -140,8 +130,8 @@ Production deployment uses Docker Compose on a single VPS (Hostinger, DigitalOce
 ### One-time VPS setup
 
 1. **Provision** a VPS with Docker + Docker Compose plugin installed.
-2. **DNS**: wildcard `*.app.com` A record pointing to the VPS IP.
-3. **SSL cert**: the user installs a wildcard cert via their Python bot. Mount it at `/etc/nginx/ssl/wildcard.pem` and `/etc/nginx/ssl/wildcard.key`. The nginx config consumes it read-only.
+2. **DNS**: an A record for your domain (e.g. `asistencia.example.com`) pointing to the VPS IP.
+3. **SSL cert**: provision a cert for your domain (Let's Encrypt or your CA). Mount it at `/etc/nginx/ssl/server.pem` and `/etc/nginx/ssl/server.key`. The nginx config consumes it read-only.
 4. **Clone the repo** to `/opt/asistencia-saas`.
 5. **Create secrets**:
    ```bash
@@ -150,7 +140,7 @@ Production deployment uses Docker Compose on a single VPS (Hostinger, DigitalOce
    sudo cp /path/to/jwt-public.pem /opt/asistencia-saas/infra/docker/secrets/
    sudo chmod 600 /opt/asistencia-saas/infra/docker/secrets/*.pem
    ```
-6. **Configure env**: copy `infra/docker/.env.example` to `infra/docker/.env` and fill in real values (DB password, Redis password, Cloudinary creds, cookie domain, CORS origins).
+6. **Configure env**: copy `infra/docker/.env.example` to `infra/docker/.env` and fill in real values (DB password, Redis password, Cloudinary creds, `API_DOMAIN`, `CORS_ORIGINS`).
 
 ### Deploy
 
@@ -185,7 +175,7 @@ Backups are written to `/backups/` with 30-day retention. To sync off-site, unco
 
 The `/health` endpoint is unauthenticated and returns 200 / 503 with dependency status. Recommended:
 
-- UptimeRobot or BetterStack to ping `https://app.com/health` every 5 min
+- UptimeRobot or BetterStack to ping `https://<your-domain>/health` every 5 min
 - Slack/Discord webhook from the deploy workflow on success/failure
 
 ### Rollback
@@ -203,11 +193,8 @@ To restore a database backup, use `pg_restore` against the postgres container (s
 
 | Symptom                                  | Likely cause                                  | Fix                                                                |
 | ---------------------------------------- | --------------------------------------------- | ------------------------------------------------------------------ |
-| Login fails with "institution not found" | Subdomain doesn't match an institution        | Check `institutions` table; check `X-Tenant-Subdomain` header      |
-| `401` on every request                   | `JwtAuthGuard` ordering                       | Confirm `TenantMiddleware` runs before `JwtAuthGuard` in `main.ts` |
-| Cross-tenant data leak                   | `tenantAwareExtension` not applied            | Check Prisma logs; verify `institutionId` is in WHERE clause       |
-| `*app.localhost` not working in Safari   | Safari doesn't support `*.localhost` wildcard | Use Chrome/Firefox for dev, or set `/etc/hosts` entries            |
-| Cookie not set on `app.com`              | Missing `Domain=.app.com`                     | Set `COOKIE_DOMAIN=.app.com` in env                                |
+| `401` on every request                   | `JwtAuthGuard` ordering                       | Confirm `JwtAuthGuard` runs after the cookie parser in `main.ts`   |
+| Cookie not set on production             | Missing `Domain` mismatch                     | Set `COOKIE_DOMAIN` to your domain (empty for localhost)           |
 | Slow bulk import                         | Worker not running                            | Check `docker compose ps worker`; verify BullMQ connection         |
 | Refresh fails with 401 in cluster        | Lua script not loaded on every node           | Verify `SCRIPT LOAD` runs on every Redis instance on boot          |
 

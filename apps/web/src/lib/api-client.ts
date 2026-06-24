@@ -2,13 +2,13 @@ import axios, { AxiosError, type AxiosRequestConfig, type InternalAxiosRequestCo
 import type { ProblemJson } from '@asistencia/shared'
 import { useAuthStore } from '@/features/auth/stores/auth.store'
 
+
 /**
  * Axios instance configured for the asistencia-saas API.
  *
  * Key behaviors (per spec FE-REQ-AUTH-005):
  *  - `withCredentials: true` so the browser sends the HttpOnly auth cookies.
- *  - Request interceptor adds `X-Tenant-Subdomain` (from auth store) and
- *    `Accept-Language: es` (default UI locale).
+ *  - Request interceptor adds `Accept-Language: es` (default UI locale).
  *  - Response interceptor handles 401: queues the failed request, calls
  *    POST /auth/refresh ONCE (concurrent 401s share the same promise), and
  *    retries the queue. On refresh-fail it clears the auth store and lets
@@ -48,14 +48,6 @@ export const apiClient = axios.create({
 
 // ── Request interceptor ────────────────────────────────────────────────────
 apiClient.interceptors.request.use((config: InternalAxiosRequestConfig) => {
-  // Tenant context — read fresh from the store on every request so the
-  // value can change at runtime (e.g. institution switch post-login).
-  const subdomain = useAuthStore.getState().institutionSlug
-  if (subdomain) {
-    config.headers.set('X-Tenant-Subdomain', subdomain)
-  }
-  // Default UI language — backend respects Accept-Language for error
-  // messages. The app is Spanish-only in MVP (per spec REQ-X-006).
   config.headers.set('Accept-Language', 'es')
   return config
 })

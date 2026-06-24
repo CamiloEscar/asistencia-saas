@@ -1,5 +1,4 @@
 import { ForbiddenException, Inject, Injectable } from '@nestjs/common'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 import {
   ATTENDANCE_REPOSITORY,
   type AttendanceSummary,
@@ -22,28 +21,25 @@ export class AttendanceSummaryUseCase {
   constructor(@Inject(ATTENDANCE_REPOSITORY) private readonly attendance: IAttendanceRepository) {}
 
   async executeCourse(
-    institutionId: string,
     courseId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary> {
-    return this.attendance.summaryByCourse(institutionId, courseId, dateRange)
+    return this.attendance.summaryByCourse(courseId, dateRange)
   }
 
   async executeStudent(
-    institutionId: string,
     studentId: string,
     courseId?: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<StudentAttendanceSummary> {
-    return this.attendance.summaryByStudent(institutionId, studentId, courseId, dateRange)
+    return this.attendance.summaryByStudent(studentId, courseId, dateRange)
   }
 
   async executeTeacher(
-    institutionId: string,
     teacherId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary> {
-    return this.attendance.summaryByTeacher(institutionId, teacherId, dateRange)
+    return this.attendance.summaryByTeacher(teacherId, dateRange)
   }
 
   /**
@@ -54,11 +50,10 @@ export class AttendanceSummaryUseCase {
    */
   async executeFromQuery(
     query: AttendanceSummaryQueryDto,
-    institutionId: string,
+    caller: { role: string; userId: string },
   ): Promise<AttendanceSummary | StudentAttendanceSummary> {
-    const ctx = getTenantContext()
-    const role = ctx?.role
-    const userId = ctx?.userId
+    const role = caller.role
+    const userId = caller.userId
 
     const dateRange =
       query.dateFrom || query.dateTo
@@ -69,7 +64,7 @@ export class AttendanceSummaryUseCase {
         : undefined
 
     if (query.courseId) {
-      return this.executeCourse(institutionId, query.courseId, dateRange)
+      return this.executeCourse(query.courseId, dateRange)
     }
     if (query.studentId) {
       // STUDENT can only request their own summary.
@@ -79,10 +74,10 @@ export class AttendanceSummaryUseCase {
           error: 'Forbidden',
         })
       }
-      return this.executeStudent(institutionId, query.studentId, query.studentCourseId, dateRange)
+      return this.executeStudent(query.studentId, query.studentCourseId, dateRange)
     }
     if (query.teacherId) {
-      return this.executeTeacher(institutionId, query.teacherId, dateRange)
+      return this.executeTeacher(query.teacherId, dateRange)
     }
 
     // Default: empty summary (no specific entity).

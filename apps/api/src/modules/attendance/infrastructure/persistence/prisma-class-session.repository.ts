@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import { ClassSession, type ClassSessionProps } from '../../domain/entities/class-session.entity'
 import {
   type GetOrCreateSessionInput,
@@ -17,9 +17,9 @@ import {
  * use case with Luxon). The repo then derives the day end as
  * day start + 24h and queries the session in that window.
  *
- * Get-or-create is wrapped in `forTenant` so the find + create
- * run in a single transaction — concurrent first-marks for the
- * same (course, day) won't create duplicate sessions.
+ * Get-or-create is wrapped in a transaction so the find + create
+ * run atomically — concurrent first-marks for the same (course,
+ * day) won't create duplicate sessions.
  */
 @Injectable()
 export class PrismaClassSessionRepository implements IClassSessionRepository {
@@ -27,22 +27,20 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<ClassSession | null> {
+  async findById(id: string): Promise<ClassSession | null> {
     const row = await this.prisma.classSession.findFirst({
-      where: { id, institutionId },
+      where: { id },
     })
     return row ? this.toEntity(row) : null
   }
 
   async findByCourseAndDate(
-    institutionId: string,
     courseId: string,
     scheduledAt: Date,
   ): Promise<ClassSession | null> {
     const { dayStart, dayEnd } = this.dayWindow(scheduledAt)
     const row = await this.prisma.classSession.findFirst({
       where: {
-        institutionId,
         courseId,
         scheduledAt: { gte: dayStart, lt: dayEnd },
       },
@@ -51,7 +49,7 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
   }
 
   async getOrCreateForCourseAndDate(input: GetOrCreateSessionInput): Promise<ClassSession> {
-    return this.prisma.forTenant(input.institutionId, async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       const { dayStart, dayEnd } = this.dayWindow(input.scheduledAt)
       // First, attempt find. UNIQUE (courseId, scheduledAt) keeps
       // this safe: only one row can exist for the exact
@@ -59,7 +57,6 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
       // session scheduled at any time during that calendar day.
       const existing = await tx.classSession.findFirst({
         where: {
-          institutionId: input.institutionId,
           courseId: input.courseId,
           scheduledAt: { gte: dayStart, lt: dayEnd },
         },
@@ -69,7 +66,6 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
       }
       const created = await tx.classSession.create({
         data: {
-          institutionId: input.institutionId,
           courseId: input.courseId,
           scheduledAt: dayStart,
           durationMin: input.durationMin,
@@ -85,12 +81,9 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
     })
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListClassSessionsInput,
-  ): Promise<ListClassSessionsResult> {
+  async list(input: ListClassSessionsInput): Promise<ListClassSessionsResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: Record<string, unknown> = { institutionId }
+    const where: Record<string, unknown> = {}
     if (input.courseId) where.courseId = input.courseId
     if (input.status) where.status = input.status
     if (input.dateFrom || input.dateTo) {
@@ -127,20 +120,19 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
   }
 
   async isTeacherAssignedToCourse(
-    institutionId: string,
     teacherId: string,
     courseId: string,
   ): Promise<boolean> {
     const found = await this.prisma.courseTeacher.findFirst({
-      where: { institutionId, courseId, teacherId },
+      where: { courseId, teacherId },
       select: { id: true },
     })
     return found !== null
   }
 
-  async getCourseDefaultDuration(institutionId: string, courseId: string): Promise<number | null> {
+  async getCourseDefaultDuration(courseId: string): Promise<number | null> {
     const course = await this.prisma.course.findFirst({
-      where: { id: courseId, institutionId },
+      where: { id: courseId },
       select: { defaultSessionDurationMin: true },
     })
     return course?.defaultSessionDurationMin ?? null
@@ -163,7 +155,6 @@ export class PrismaClassSessionRepository implements IClassSessionRepository {
   private toEntity(row: Record<string, unknown>): ClassSession {
     return ClassSession.fromPersistence({
       id: row.id as string,
-      institutionId: row.institutionId as string,
       courseId: row.courseId as string,
       scheduledAt: row.scheduledAt as Date,
       durationMin: row.durationMin as number,

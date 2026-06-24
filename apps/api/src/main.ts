@@ -39,7 +39,8 @@ async function bootstrap(): Promise<void> {
   // Cookies (signed) — required for refresh-token cookies.
   app.use(cookieParser())
 
-  // CORS — dynamic origin check; FE on http://localhost:5173 in dev, *.app.com in prod.
+  // CORS — config-driven allow-list. Single-tenant deploys set a single origin
+  // (e.g. `https://asistencia.example.com`); dev sets `http://localhost:5173`.
   const allowedOrigins = (process.env.CORS_ORIGINS ?? 'http://localhost:5173')
     .split(',')
     .map((o) => o.trim())
@@ -49,13 +50,6 @@ async function bootstrap(): Promise<void> {
     origin: (origin, callback) => {
       if (!origin) return callback(null, true)
       if (allowedOrigins.includes(origin)) return callback(null, true)
-      // Wildcard subdomains in dev (http://*.app.localhost) and prod (https://*.app.com).
-      if (/^https?:\/\/[a-z0-9-]+\.app\.localhost(:\d+)?$/.test(origin)) {
-        return callback(null, true)
-      }
-      if (/^https?:\/\/[a-z0-9-]+\.app\.com$/.test(origin)) {
-        return callback(null, true)
-      }
       return callback(new Error(`CORS not allowed: ${origin}`), false)
     },
     credentials: true,
@@ -63,7 +57,6 @@ async function bootstrap(): Promise<void> {
     allowedHeaders: [
       'Content-Type',
       'Authorization',
-      'X-Tenant-Subdomain',
       'X-Request-ID',
       'X-Confirm',
       'X-CSRF-Token',

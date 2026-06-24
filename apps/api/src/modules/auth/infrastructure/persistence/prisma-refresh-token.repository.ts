@@ -1,7 +1,6 @@
-import { Inject, Injectable } from '@nestjs/common'
+import { Injectable } from '@nestjs/common'
 import { createHash } from 'node:crypto'
-import type { PrismaClient } from '@prisma/client'
-import { SUPER_ADMIN_PRISMA } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import type {
   CreateRefreshTokenInput,
   RefreshTokenRecord,
@@ -26,7 +25,7 @@ import type {
  */
 @Injectable()
 export class PrismaRefreshTokenRepository implements RefreshTokenRepository {
-  constructor(@Inject(SUPER_ADMIN_PRISMA) private readonly prisma: PrismaClient) {}
+  constructor(private readonly prisma: PrismaService) {}
 
   async create(input: CreateRefreshTokenInput): Promise<RefreshTokenRecord> {
     const row = await this.prisma.refreshToken.create({

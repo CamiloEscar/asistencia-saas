@@ -42,7 +42,7 @@
       "success": "Institución creada con éxito"
     }
   },
-  "institutionAdmin": {
+  "admin": {
     "title": "Panel del Administrador"
   },
   "teacher": {

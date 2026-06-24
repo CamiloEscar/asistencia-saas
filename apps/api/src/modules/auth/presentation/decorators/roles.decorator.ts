@@ -2,7 +2,7 @@ import { SetMetadata } from '@nestjs/common'
 
 export const ROLES_METADATA_KEY = 'auth:roles'
 
-export type RoleName = 'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'TEACHER' | 'STUDENT'
+export type RoleName = 'ADMIN' | 'TEACHER' | 'STUDENT'
 
 /**
  * `@Roles(Role.X, Role.Y)` — restricts a route to specific roles. Combined

@@ -1,5 +1,5 @@
 import { Controller, Get } from '@nestjs/common'
-import type { JwtKeysService } from '../../../../shared/crypto/jwt-keys.service'
+import  { JwtKeysService } from '../../../../shared/crypto/jwt-keys.service'
 import { Public } from '../decorators/public.decorator'
 
 /**

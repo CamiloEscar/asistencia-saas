@@ -15,13 +15,13 @@ import {
 export class DeactivateSubjectUseCase {
   constructor(@Inject(SUBJECT_REPOSITORY) private readonly subjects: ISubjectRepository) {}
 
-  async execute(institutionId: string, id: string): Promise<Subject> {
-    const target = await this.subjects.findByIdInInstitution(institutionId, id)
+  async execute(id: string): Promise<Subject> {
+    const target = await this.subjects.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Subject not found', error: 'Not Found' })
     }
 
-    const activeCourseCount = await this.subjects.countActiveCoursesInInstitution(institutionId, id)
+    const activeCourseCount = await this.subjects.countActiveCourses(id)
     if (activeCourseCount > 0) {
       throw new ConflictException({
         message: `Subject is in use by ${activeCourseCount} active courses`,
@@ -29,6 +29,6 @@ export class DeactivateSubjectUseCase {
       })
     }
 
-    return this.subjects.setDeletedInInstitution(institutionId, id)
+    return this.subjects.setDeleted(id)
   }
 }

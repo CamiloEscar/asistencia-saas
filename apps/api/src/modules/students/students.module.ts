@@ -4,10 +4,8 @@ import { CsvModule } from '../../shared/csv/csv.module'
 import { CryptoModule } from '../../shared/crypto/crypto.module'
 import { PrismaModule } from '../../shared/prisma/prisma.module'
 import { QueueModule } from '../../shared/queue/queue.module'
-import { TenantModule } from '../../shared/tenant/tenant.module'
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard'
 import { RolesGuard } from '../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../auth/infrastructure/guards/tenant.guard'
 import { CreateStudentUseCase } from './application/use-cases/create-student.use-case'
 import { ListStudentsUseCase } from './application/use-cases/list-students.use-case'
 import { GetStudentUseCase } from './application/use-cases/get-student.use-case'
@@ -39,7 +37,7 @@ import { StudentsController } from './presentation/controllers/students.controll
  * a dedicated worker container is a follow-up.
  */
 @Module({
-  imports: [PrismaModule, CryptoModule, TenantModule, AuthModule, CsvModule, QueueModule],
+  imports: [PrismaModule, CryptoModule, AuthModule, CsvModule, QueueModule],
   controllers: [StudentsController],
   providers: [
     { provide: STUDENT_REPOSITORY, useClass: PrismaStudentRepository },
@@ -52,7 +50,6 @@ import { StudentsController } from './presentation/controllers/students.controll
     StudentBulkImportProcessor,
     JwtAuthGuard,
     RolesGuard,
-    TenantGuard,
   ],
   exports: [STUDENT_REPOSITORY],
 })

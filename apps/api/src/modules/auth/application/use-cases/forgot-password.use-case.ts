@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger } from '@nestjs/common'
-import type { TenantResolverService } from '../../../../shared/tenant/tenant-resolver.service'
 import { USER_REPOSITORY } from '../../domain/repositories/user.repository.interface'
-import type { UserRepository } from '../../domain/repositories/user.repository.interface'
-import type { SetPasswordUseCase } from './set-password.use-case'
+import  { UserRepository } from '../../domain/repositories/user.repository.interface'
+import  { SetPasswordUseCase } from './set-password.use-case'
 import type { ForgotPasswordResponse } from '../dtos/forgot-password.dto'
 
 /**
@@ -25,24 +24,21 @@ export class ForgotPasswordUseCase {
 
   constructor(
     @Inject(USER_REPOSITORY) private readonly users: UserRepository,
-    private readonly tenantResolver: TenantResolverService,
     private readonly setPassword: SetPasswordUseCase,
   ) {}
 
   async execute(input: {
     email: string
-    tenantSubdomain: string
   }): Promise<ForgotPasswordResponse> {
     let userId: string | null = null
 
     try {
-      const tenant = await this.tenantResolver.resolveBySubdomain(input.tenantSubdomain)
-      const user = await this.users.findByEmail(input.email, tenant.id)
+      const user = await this.users.findByEmail(input.email)
       if (user && user.isActive) {
         userId = user.id
       }
     } catch {
-      // tenant not found → still return generic success
+      // user not found → still return generic success
     }
 
     if (userId) {

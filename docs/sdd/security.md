@@ -1,8 +1,15 @@
 # Multi-Tenant Defense-in-Depth — `asistencia-saas`
 
-> **Status**: LOCKED. This document is the canonical reference for the
+> ⚠️ **HISTORICAL** — this spec describes the multi-tenant defense-in-depth model
+> that was REMOVED in the single-tenant refactor. Single-tenant deploys do not
+> need this layer; tenant context, RLS policies, and subdomain routing were
+> deleted. The active security model lives in [`apps/api/src/modules/app-config/`](../apps/api/src/modules/app-config/)
+> and the auth-module RFC coverage. Keep this document for historical reference
+> only — DO NOT reintroduce the layers described below.
+
+> **Status (pre-refactor)**: LOCKED. This document was the canonical reference for the
 > three-layer isolation model in `attendance-mvp` (Hito 1). Any code
-> change that weakens any of these layers is a security incident.
+> change that weakened any of these layers was a security incident.
 
 ## The threat
 

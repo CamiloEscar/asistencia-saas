@@ -1,7 +1,7 @@
 import { Inject, Injectable, UnauthorizedException } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
 import { ExtractJwt, Strategy } from 'passport-jwt'
-import type { CookieService } from '../cookies/cookie.service'
+import  { CookieService } from '../cookies/cookie.service'
 import { JwtKeysService } from '../../../../shared/crypto/jwt-keys.service'
 import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
 

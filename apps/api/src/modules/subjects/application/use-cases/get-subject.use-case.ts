@@ -6,15 +6,14 @@ import {
 } from '../../domain/repositories/subject.repository.interface'
 
 /**
- * GetSubjectUseCase — fetch a single subject by id, scoped to the
- * caller's institution.
+ * GetSubjectUseCase — fetch a single subject by id.
  */
 @Injectable()
 export class GetSubjectUseCase {
   constructor(@Inject(SUBJECT_REPOSITORY) private readonly subjects: ISubjectRepository) {}
 
-  async execute(institutionId: string, id: string): Promise<Subject> {
-    const found = await this.subjects.findByIdInInstitution(institutionId, id)
+  async execute(id: string): Promise<Subject> {
+    const found = await this.subjects.findById(id)
     if (!found) {
       throw new NotFoundException({ message: 'Subject not found', error: 'Not Found' })
     }

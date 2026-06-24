@@ -9,7 +9,6 @@ import { JustificationText } from '../value-objects/justification-text.vo'
  */
 export interface AttendanceProps {
   id: string
-  institutionId: string
   sessionId: string
   studentId: string
   status: string
@@ -39,9 +38,6 @@ export class Attendance {
 
   get id(): string {
     return this.props.id
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get sessionId(): string {
     return this.props.sessionId

@@ -8,15 +8,16 @@
 infra/
 ├── docker/
 │   ├── docker-compose.yml         # Local dev: Postgres 16 + Redis 7 + Adminer
+│   ├── docker-compose.prod.yml    # Production: postgres, redis, pgbouncer, api, worker, web, nginx
 │   ├── api.Dockerfile             # Multi-stage NestJS API image
 │   ├── web.Dockerfile             # Multi-stage Vite/React SPA image
 │   ├── nginx/
 │   │   ├── web.conf               # nginx config for the web container (SPA + gzip)
-│   │   └── conf.d/                # (reserved for production nginx)
+│   │   └── conf.d/                # production server block (TLS + reverse proxy)
 │   └── postgres/
 │       └── init/
 │           └── 00-extensions.sql  # pgcrypto, citext, pg_trgm
-├── scripts/                       # backup-db.sh, deploy.sh (added in Phase 19)
+├── scripts/                       # backup-db.sh, deploy.sh
 └── README.md                      # ← you are here
 ```
 
@@ -59,13 +60,9 @@ pnpm dev
 
 The API is now at `http://localhost:3000/api/v1` and the SPA at `http://localhost:5173`.
 
-### Default dev URLs (subdomain routing)
+### Default dev URL
 
-- `http://app.localhost:5173` → super-admin entry (no tenant)
-- `http://celsius.app.localhost:5173` → institution A (Celsius) login
-- `http://universidad-b.app.localhost:5173` → institution B's login
-
-Chrome and Firefox resolve `*.localhost` natively. Safari does not — see the [README troubleshooting](../../README.md#browser-support) section.
+- `http://localhost:5173` → login (single-tenant dev; one seeded institution)
 
 ### Useful commands
 
@@ -96,30 +93,29 @@ The `.env.example` files at the repo root and at each app (`apps/api/.env.exampl
 - `DATABASE_URL` — Postgres connection string
 - `REDIS_URL` — Redis connection string
 - `JWT_PRIVATE_KEY` / `JWT_PUBLIC_KEY` — RS256 keypair (PEM, multiline; quoted). On first boot the API generates a fresh pair at `JWT_PRIVATE_KEY_PATH` / `JWT_PUBLIC_KEY_PATH` if these are empty.
-- `CLOUDINARY_*` — institution logo upload credentials
-- `ROOT_DOMAIN` — `localhost` in dev, `app.com` in prod (used to extract the tenant subdomain from the request host)
+- `CLOUDINARY_*` — logo upload credentials
 
 ### `apps/api/.env`
 
-- `COOKIE_SAMESITE` — `lax` per design #186 Q3 (must NOT be `strict` in prod because of cross-subdomain)
-- `COOKIE_SECURE` — `true` in prod, `false` in dev (so cookies are sent over `http://*.app.localhost`)
+- `COOKIE_SAMESITE` — `lax` (must NOT be `strict` for cross-site flows)
+- `COOKIE_SECURE` — `true` in prod, `false` in dev (so cookies are sent over `http://localhost`)
 - `THROTTLE_TTL` / `THROTTLE_LIMIT` — default per-user rate limit (overridable per endpoint with `@Throttle()`)
 - `LOG_LEVEL` — pino level (`info` in dev/staging, `warn` in prod)
 
 ### `apps/web/.env`
 
-- `VITE_API_URL` — base URL for the API. Empty in dev (uses Vite proxy at `/api`); set to `https://api.app.com` in prod builds.
+- `VITE_API_URL` — base URL for the API. Empty in dev (uses Vite proxy at `/api`); set to your prod origin in prod builds.
 - `VITE_DEFAULT_LOCALE` — `es` for MVP
 
 ## Production topology
 
-The production stack runs on a Hostinger VPS behind Nginx (Phase 19). Summary:
+The production stack runs on a Hostinger VPS behind Nginx. Summary:
 
 ```
 Browser
   │  HTTPS
   ▼
-Nginx (Hostinger VPS)   ← wildcard *.app.com cert, gzip, security headers
+Nginx (Hostinger VPS)   ← operator-provided domain cert, gzip, security headers
   │
   ├── /api/*  ──►  api:3000          (NestJS, containerized)
   ├── /api/*  ──►  worker (BullMQ)   (separate container, same image, different CMD)
@@ -127,8 +123,8 @@ Nginx (Hostinger VPS)   ← wildcard *.app.com cert, gzip, security headers
 
   │                │
   ▼                ▼
-PgBouncer ──►  Postgres 16 (RLS active, two roles: app_user, app_admin)
+PgBouncer ──►  Postgres 16
 Redis 7       (DB 0 cache/throttler, DB 1 refresh, DB 2 activation, DB 3 bullmq)
 ```
 
-Full production setup, backup scripts, and deploy.sh land in Phase 19 (task 19.5+).
+Full production setup, backup scripts, and deploy.sh live in `infra/scripts/`.

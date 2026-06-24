@@ -1,7 +1,7 @@
 {
   "app": {
     "name": "Asistencia SaaS",
-    "tagline": "Gestión de asistencia multi-tenant"
+    "tagline": "Gestión de asistencia"
   },
   "nav": {
     "dashboard": "Panel",
@@ -110,8 +110,7 @@
     }
   },
   "roles": {
-    "SUPER_ADMIN": "Super Administrador",
-    "INSTITUTION_ADMIN": "Administrador Institucional",
+    "ADMIN": "Administrador",
     "TEACHER": "Profesor",
     "STUDENT": "Alumno"
   },
@@ -120,10 +119,6 @@
     "ABSENT": "Ausente",
     "LATE": "Tardanza",
     "JUSTIFIED": "Justificado"
-  },
-  "institutionStatus": {
-    "ACTIVE": "Activa",
-    "INACTIVE": "Inactiva"
   },
   "sessionStatus": {
     "SCHEDULED": "Programada",

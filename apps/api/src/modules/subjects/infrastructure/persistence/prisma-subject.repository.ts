@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import { Subject, type SubjectProps } from '../../domain/entities/subject.entity'
 import type {
   CreateSubjectInput,
@@ -9,36 +9,28 @@ import type {
   UpdateSubjectInput,
 } from '../../domain/repositories/subject.repository.interface'
 
-/**
- * Prisma implementation of `ISubjectRepository`. Uses the
- * tenant-aware `PrismaService` so the extension automatically
- * injects `institutionId` into every WHERE clause.
- */
 @Injectable()
 export class PrismaSubjectRepository implements ISubjectRepository {
   private readonly logger = new Logger(PrismaSubjectRepository.name)
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<Subject | null> {
-    const row = await this.prisma.subject.findFirst({ where: { id, institutionId } })
+  async findById(id: string): Promise<Subject | null> {
+    const row = await this.prisma.subject.findFirst({ where: { id } })
     return row ? this.toEntity(row) : null
   }
 
-  async findByCodeInInstitution(institutionId: string, code: string): Promise<Subject | null> {
+  async findByCode(code: string): Promise<Subject | null> {
     // Citext is case-insensitive at the DB layer.
     const row = await this.prisma.subject.findFirst({
-      where: { institutionId, code: code.toUpperCase() },
+      where: { code: code.toUpperCase() },
     })
     return row ? this.toEntity(row) : null
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListSubjectsInput,
-  ): Promise<ListSubjectsResult> {
+  async list(input: ListSubjectsInput): Promise<ListSubjectsResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: Record<string, unknown> = { institutionId }
+    const where: Record<string, unknown> = {}
     if (input.search) {
       const q = input.search.trim()
       where.OR = [
@@ -65,10 +57,9 @@ export class PrismaSubjectRepository implements ISubjectRepository {
     }
   }
 
-  async createInInstitution(input: CreateSubjectInput): Promise<Subject> {
+  async create(input: CreateSubjectInput): Promise<Subject> {
     const row = await this.prisma.subject.create({
       data: {
-        institutionId: input.institutionId,
         code: input.code.toUpperCase(),
         name: input.name,
         description: input.description ?? null,
@@ -77,40 +68,35 @@ export class PrismaSubjectRepository implements ISubjectRepository {
     return this.toEntity(row)
   }
 
-  async updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateSubjectInput,
-  ): Promise<Subject> {
+  async update(id: string, input: UpdateSubjectInput): Promise<Subject> {
     const data: Record<string, unknown> = {}
     if (input.name !== undefined) data.name = input.name
     if (input.description !== undefined) data.description = input.description
 
     const row = await this.prisma.subject.update({
-      where: { id, institutionId },
+      where: { id },
       data,
     })
     return this.toEntity(row)
   }
 
-  async setDeletedInInstitution(institutionId: string, id: string): Promise<Subject> {
+  async setDeleted(id: string): Promise<Subject> {
     const row = await this.prisma.subject.update({
-      where: { id, institutionId },
+      where: { id },
       data: { deletedAt: new Date() },
     })
     return this.toEntity(row)
   }
 
-  async countActiveCoursesInInstitution(institutionId: string, id: string): Promise<number> {
+  async countActiveCourses(id: string): Promise<number> {
     return this.prisma.course.count({
-      where: { institutionId, subjectId: id, deletedAt: null },
+      where: { subjectId: id, deletedAt: null },
     })
   }
 
   private toEntity(row: Record<string, unknown>): Subject {
     return Subject.fromPersistence({
       id: row.id as string,
-      institutionId: row.institutionId as string,
       code: row.code as string,
       name: row.name as string,
       description: (row.description as string | null) ?? null,

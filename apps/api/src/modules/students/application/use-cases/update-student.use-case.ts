@@ -19,8 +19,8 @@ import type { UpdateStudentDto } from '../dtos/update-student.dto'
 export class UpdateStudentUseCase {
   constructor(@Inject(STUDENT_REPOSITORY) private readonly students: IStudentRepository) {}
 
-  async execute(institutionId: string, id: string, input: UpdateStudentDto): Promise<Student> {
-    const target = await this.students.findByIdInInstitution(institutionId, id)
+  async execute(id: string, input: UpdateStudentDto): Promise<Student> {
+    const target = await this.students.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Student not found', error: 'Not Found' })
     }
@@ -29,7 +29,7 @@ export class UpdateStudentUseCase {
     if (input.legajo !== undefined) {
       const legajo = Legajo.create(input.legajo)
       if (legajo.value !== target.legajo) {
-        const conflict = await this.students.findByLegajoInInstitution(institutionId, legajo.value)
+        const conflict = await this.students.findByLegajo(legajo.value)
         if (conflict && conflict.id !== id) {
           throw new ConflictException({
             message: 'Legajo already in use in this institution',
@@ -44,7 +44,7 @@ export class UpdateStudentUseCase {
     // Re-validate email if changing.
     if (input.email !== undefined && input.email !== target.email) {
       const email = Email.create(input.email)
-      const conflict = await this.students.findByEmailInInstitution(institutionId, email.value)
+      const conflict = await this.students.findByEmail(email.value)
       if (conflict && conflict.id !== id) {
         throw new ConflictException({
           message: 'Email already in use in this institution',
@@ -55,7 +55,7 @@ export class UpdateStudentUseCase {
       input.email = email.value
     }
 
-    return this.students.updateInInstitution(institutionId, id, {
+    return this.students.update(id, {
       fullName: input.fullName,
       email: input.email,
       legajo: input.legajo,

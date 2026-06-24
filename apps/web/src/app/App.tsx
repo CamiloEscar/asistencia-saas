@@ -36,20 +36,7 @@ const ForgotPasswordPage = lazy(() =>
 const DashboardPage = lazy(() =>
   import('@/features/dashboard/pages/DashboardPage').then((m) => ({ default: m.DashboardPage })),
 )
-const SuperAdminDashboard = lazy(() =>
-  import('@/features/institutions/pages/SuperAdminDashboard').then((m) => ({
-    default: m.SuperAdminDashboard,
-  })),
-)
-
-// Institutions (super admin)
-const InstitutionsListPage = lazy(() =>
-  import('@/features/institutions/pages/InstitutionsListPage').then((m) => ({
-    default: m.InstitutionsListPage,
-  })),
-)
-
-// Users (institution admin)
+// Users (admin)
 const UsersListPage = lazy(() =>
   import('@/features/users/pages/UsersListPage').then((m) => ({ default: m.UsersListPage })),
 )
@@ -144,23 +131,11 @@ export function App() {
                     <Route element={<AppShell />}>
                       <Route path="/" element={<RoleRedirect />} />
                       <Route path={Paths.dashboard} element={<DashboardPage />} />
-                      <Route path={Paths.admin} element={<SuperAdminDashboard />} />
-
-                      {/* Institutions - SUPER_ADMIN only */}
-                      <Route
-                        path={Paths.institutions}
-                        element={
-                          <ProtectedRoute allowedRoles={[UserRole.SUPER_ADMIN]}>
-                            <InstitutionsListPage />
-                          </ProtectedRoute>
-                        }
-                      />
-
-                      {/* Users - INSTITUTION_ADMIN+ */}
+                      {/* Users - ADMIN only */}
                       <Route
                         path={Paths.users}
                         element={
-                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                             <UsersListPage />
                           </ProtectedRoute>
                         }
@@ -171,7 +146,7 @@ export function App() {
                         path={Paths.students}
                         element={
                           <ProtectedRoute
-                            allowedRoles={[UserRole.INSTITUTION_ADMIN, UserRole.TEACHER]}
+                            allowedRoles={[UserRole.ADMIN, UserRole.TEACHER]}
                           >
                             <StudentsListPage />
                           </ProtectedRoute>
@@ -180,7 +155,7 @@ export function App() {
                       <Route
                         path={Paths.studentsBulkImport}
                         element={
-                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                             <BulkImportPage />
                           </ProtectedRoute>
                         }
@@ -190,7 +165,7 @@ export function App() {
                       <Route
                         path={Paths.teachers}
                         element={
-                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                             <TeachersListPage />
                           </ProtectedRoute>
                         }
@@ -200,7 +175,7 @@ export function App() {
                       <Route
                         path={Paths.subjects}
                         element={
-                          <ProtectedRoute allowedRoles={[UserRole.INSTITUTION_ADMIN]}>
+                          <ProtectedRoute allowedRoles={[UserRole.ADMIN]}>
                             <SubjectsListPage />
                           </ProtectedRoute>
                         }
@@ -215,7 +190,7 @@ export function App() {
                         path={Paths.takeAttendance(':id')}
                         element={
                           <ProtectedRoute
-                            allowedRoles={[UserRole.TEACHER, UserRole.INSTITUTION_ADMIN]}
+                            allowedRoles={[UserRole.TEACHER, UserRole.ADMIN]}
                           >
                             <TakeAttendancePage />
                           </ProtectedRoute>
@@ -225,7 +200,7 @@ export function App() {
                         path={Paths.attendanceHistory}
                         element={
                           <ProtectedRoute
-                            allowedRoles={[UserRole.TEACHER, UserRole.INSTITUTION_ADMIN]}
+                            allowedRoles={[UserRole.TEACHER, UserRole.ADMIN]}
                           >
                             <AttendanceHistoryPage />
                           </ProtectedRoute>

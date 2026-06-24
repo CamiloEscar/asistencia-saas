@@ -125,9 +125,9 @@ services:
       CLOUDINARY_CLOUD_NAME: ${CLOUDINARY_CLOUD_NAME:-}
       CLOUDINARY_API_KEY: ${CLOUDINARY_API_KEY:-}
       CLOUDINARY_API_SECRET: ${CLOUDINARY_API_SECRET:-}
-      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-.app.com}
+      COOKIE_DOMAIN: ${COOKIE_DOMAIN:-}
       COOKIE_SECURE: 'true'
-      CORS_ORIGINS: ${CORS_ORIGINS:-https://app.com,https://*.app.com}
+      CORS_ORIGINS: ${CORS_ORIGINS:-${API_DOMAIN}}
       THROTTLE_TTL: ${THROTTLE_TTL:-60}
       THROTTLE_LIMIT: ${THROTTLE_LIMIT:-100}
       LOG_LEVEL: ${LOG_LEVEL:-info}
@@ -201,14 +201,17 @@ services:
   nginx:
     build:
       context: ./nginx
+      args:
+        API_DOMAIN: ${API_DOMAIN}
     restart: unless-stopped
     ports:
       - '80:80'
       - '443:443'
     volumes:
-      # Wildcard certs (managed by the user's Python bot, not by us)
-      - /etc/nginx/ssl/wildcard.pem:/etc/nginx/ssl/wildcard.pem:ro
-      - /etc/nginx/ssl/wildcard.key:/etc/nginx/ssl/wildcard.key:ro
+      # Single-tenant cert (managed by the operator). Mount the operator's
+      # domain cert at /etc/nginx/ssl/server.pem and key.
+      - /etc/nginx/ssl/server.pem:/etc/nginx/ssl/server.pem:ro
+      - /etc/nginx/ssl/server.key:/etc/nginx/ssl/server.key:ro
     depends_on:
       - api
       - web

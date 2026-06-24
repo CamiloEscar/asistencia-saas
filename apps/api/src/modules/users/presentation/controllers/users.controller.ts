@@ -14,16 +14,15 @@ import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../../../auth/infrastructure/guards/tenant.guard'
 import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
 import type { TokenClaims } from '../../../../shared/crypto/jwt.service'
 import { CurrentUser } from '../../../auth/presentation/decorators/current-user.decorator'
-import type { CreateUserUseCase } from '../../application/use-cases/create-user.use-case'
-import type { ListUsersUseCase } from '../../application/use-cases/list-users.use-case'
-import type { GetUserUseCase } from '../../application/use-cases/get-user.use-case'
-import type { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case'
-import type { DeactivateUserUseCase } from '../../application/use-cases/deactivate-user.use-case'
-import type { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case'
+import  { CreateUserUseCase } from '../../application/use-cases/create-user.use-case'
+import  { ListUsersUseCase } from '../../application/use-cases/list-users.use-case'
+import  { GetUserUseCase } from '../../application/use-cases/get-user.use-case'
+import  { UpdateUserUseCase } from '../../application/use-cases/update-user.use-case'
+import  { DeactivateUserUseCase } from '../../application/use-cases/deactivate-user.use-case'
+import  { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case'
 import {
   CreateUserDtoSchema,
   type CreateUserDto,
@@ -34,18 +33,15 @@ import {
   ListUsersQueryDtoSchema,
   type ListUsersQueryDto,
 } from '../../application/dtos/list-users.query.dto'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 
 /**
- * UsersController — `/api/users/*` endpoints. All scoped to the
- * caller's institution. INSTITUTION_ADMIN can manage all users
- * in their institution. TEACHER and STUDENT do not have a
- * `/api/users` management surface (the spec routes them through
- * `/api/me` for self-service).
+ * UsersController — `/api/users/*` endpoints. ADMIN can manage all
+ * users. TEACHER and STUDENT do not have a `/api/users` management
+ * surface (the spec routes them through `/api/me` for self-service).
  */
 @Controller('users')
-@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
-@Roles('INSTITUTION_ADMIN')
+@UseGuards(JwtAuthGuard, RolesGuard)
+@Roles('ADMIN')
 export class UsersController {
   constructor(
     private readonly createUseCase: CreateUserUseCase,
@@ -61,8 +57,7 @@ export class UsersController {
   async list(
     @Query(new ZodValidationPipe(ListUsersQueryDtoSchema)) query: ListUsersQueryDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const result = await this.listUseCase.execute(institutionId, {
+    const result = await this.listUseCase.execute({
       cursor: query.cursor,
       limit: query.limit,
       role: query.role ?? null,
@@ -82,15 +77,13 @@ export class UsersController {
   create(
     @Body(new ZodValidationPipe(CreateUserDtoSchema)) body: CreateUserDto,
   ): Promise<CreateUserResponse> {
-    const institutionId = this.requireTenantId()
-    return this.createUseCase.execute(body, institutionId)
+    return this.createUseCase.execute(body)
   }
 
   // ─── GET /users/:id ────────────────────────────────────────────────────
   @Get(':id')
   async byId(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const u = await this.getUseCase.execute(institutionId, id)
+    const u = await this.getUseCase.execute(id)
     return u.toPublicJson()
   }
 
@@ -102,8 +95,7 @@ export class UsersController {
     @Body(new ZodValidationPipe(UpdateUserDtoSchema)) body: UpdateUserDto,
     @CurrentUser() actor: TokenClaims,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const u = await this.updateUseCase.execute(institutionId, actor.sub, id, body)
+    const u = await this.updateUseCase.execute(actor.sub, id, body)
     return u.toPublicJson()
   }
 
@@ -111,8 +103,7 @@ export class UsersController {
   @Post(':id/deactivate')
   @Audit({ action: 'USER_DEACTIVATED', entityType: 'User' })
   async deactivate(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const u = await this.deactivateUseCase.execute(institutionId, id)
+    const u = await this.deactivateUseCase.execute(id)
     return u.toPublicJson()
   }
 
@@ -120,8 +111,7 @@ export class UsersController {
   @Delete(':id')
   @Audit({ action: 'USER_DELETED', entityType: 'User' })
   async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const u = await this.deactivateUseCase.execute(institutionId, id)
+    const u = await this.deactivateUseCase.execute(id)
     return u.toPublicJson()
   }
 
@@ -132,21 +122,6 @@ export class UsersController {
     @Param('id', new ParseUUIDPipe()) id: string,
     @CurrentUser() actor: TokenClaims,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    return this.resetPasswordUseCase.execute(institutionId, actor.sub, id)
-  }
-
-  /**
-   * The tenant context is populated by TenantMiddleware at the
-   * start of every request. If it's missing here, that's a bug
-   * (the middleware didn't run). We throw a clear 500 instead of
-   * letting downstream queries hit a missing-context error.
-   */
-  private requireTenantId(): string {
-    const ctx = getTenantContext()
-    if (!ctx) {
-      throw new Error('Tenant context missing — TenantMiddleware did not run')
-    }
-    return ctx.tenantId
+    return this.resetPasswordUseCase.execute(actor.sub, id)
   }
 }

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { INSTITUTION_ASSIGNABLE_ROLES } from './create-user.dto'
+import { ASSIGNABLE_ROLES } from './create-user.dto'
 
 /**
  * Update-user DTO. Role can be changed but constrained to the
@@ -10,7 +10,7 @@ export const UpdateUserDtoSchema = z
   .object({
     fullName: z.string().trim().min(1).max(200).optional(),
     email: z.string().trim().toLowerCase().email('Invalid email format').optional(),
-    role: z.enum(INSTITUTION_ASSIGNABLE_ROLES).optional(),
+    role: z.enum(ASSIGNABLE_ROLES).optional(),
     phone: z.string().trim().max(30).nullable().optional(),
     legajo: z.string().trim().min(1).max(20).nullable().optional(),
     isActive: z.boolean().optional(),

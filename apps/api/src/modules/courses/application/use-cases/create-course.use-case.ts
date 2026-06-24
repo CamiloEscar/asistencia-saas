@@ -8,13 +8,13 @@ import {
 import type { CreateCourseDto, CreateCourseResponse } from '../dtos/create-course.dto'
 
 /**
- * CreateCourseUseCase — creates a course in the caller's
- * institution, optionally assigning teachers and enrolling students
- * in a single transaction. Per spec REQ-COURSE-002:
- *   - Validates subject belongs to the same institution.
- *   - Validates teacher belongs to the same institution.
- *   - Validates students belong to the same institution.
- *   - Code is unique within the institution (409 on conflict).
+ * CreateCourseUseCase — creates a course, optionally assigning
+ * teachers and enrolling students in a single transaction. Per
+ * spec REQ-COURSE-002:
+ *   - Validates subject exists.
+ *   - Validates teachers exist.
+ *   - Validates students exist.
+ *   - Code is unique (409 on conflict).
  *
  * Class session generation (REQ-ATT-010) is a follow-up: the
  * schedule is stored on the course row; sessions are created by
@@ -28,29 +28,29 @@ export class CreateCourseUseCase {
 
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
-  async execute(input: CreateCourseDto, institutionId: string): Promise<CreateCourseResponse> {
+  async execute(input: CreateCourseDto): Promise<CreateCourseResponse> {
     // 1. Validate schedule format.
     const schedule = ScheduleVO.create(input.schedule)
 
-    // 2. Cross-tenant validation.
-    await this.courses.validateSubjectInInstitution(institutionId, input.subjectId)
+    // 2. Existence validation.
+    await this.courses.validateSubjectExists(input.subjectId)
     if (input.teacherIds) {
       for (const teacherId of input.teacherIds) {
-        await this.courses.validateTeacherInInstitution(institutionId, teacherId)
+        await this.courses.validateTeacherExists(teacherId)
       }
     }
     if (input.initialStudentIds) {
       for (const studentId of input.initialStudentIds) {
-        await this.courses.validateStudentInInstitution(institutionId, studentId)
+        await this.courses.validateStudentExists(studentId)
       }
     }
 
     // 3. Code uniqueness.
     const code = input.code.toUpperCase()
-    const existing = await this.courses.findByCodeInInstitution(institutionId, code)
+    const existing = await this.courses.findByCode(code)
     if (existing) {
       throw new ConflictException({
-        message: 'Course code already in use in this institution',
+        message: 'Course code already in use',
         error: 'Conflict',
         field: 'code',
       })
@@ -67,7 +67,6 @@ export class CreateCourseUseCase {
 
     // 5. Create the course.
     const createInput: CreateCourseInput = {
-      institutionId,
       subjectId: input.subjectId,
       code,
       name: input.name,
@@ -78,7 +77,7 @@ export class CreateCourseUseCase {
       schedule: schedule.toJson(),
       defaultSessionDurationMin: input.defaultSessionDurationMin ?? 80,
     }
-    const course = await this.courses.createInInstitution(createInput)
+    const course = await this.courses.create(createInput)
 
     // 6. Assign teachers (idempotent) and enroll students.
     if (input.teacherIds) {

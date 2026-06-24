@@ -5,7 +5,6 @@ import esCommon from '../../locales/es/common.json'
 import esErrors from '../../locales/es/errors.json'
 import esDashboard from '../../locales/es/dashboard.json'
 import esFeedback from '../../locales/es/feedback.json'
-import esInstitutions from '../../locales/es/institutions.json'
 import esUsers from '../../locales/es/users.json'
 import esStudents from '../../locales/es/students.json'
 import esTeachers from '../../locales/es/teachers.json'
@@ -33,7 +32,6 @@ export function initI18n() {
       'errors',
       'dashboard',
       'feedback',
-      'institutions',
       'users',
       'students',
       'teachers',
@@ -56,7 +54,6 @@ export function initI18n() {
     'errors',
     'dashboard',
     'feedback',
-    'institutions',
     'users',
     'students',
     'teachers',
@@ -77,7 +74,6 @@ export function initI18n() {
           errors: esErrors,
           dashboard: esDashboard,
           feedback: esFeedback,
-          institutions: esInstitutions,
           users: esUsers,
           students: esStudents,
           teachers: esTeachers,

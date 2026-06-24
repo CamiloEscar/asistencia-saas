@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable, Logger } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import { Course, type CourseProps } from '../../domain/entities/course.entity'
 import type {
   AssignedTeacher,
@@ -12,16 +12,10 @@ import type {
 } from '../../domain/repositories/course.repository.interface'
 
 /**
- * Prisma implementation of `ICourseRepository`. Uses the
- * tenant-aware `PrismaService` so the extension automatically
- * injects `institutionId` into every WHERE clause.
- *
- * Manages the m:n relationships:
+ * Prisma implementation of `ICourseRepository`. Manages the m:n
+ * relationships:
  *   - `Enrollment` (course ↔ student)
  *   - `CourseTeacher` (course ↔ teacher)
- *
- * Both are tenant-scoped via the denormalized `institutionId`
- * column on each join table.
  */
 @Injectable()
 export class PrismaCourseRepository implements ICourseRepository {
@@ -31,24 +25,21 @@ export class PrismaCourseRepository implements ICourseRepository {
 
   // ─── Reads ────────────────────────────────────────────────────────────
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<Course | null> {
-    const row = await this.prisma.course.findFirst({ where: { id, institutionId } })
+  async findById(id: string): Promise<Course | null> {
+    const row = await this.prisma.course.findFirst({ where: { id } })
     return row ? this.toEntity(row) : null
   }
 
-  async findByCodeInInstitution(institutionId: string, code: string): Promise<Course | null> {
+  async findByCode(code: string): Promise<Course | null> {
     const row = await this.prisma.course.findFirst({
-      where: { institutionId, code: code.toUpperCase() },
+      where: { code: code.toUpperCase() },
     })
     return row ? this.toEntity(row) : null
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListCoursesInput,
-  ): Promise<ListCoursesResult> {
+  async list(input: ListCoursesInput): Promise<ListCoursesResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: Record<string, unknown> = { institutionId }
+    const where: Record<string, unknown> = {}
     if (input.subjectId) where.subjectId = input.subjectId
     if (input.semester) where.semester = input.semester
     if (input.isActive !== null && input.isActive !== undefined) {
@@ -70,7 +61,7 @@ export class PrismaCourseRepository implements ICourseRepository {
     // STUDENT sees only enrolled courses. ADMIN sees all.
     if (input.forRole === 'TEACHER' && input.forUserId) {
       const assignments = await this.prisma.courseTeacher.findMany({
-        where: { teacherId: input.forUserId, institutionId },
+        where: { teacherId: input.forUserId },
         select: { courseId: true },
       })
       const courseIds = assignments.map((a: { courseId: string }) => a.courseId)
@@ -80,7 +71,7 @@ export class PrismaCourseRepository implements ICourseRepository {
       where.id = { in: courseIds }
     } else if (input.forRole === 'STUDENT' && input.forUserId) {
       const enrollments = await this.prisma.enrollment.findMany({
-        where: { studentId: input.forUserId, institutionId },
+        where: { studentId: input.forUserId },
         select: { courseId: true },
       })
       const courseIds = enrollments.map((e: { courseId: string }) => e.courseId)
@@ -93,7 +84,7 @@ export class PrismaCourseRepository implements ICourseRepository {
     // Additional explicit filters can narrow the above set.
     if (input.teacherId) {
       const assignments = await this.prisma.courseTeacher.findMany({
-        where: { teacherId: input.teacherId, institutionId },
+        where: { teacherId: input.teacherId },
         select: { courseId: true },
       })
       const courseIds = new Set(assignments.map((a: { courseId: string }) => a.courseId))
@@ -107,7 +98,7 @@ export class PrismaCourseRepository implements ICourseRepository {
     }
     if (input.studentId) {
       const enrollments = await this.prisma.enrollment.findMany({
-        where: { studentId: input.studentId, institutionId },
+        where: { studentId: input.studentId },
         select: { courseId: true },
       })
       const courseIds = new Set(enrollments.map((e: { courseId: string }) => e.courseId))
@@ -139,10 +130,9 @@ export class PrismaCourseRepository implements ICourseRepository {
 
   // ─── Writes ───────────────────────────────────────────────────────────
 
-  async createInInstitution(input: CreateCourseInput): Promise<Course> {
+  async create(input: CreateCourseInput): Promise<Course> {
     const row = await this.prisma.course.create({
       data: {
-        institutionId: input.institutionId,
         subjectId: input.subjectId,
         code: input.code.toUpperCase(),
         name: input.name,
@@ -157,11 +147,7 @@ export class PrismaCourseRepository implements ICourseRepository {
     return this.toEntity(row)
   }
 
-  async updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateCourseInput,
-  ): Promise<Course> {
+  async update(id: string, input: UpdateCourseInput): Promise<Course> {
     const data: Record<string, unknown> = {}
     if (input.name !== undefined) data.name = input.name
     if (input.description !== undefined) data.description = input.description
@@ -173,15 +159,15 @@ export class PrismaCourseRepository implements ICourseRepository {
     }
 
     const row = await this.prisma.course.update({
-      where: { id, institutionId },
+      where: { id },
       data,
     })
     return this.toEntity(row)
   }
 
-  async setDeletedInInstitution(institutionId: string, id: string): Promise<Course> {
+  async setDeleted(id: string): Promise<Course> {
     const row = await this.prisma.course.update({
-      where: { id, institutionId },
+      where: { id },
       data: { deletedAt: new Date() },
     })
     return this.toEntity(row)
@@ -190,18 +176,9 @@ export class PrismaCourseRepository implements ICourseRepository {
   // ─── Enrollment (course ↔ student) ───────────────────────────────────
 
   async enrollStudent(courseId: string, studentId: string): Promise<void> {
-    // We need the institutionId for the denormalized column. Pull
-    // the course first; on miss this no-ops.
-    const course = await this.prisma.course.findUnique({
-      where: { id: courseId },
-      select: { institutionId: true },
-    })
-    if (!course) {
-      throw new BadRequestException({ message: 'Course not found', error: 'Bad Request' })
-    }
     await this.prisma.enrollment
       .create({
-        data: { institutionId: course.institutionId, courseId, studentId },
+        data: { courseId, studentId },
       })
       .catch((err: Error) => {
         // UNIQUE (courseId, studentId) — idempotent.
@@ -256,16 +233,9 @@ export class PrismaCourseRepository implements ICourseRepository {
   // ─── Teacher assignment (course ↔ teacher) ────────────────────────────
 
   async assignTeacher(courseId: string, teacherId: string): Promise<void> {
-    const course = await this.prisma.course.findUnique({
-      where: { id: courseId },
-      select: { institutionId: true },
-    })
-    if (!course) {
-      throw new BadRequestException({ message: 'Course not found', error: 'Bad Request' })
-    }
     await this.prisma.courseTeacher
       .create({
-        data: { institutionId: course.institutionId, courseId, teacherId },
+        data: { courseId, teacherId },
       })
       .catch((err: Error) => {
         if (!err.message.includes('Unique constraint')) throw err
@@ -299,44 +269,44 @@ export class PrismaCourseRepository implements ICourseRepository {
     return this.prisma.courseTeacher.count({ where: { courseId } })
   }
 
-  // ─── Cross-tenant validation helpers ─────────────────────────────────
+  // ─── Existence validation helpers ─────────────────────────────────────
 
-  async validateSubjectInInstitution(institutionId: string, subjectId: string): Promise<void> {
+  async validateSubjectExists(subjectId: string): Promise<void> {
     const found = await this.prisma.subject.findFirst({
-      where: { id: subjectId, institutionId },
+      where: { id: subjectId },
       select: { id: true },
     })
     if (!found) {
       throw new BadRequestException({
-        message: 'Subject does not belong to this institution',
+        message: 'Subject not found',
         error: 'Bad Request',
         field: 'subjectId',
       })
     }
   }
 
-  async validateTeacherInInstitution(institutionId: string, teacherId: string): Promise<void> {
+  async validateTeacherExists(teacherId: string): Promise<void> {
     const found = await this.prisma.user.findFirst({
-      where: { id: teacherId, institutionId, role: 'TEACHER' },
+      where: { id: teacherId, role: 'TEACHER' },
       select: { id: true },
     })
     if (!found) {
       throw new BadRequestException({
-        message: 'Teacher does not belong to this institution',
+        message: 'Teacher not found',
         error: 'Bad Request',
         field: 'teacherId',
       })
     }
   }
 
-  async validateStudentInInstitution(institutionId: string, studentId: string): Promise<void> {
+  async validateStudentExists(studentId: string): Promise<void> {
     const found = await this.prisma.user.findFirst({
-      where: { id: studentId, institutionId, role: 'STUDENT' },
+      where: { id: studentId, role: 'STUDENT' },
       select: { id: true },
     })
     if (!found) {
       throw new BadRequestException({
-        message: 'Student does not belong to this institution',
+        message: 'Student not found',
         error: 'Bad Request',
         field: 'studentId',
       })
@@ -348,7 +318,6 @@ export class PrismaCourseRepository implements ICourseRepository {
   private toEntity(row: Record<string, unknown>): Course {
     return Course.fromPersistence({
       id: row.id as string,
-      institutionId: row.institutionId as string,
       subjectId: row.subjectId as string,
       code: row.code as string,
       name: row.name as string,

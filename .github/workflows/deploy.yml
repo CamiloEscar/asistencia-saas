@@ -25,9 +25,11 @@ jobs:
     name: Deploy to VPS
     runs-on: ubuntu-latest
     # Use environment for manual approval (set up in GitHub Settings → Environments)
+    # `APP_DOMAIN` must be set in the `production` environment secrets to
+    # the public domain this deploy serves (e.g. https://asistencia.example.com).
     environment:
       name: production
-      url: https://app.com
+      url: ${{ vars.APP_DOMAIN || 'https://app.example.com' }}
 
     # Don't run on push if the CI workflow failed.
     # `workflow_run` is the cleanest way to gate on CI status.
@@ -62,10 +64,16 @@ jobs:
 
       - name: Smoke test
         if: success()
+        env:
+          APP_DOMAIN: ${{ vars.APP_DOMAIN || secrets.APP_DOMAIN }}
         run: |
-          echo "Waiting for app.com to be healthy..."
+          if [ -z "$APP_DOMAIN" ]; then
+            echo "APP_DOMAIN is not set — define it as an environment variable in the 'production' environment."
+            exit 1
+          fi
+          echo "Waiting for $APP_DOMAIN to be healthy..."
           for i in $(seq 1 30); do
-            if curl -fsS https://app.com/health > /dev/null 2>&1; then
+            if curl -fsS "$APP_DOMAIN/health" > /dev/null 2>&1; then
               echo "Production is healthy"
               exit 0
             fi

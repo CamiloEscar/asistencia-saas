@@ -6,7 +6,6 @@
  */
 export interface ClassSessionProps {
   id: string
-  institutionId: string
   courseId: string
   scheduledAt: Date
   durationMin: number
@@ -38,9 +37,6 @@ export class ClassSession {
 
   get id(): string {
     return this.props.id
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get courseId(): string {
     return this.props.courseId

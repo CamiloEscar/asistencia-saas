@@ -40,16 +40,16 @@ describe('BulkImportStudentsUseCase', () => {
 
   beforeEach(() => {
     students = {
-      findByIdInInstitution: jest.fn(),
-      findByLegajoInInstitution: jest.fn(),
-      findByEmailInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
+      findById: jest.fn(),
+      findByLegajo: jest.fn(),
+      findByEmail: jest.fn(),
+      list: jest.fn(),
       listForTeacher: jest.fn(),
-      createInInstitution: jest.fn(),
-      updateInInstitution: jest.fn(),
-      setActiveInInstitution: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      setActive: jest.fn(),
       bulkUpsert: jest.fn(),
-      countInInstitution: jest.fn(),
+      count: jest.fn(),
     } as unknown as jest.Mocked<IStudentRepository>
     csv = { parseStudentCsv: jest.fn() }
     redis = { eval: jest.fn().mockResolvedValue([1, 60 * 60]) }
@@ -77,12 +77,12 @@ describe('BulkImportStudentsUseCase', () => {
       errors: [],
     } satisfies BulkImportResult)
 
-    const result = await useCase.execute(Buffer.from('ignored'), 'i-1', 'u-1', {
+    const result = await useCase.execute(Buffer.from('ignored'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
 
-    expect(students.bulkUpsert).toHaveBeenCalledWith('i-1', expect.any(Array))
+    expect(students.bulkUpsert).toHaveBeenCalledWith(expect.any(Array))
     expect(queue.add).not.toHaveBeenCalled()
     expect(result).toMatchObject({ created: 10, skipped: 0, updated: 0, errors: [] })
   })
@@ -91,7 +91,7 @@ describe('BulkImportStudentsUseCase', () => {
     const rows = manyRows(501)
     csv.parseStudentCsv.mockResolvedValue({ rows, errors: [], totalRows: 501 })
 
-    const result = await useCase.execute(Buffer.from('ignored'), 'i-1', 'u-1', {
+    const result = await useCase.execute(Buffer.from('ignored'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
@@ -99,7 +99,7 @@ describe('BulkImportStudentsUseCase', () => {
     expect(students.bulkUpsert).not.toHaveBeenCalled()
     expect(queue.add).toHaveBeenCalledWith(
       expect.any(String),
-      expect.objectContaining({ institutionId: 'i-1', userId: 'u-1' }),
+      expect.objectContaining({ userId: 'u-1' }),
       expect.any(Object),
     )
     expect(result).toMatchObject({
@@ -113,7 +113,7 @@ describe('BulkImportStudentsUseCase', () => {
     const rows = manyRows(3)
     csv.parseStudentCsv.mockResolvedValue({ rows, errors: [], totalRows: 3 })
 
-    const result = await useCase.execute(Buffer.from('ignored'), 'i-1', 'u-1', {
+    const result = await useCase.execute(Buffer.from('ignored'), 'u-1', {
       dryRun: true,
       updateExisting: false,
     })
@@ -145,7 +145,7 @@ describe('BulkImportStudentsUseCase', () => {
       errors: [],
     })
 
-    const result = await useCase.execute(Buffer.from('ignored'), 'i-1', 'u-1', {
+    const result = await useCase.execute(Buffer.from('ignored'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
@@ -162,11 +162,11 @@ describe('BulkImportStudentsUseCase', () => {
     csv.parseStudentCsv.mockResolvedValue({ rows, errors: [], totalRows: 3 })
 
     await expect(
-      useCase.execute(Buffer.from('x'), 'i-1', 'u-1', { dryRun: false, updateExisting: false }),
+      useCase.execute(Buffer.from('x'), 'u-1', { dryRun: false, updateExisting: false }),
     ).rejects.toBeInstanceOf(HttpException)
 
     try {
-      await useCase.execute(Buffer.from('x'), 'i-1', 'u-1', {
+      await useCase.execute(Buffer.from('x'), 'u-1', {
         dryRun: false,
         updateExisting: false,
       })

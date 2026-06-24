@@ -1,5 +1,5 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import { Attendance, type AttendanceProps } from '../../domain/entities/attendance.entity'
 import {
   ATTENDANCE_STATUSES,
@@ -19,19 +19,14 @@ import {
 } from '../../domain/repositories/attendance.repository.interface'
 
 /**
- * Prisma implementation of `IAttendanceRepository`. Uses the
- * tenant-aware `PrismaService` so the `institutionId` is
- * injected automatically. For multi-statement transactions (bulk
- * upsert) we additionally wrap in `forTenant` so RLS is active
- * for every statement (defense-in-depth per design §2.1).
+ * Prisma implementation of `IAttendanceRepository`.
  *
  * **Performance notes** (per design §9.1):
  *   - bulk upsert: find existing + createMany + per-row update,
  *     all in one transaction. Typical 60-student class = ~62
  *     round-trips inside a single TX → well under 50ms on a
  *     healthy network.
- *   - summaryByCourse: groupBy on `(institutionId, recordedAt)`
- *     index. <100ms for 1M rows.
+ *   - summaryByCourse: groupBy on `(recordedAt)` index. <100ms for 1M rows.
  *   - summaryByStudent: load + aggregate in JS (for per-course
  *     breakdown). For typical semester (300 records) < 25ms.
  *     Will be replaced with a materialized view in Hito 2.
@@ -44,19 +39,16 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
 
   // ─── Reads ───────────────────────────────────────────────────────────
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<Attendance | null> {
+  async findById(id: string): Promise<Attendance | null> {
     const row = await this.prisma.attendanceRecord.findFirst({
-      where: { id, institutionId },
+      where: { id },
     })
     return row ? this.toEntity(row) : null
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListAttendanceInput,
-  ): Promise<ListAttendanceResult> {
+  async list(input: ListAttendanceInput): Promise<ListAttendanceResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: Record<string, unknown> = { institutionId }
+    const where: Record<string, unknown> = {}
     if (input.status) where.status = input.status
     if (input.studentId) where.studentId = input.studentId
     if (input.sessionId) where.sessionId = input.sessionId
@@ -67,9 +59,6 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
       }
     }
     if (input.courseId) {
-      // Filter by joining the session's course. The
-      // `(institutionId, courseId)` index on class_sessions keeps
-      // this fast.
       where.session = { courseId: input.courseId }
     }
 
@@ -77,7 +66,7 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
     // sees only their own records. ADMIN sees everything.
     if (input.forRole === 'TEACHER' && input.forUserId) {
       const assignments = await this.prisma.courseTeacher.findMany({
-        where: { teacherId: input.forUserId, institutionId },
+        where: { teacherId: input.forUserId },
         select: { courseId: true },
       })
       const courseIds = assignments.map((a: { courseId: string }) => a.courseId)
@@ -111,7 +100,6 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
 
   async bulkCreateOrUpdate(input: {
     sessionId: string
-    institutionId: string
     recordedBy: string
     records: AttendanceRecordInput[]
   }): Promise<BulkUpsertResult> {
@@ -119,7 +107,7 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
       return { created: 0, updated: 0, recordIds: [] }
     }
 
-    return this.prisma.forTenant(input.institutionId, async (tx) => {
+    return this.prisma.$transaction(async (tx) => {
       // 1. Find the existing rows for this session + the given
       //    students. We need their ids to issue updates; the
       //    UNIQUE (sessionId, studentId) is the lookup key.
@@ -144,7 +132,6 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
       if (newRows.length > 0) {
         await tx.attendanceRecord.createMany({
           data: newRows.map((r: AttendanceRecordInput) => ({
-            institutionId: input.institutionId,
             sessionId: input.sessionId,
             studentId: r.studentId,
             status: r.status,
@@ -197,8 +184,7 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
     })
   }
 
-  async updateByIdInInstitution(
-    institutionId: string,
+  async updateById(
     id: string,
     input: UpdateAttendanceInput,
     _byUser: string,
@@ -212,7 +198,7 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
       data.evidenceUrl = input.evidenceUrl
     }
     const row = await this.prisma.attendanceRecord.update({
-      where: { id, institutionId },
+      where: { id },
       data,
     })
     return this.toEntity(row)
@@ -221,12 +207,10 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
   // ─── Aggregations ────────────────────────────────────────────────────
 
   async summaryByCourse(
-    institutionId: string,
     courseId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary> {
     const where: Record<string, unknown> = {
-      institutionId,
       session: { courseId },
     }
     if (dateRange?.from || dateRange?.to) {
@@ -245,18 +229,11 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
   }
 
   async summaryByStudent(
-    institutionId: string,
     studentId: string,
     courseId?: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<StudentAttendanceSummary> {
-    // For per-course breakdown, load the rows (with session.courseId)
-    // and aggregate in JS. For a typical student (300 records per
-    // semester) this is < 25ms.
-    const where: Record<string, unknown> = {
-      institutionId,
-      studentId,
-    }
+    const where: Record<string, unknown> = { studentId }
     if (courseId) {
       where.session = { courseId }
     }
@@ -320,14 +297,11 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
   }
 
   async summaryByTeacher(
-    institutionId: string,
     teacherId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary> {
-    // Find the courses the teacher is assigned to, then aggregate
-    // attendance across all of them.
     const assignments = await this.prisma.courseTeacher.findMany({
-      where: { teacherId, institutionId },
+      where: { teacherId },
       select: { courseId: true },
     })
     const courseIds = assignments.map((a: { courseId: string }) => a.courseId)
@@ -336,7 +310,6 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
     }
 
     const where: Record<string, unknown> = {
-      institutionId,
       session: { courseId: { in: courseIds } },
     }
     if (dateRange?.from || dateRange?.to) {
@@ -430,7 +403,6 @@ export class PrismaAttendanceRepository implements IAttendanceRepository {
   private toEntity(row: Record<string, unknown>): Attendance {
     return Attendance.fromPersistence({
       id: row.id as string,
-      institutionId: row.institutionId as string,
       sessionId: row.sessionId as string,
       studentId: row.studentId as string,
       status: row.status as string,

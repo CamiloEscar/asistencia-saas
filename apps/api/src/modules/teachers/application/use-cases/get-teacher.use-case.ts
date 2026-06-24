@@ -13,8 +13,8 @@ import {
 export class GetTeacherUseCase {
   constructor(@Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository) {}
 
-  async execute(institutionId: string, id: string): Promise<Teacher> {
-    const found = await this.teachers.findByIdInInstitution(institutionId, id)
+  async execute(id: string): Promise<Teacher> {
+    const found = await this.teachers.findById(id)
     if (!found) {
       throw new NotFoundException({ message: 'Teacher not found', error: 'Not Found' })
     }

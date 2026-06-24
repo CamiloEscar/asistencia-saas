@@ -2,14 +2,9 @@ import type { Attendance } from '../entities/attendance.entity'
 import type { AttendanceStatusValue } from '../value-objects/attendance-status.vo'
 
 /**
- * Repository contract for the attendance module. Tenant-scoped:
- * every read/write takes `institutionId` (or scopes internally
- * via the `forTenant` Prisma helper) so the application layer
- * never has to remember. RLS is the final defense — these
- * explicit `institutionId` params document the intent.
- *
- * Implementation note: bulk operations use a single Prisma
- * transaction so a partial failure rolls back the whole batch
+ * Repository contract for the attendance module. Implementation
+ * note: bulk operations use a single Prisma transaction so a
+ * partial failure rolls back the whole batch
  * (REQ-ATT-001-04 atomicity).
  */
 
@@ -41,7 +36,7 @@ export interface ListAttendanceInput {
   dateTo?: Date | null
   /**
    * Role-based filter applied server-side:
-   *  - 'ADMIN'  → all records in the institution
+   *  - 'ADMIN'  → all records
    *  - 'TEACHER' → only records for sessions whose course is
    *                 assigned to `forUserId`
    *  - 'STUDENT' → only records for `studentId === forUserId`
@@ -87,8 +82,8 @@ export interface StudentAttendanceSummary extends AttendanceSummary {
 }
 
 export interface IAttendanceRepository {
-  /** Find by id within institution. Returns null if not found or cross-tenant. */
-  findByIdInInstitution(institutionId: string, id: string): Promise<Attendance | null>
+  /** Find by id. Returns null if not found. */
+  findById(id: string): Promise<Attendance | null>
 
   /**
    * Bulk create or update attendance for a session. Runs in a
@@ -102,7 +97,6 @@ export interface IAttendanceRepository {
    */
   bulkCreateOrUpdate(input: {
     sessionId: string
-    institutionId: string
     recordedBy: string
     records: AttendanceRecordInput[]
   }): Promise<BulkUpsertResult>
@@ -112,26 +106,20 @@ export interface IAttendanceRepository {
    * rules are enforced at the use case layer; the repo just
    * executes. Returns the updated entity.
    */
-  updateByIdInInstitution(
-    institutionId: string,
+  updateById(
     id: string,
     input: UpdateAttendanceInput,
     byUser: string,
   ): Promise<Attendance>
 
   /** Cursor-paginated list. `input` carries the role filter. */
-  listInInstitution(
-    institutionId: string,
-    input: ListAttendanceInput,
-  ): Promise<ListAttendanceResult>
+  list(input: ListAttendanceInput): Promise<ListAttendanceResult>
 
   /**
    * Aggregated counts + percentages for a course (optionally
-   * filtered to a date range). Uses `groupBy({ by: ['status'] })`
-   * for an O(N) scan on the indexed `(institutionId, courseId, date)`.
+   * filtered to a date range).
    */
   summaryByCourse(
-    institutionId: string,
     courseId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary>
@@ -142,7 +130,6 @@ export interface IAttendanceRepository {
    * page, REQ-ATT-005).
    */
   summaryByStudent(
-    institutionId: string,
     studentId: string,
     courseId?: string,
     dateRange?: { from?: Date; to?: Date },
@@ -154,7 +141,6 @@ export interface IAttendanceRepository {
    * snapshot" widget.
    */
   summaryByTeacher(
-    institutionId: string,
     teacherId: string,
     dateRange?: { from?: Date; to?: Date },
   ): Promise<AttendanceSummary>

@@ -1,6 +1,5 @@
 import { ForbiddenException } from '@nestjs/common'
 import { AttendanceSummaryUseCase } from '../application/use-cases/attendance-summary.use-case'
-import { enterTenantContext } from '../../../shared/tenant/tenant.context'
 import type { IAttendanceRepository } from '../domain/repositories/attendance.repository.interface'
 
 /**
@@ -11,7 +10,6 @@ import type { IAttendanceRepository } from '../domain/repositories/attendance.re
  *  - empty query → empty summary
  */
 describe('AttendanceSummaryUseCase', () => {
-  const institutionId = 'i-1'
   let attendance: jest.Mocked<IAttendanceRepository>
 
   const fakeSummary = {
@@ -25,10 +23,10 @@ describe('AttendanceSummaryUseCase', () => {
 
   beforeEach(() => {
     attendance = {
-      findByIdInInstitution: jest.fn(),
+      findById: jest.fn(),
       bulkCreateOrUpdate: jest.fn(),
-      updateByIdInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
+      updateById: jest.fn(),
+      list: jest.fn(),
       summaryByCourse: jest.fn().mockResolvedValue(fakeSummary),
       summaryByStudent: jest.fn().mockResolvedValue(fakeSummary),
       summaryByTeacher: jest.fn().mockResolvedValue(fakeSummary),
@@ -37,69 +35,60 @@ describe('AttendanceSummaryUseCase', () => {
   })
 
   it('executeFromQuery with courseId calls summaryByCourse', async () => {
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: 'UTC' })
     const useCase = new AttendanceSummaryUseCase(attendance)
-    const result = await useCase.executeFromQuery({ courseId: 'c-1' }, institutionId)
-    expect(attendance.summaryByCourse).toHaveBeenCalledWith(institutionId, 'c-1', undefined)
+    const result = await useCase.executeFromQuery(
+      { courseId: 'c-1' },
+      { role: 'ADMIN', userId: 'a-1' },
+    )
+    expect(attendance.summaryByCourse).toHaveBeenCalledWith('c-1', undefined)
     expect(result).toEqual(fakeSummary)
   })
 
   it('executeFromQuery with studentId calls summaryByStudent', async () => {
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: 'UTC' })
     const useCase = new AttendanceSummaryUseCase(attendance)
-    const result = await useCase.executeFromQuery({ studentId: 'stu-1' }, institutionId)
-    expect(attendance.summaryByStudent).toHaveBeenCalledWith(
-      institutionId,
-      'stu-1',
-      undefined,
-      undefined,
+    const result = await useCase.executeFromQuery(
+      { studentId: 'stu-1' },
+      { role: 'ADMIN', userId: 'a-1' },
     )
+    expect(attendance.summaryByStudent).toHaveBeenCalledWith('stu-1', undefined, undefined)
     expect(result).toEqual(fakeSummary)
   })
 
   it('STUDENT can only see their own summary', async () => {
-    enterTenantContext({
-      tenantId: institutionId,
-      subdomain: 'u-a',
-      timezone: 'UTC',
-      userId: 'stu-me',
-      role: 'STUDENT',
-    })
     const useCase = new AttendanceSummaryUseCase(attendance)
     await expect(
-      useCase.executeFromQuery({ studentId: 'stu-other' }, institutionId),
+      useCase.executeFromQuery(
+        { studentId: 'stu-other' },
+        { role: 'STUDENT', userId: 'stu-me' },
+      ),
     ).rejects.toBeInstanceOf(ForbiddenException)
   })
 
   it('STUDENT can see their own summary', async () => {
-    enterTenantContext({
-      tenantId: institutionId,
-      subdomain: 'u-a',
-      timezone: 'UTC',
-      userId: 'stu-me',
-      role: 'STUDENT',
-    })
     const useCase = new AttendanceSummaryUseCase(attendance)
-    await useCase.executeFromQuery({ studentId: 'stu-me' }, institutionId)
+    await useCase.executeFromQuery(
+      { studentId: 'stu-me' },
+      { role: 'STUDENT', userId: 'stu-me' },
+    )
     expect(attendance.summaryByStudent).toHaveBeenCalled()
   })
 
   it('executeFromQuery with teacherId calls summaryByTeacher', async () => {
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: 'UTC' })
     const useCase = new AttendanceSummaryUseCase(attendance)
-    await useCase.executeFromQuery({ teacherId: 't-1' }, institutionId)
-    expect(attendance.summaryByTeacher).toHaveBeenCalledWith(institutionId, 't-1', undefined)
+    await useCase.executeFromQuery(
+      { teacherId: 't-1' },
+      { role: 'ADMIN', userId: 'a-1' },
+    )
+    expect(attendance.summaryByTeacher).toHaveBeenCalledWith('t-1', undefined)
   })
 
   it('passes date range through to the repository', async () => {
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: 'UTC' })
     const useCase = new AttendanceSummaryUseCase(attendance)
     await useCase.executeFromQuery(
       { courseId: 'c-1', dateFrom: '2026-06-01', dateTo: '2026-06-30' },
-      institutionId,
+      { role: 'ADMIN', userId: 'a-1' },
     )
     expect(attendance.summaryByCourse).toHaveBeenCalledWith(
-      institutionId,
       'c-1',
       expect.objectContaining({
         from: expect.any(Date),
@@ -109,9 +98,8 @@ describe('AttendanceSummaryUseCase', () => {
   })
 
   it('returns empty summary when no entity is given', async () => {
-    enterTenantContext({ tenantId: institutionId, subdomain: 'u-a', timezone: 'UTC' })
     const useCase = new AttendanceSummaryUseCase(attendance)
-    const result = await useCase.executeFromQuery({}, institutionId)
+    const result = await useCase.executeFromQuery({}, { role: 'ADMIN', userId: 'a-1' })
     expect(result).toMatchObject({ total: 0, present: 0 })
   })
 })

@@ -8,7 +8,7 @@ import { LoadingSpinner } from '@/components/feedback/LoadingSpinner'
 import { Paths } from '@/app/routes/paths'
 import { useInstitutionAdminKpis, useRecentActivity } from '../api/dashboard.api'
 
-export function InstitutionAdminDashboard() {
+export function AdminDashboard() {
   const { t } = useTranslation()
   const kpis = useInstitutionAdminKpis()
   const activity = useRecentActivity(10)
@@ -16,7 +16,7 @@ export function InstitutionAdminDashboard() {
   return (
     <div className="space-y-6">
       <PageHeader
-        title={t('institutionAdmin.title')}
+        title={t('admin.title')}
         description={`${t('dashboard.welcome', { name: '' })}`}
       />
 

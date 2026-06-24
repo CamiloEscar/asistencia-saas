@@ -38,10 +38,9 @@ interface CreateUserDialogProps {
 }
 
 /**
- * Create a new user in the active institution. The role is restricted to
- * tenant roles (no SUPER_ADMIN from the FE). When the user is created
- * without a password, the BE returns a set-password link that the user
- * must be sent manually (no SMTP in MVP).
+ * Create a new user. The role is restricted to {ADMIN, TEACHER, STUDENT}.
+ * When the user is created without a password, the BE returns a
+ * set-password link that the user must be sent manually (no SMTP in MVP).
  */
 export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) {
   const { t } = useTranslation()
@@ -150,9 +149,7 @@ export function CreateUserDialog({ open, onOpenChange }: CreateUserDialogProps) 
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
-                        {userRoleValues
-                          .filter((r) => r !== 'SUPER_ADMIN')
-                          .map((r) => (
+                        {userRoleValues.map((r) => (
                             <SelectItem key={r} value={r}>
                               {t(`roles.${r}`)}
                             </SelectItem>

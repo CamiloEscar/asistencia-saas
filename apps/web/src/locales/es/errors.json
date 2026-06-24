@@ -2,7 +2,6 @@
   "generic": "Algo salió mal. Intentá de nuevo.",
   "unauthorized": "Email o contraseña incorrectos",
   "forbidden": "No tienes permisos para esta acción",
-  "inactiveInstitution": "La institución está inactiva. Contacta al administrador.",
   "notFound": "Recurso no encontrado",
   "validation": "Revisá los datos del formulario",
   "network": "Sin conexión. Revisá tu red.",

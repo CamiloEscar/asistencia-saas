@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common'
 import { randomBytes } from 'node:crypto'
-import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
-import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
+import  { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
+import  { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
 import { Email } from '../../../auth/domain/value-objects/email.vo'
 import { Legajo } from '../../domain/value-objects/legajo.vo'
 import type { Student } from '../../domain/entities/student.entity'
@@ -12,13 +12,13 @@ import {
 import type { CreateStudentDto, CreateStudentResponse } from '../dtos/create-student.dto'
 
 /**
- * CreateStudentUseCase — creates a student in the caller's institution.
+ * CreateStudentUseCase — creates a student.
  *
  * Constraints (per spec REQ-STUDENT-002, REQ-STUDENT-006):
  *   - `legajo` validated (3-30 alphanumeric + hyphens, case-insensitive).
  *   - `email` validated + normalized to lowercase.
- *   - Legajo uniqueness within the institution (409 if not).
- *   - Email uniqueness within the institution (409 if not).
+ *   - Legajo uniqueness (409 if not).
+ *   - Email uniqueness (409 if not).
  *   - If no password is provided, generate a 16-char temporary
  *     password, hash it, and return it in the response (no SMTP
  *     in MVP). The student can later set their own via the
@@ -34,16 +34,13 @@ export class CreateStudentUseCase {
     private readonly setPasswordUseCase: SetPasswordUseCase,
   ) {}
 
-  async execute(input: CreateStudentDto, institutionId: string): Promise<CreateStudentResponse> {
+  async execute(input: CreateStudentDto): Promise<CreateStudentResponse> {
     // 1. Validate email and legajo formats.
     const email = input.email ? Email.create(input.email) : null
     const legajo = Legajo.create(input.legajo)
 
     // 2. Enforce legajo uniqueness.
-    const existingByLegajo = await this.students.findByLegajoInInstitution(
-      institutionId,
-      legajo.value,
-    )
+    const existingByLegajo = await this.students.findByLegajo(legajo.value)
     if (existingByLegajo) {
       throw new ConflictException({
         message: 'Legajo already in use in this institution',
@@ -54,10 +51,7 @@ export class CreateStudentUseCase {
 
     // 3. Enforce email uniqueness (when provided).
     if (email) {
-      const existingByEmail = await this.students.findByEmailInInstitution(
-        institutionId,
-        email.value,
-      )
+      const existingByEmail = await this.students.findByEmail(email.value)
       if (existingByEmail) {
         throw new ConflictException({
           message: 'Email already in use in this institution',
@@ -75,11 +69,10 @@ export class CreateStudentUseCase {
     // deterministic placeholder so the column's UNIQUE constraint
     // is satisfied. The student sets their real email at first
     // login via the set-password flow.
-    const student: Student = await this.students.createInInstitution({
+    const student: Student = await this.students.create({
       email: email?.value ?? `${legajo.value.toLowerCase()}@imported.local`,
       passwordHash,
       fullName: input.fullName,
-      institutionId,
       legajo: legajo.value,
       phone: input.phone,
       birthDate: input.birthDate,

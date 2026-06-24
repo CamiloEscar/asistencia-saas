@@ -16,7 +16,6 @@ import type { Attendance } from '../domain/entities/attendance.entity'
  *  - rejects when attendance record does not exist
  */
 describe('UploadEvidenceUseCase', () => {
-  const institutionId = 'i-1'
   const attendanceId = 'att-1'
 
   let attendance: jest.Mocked<IAttendanceRepository>
@@ -31,7 +30,6 @@ describe('UploadEvidenceUseCase', () => {
   const fakeAttendance = (): Attendance =>
     ({
       id: attendanceId,
-      institutionId,
       sessionId: 's-1',
       studentId: 'stu-1',
       status: 'PRESENT',
@@ -44,13 +42,13 @@ describe('UploadEvidenceUseCase', () => {
 
   beforeEach(() => {
     attendance = {
-      findByIdInInstitution: jest.fn().mockResolvedValue(fakeAttendance()),
-      updateByIdInInstitution: jest.fn().mockImplementation(async () => ({
+      findById: jest.fn().mockResolvedValue(fakeAttendance()),
+      updateById: jest.fn().mockImplementation(async () => ({
         ...fakeAttendance(),
-        evidenceUrl: 'https://cdn.cloudinary.com/asistencia-saas/attendance/i-1/att-1/evidence',
+        evidenceUrl: 'https://cdn.cloudinary.com/asistencia-saas/attendance/att-1/evidence',
       })),
       bulkCreateOrUpdate: jest.fn(),
-      listInInstitution: jest.fn(),
+      list: jest.fn(),
       summaryByCourse: jest.fn(),
       summaryByStudent: jest.fn(),
       summaryByTeacher: jest.fn(),
@@ -59,8 +57,8 @@ describe('UploadEvidenceUseCase', () => {
 
     cloudinary = {
       uploadImage: jest.fn().mockResolvedValue({
-        url: 'https://cdn.cloudinary.com/asistencia-saas/attendance/i-1/att-1/evidence',
-        publicId: 'asistencia-saas/attendance/i-1/att-1/evidence',
+        url: 'https://cdn.cloudinary.com/asistencia-saas/attendance/att-1/evidence',
+        publicId: 'asistencia-saas/attendance/att-1/evidence',
         width: 800,
         height: 600,
         format: 'jpg',
@@ -70,17 +68,16 @@ describe('UploadEvidenceUseCase', () => {
 
   it('uploads and persists the URL (happy path)', async () => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
-    const result = await useCase.execute(attendanceId, institutionId, fakeFile())
+    const result = await useCase.execute(attendanceId, fakeFile())
     expect(result.evidenceUrl).toContain('cloudinary.com')
     expect(cloudinary.uploadImage).toHaveBeenCalledWith(
       expect.any(Buffer),
       expect.objectContaining({
-        folder: `attendance/${institutionId}/${attendanceId}`,
+        folder: `attendance/${attendanceId}`,
         publicId: 'evidence',
       }),
     )
-    expect(attendance.updateByIdInInstitution).toHaveBeenCalledWith(
-      institutionId,
+    expect(attendance.updateById).toHaveBeenCalledWith(
       attendanceId,
       { evidenceUrl: expect.stringContaining('cloudinary.com') },
       'system:upload-evidence',
@@ -90,35 +87,35 @@ describe('UploadEvidenceUseCase', () => {
   it('rejects files larger than 5MB', async () => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
     await expect(
-      useCase.execute(attendanceId, institutionId, fakeFile({ size: MAX_EVIDENCE_BYTES + 1 })),
+      useCase.execute(attendanceId, fakeFile({ size: MAX_EVIDENCE_BYTES + 1 })),
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(cloudinary.uploadImage).not.toHaveBeenCalled()
   })
 
   it('accepts a file exactly at the size limit', async () => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
-    await useCase.execute(attendanceId, institutionId, fakeFile({ size: MAX_EVIDENCE_BYTES }))
+    await useCase.execute(attendanceId, fakeFile({ size: MAX_EVIDENCE_BYTES }))
     expect(cloudinary.uploadImage).toHaveBeenCalled()
   })
 
   it('rejects unsupported MIME types', async () => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
     await expect(
-      useCase.execute(attendanceId, institutionId, fakeFile({ mimetype: 'application/pdf' })),
+      useCase.execute(attendanceId, fakeFile({ mimetype: 'application/pdf' })),
     ).rejects.toBeInstanceOf(BadRequestException)
     expect(cloudinary.uploadImage).not.toHaveBeenCalled()
   })
 
   it.each(ALLOWED_EVIDENCE_MIME_TYPES)('accepts MIME type %s', async (mimetype) => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
-    await useCase.execute(attendanceId, institutionId, fakeFile({ mimetype }))
+    await useCase.execute(attendanceId, fakeFile({ mimetype }))
     expect(cloudinary.uploadImage).toHaveBeenCalled()
   })
 
   it('returns 400 when the attendance record does not exist (avoids dangling assets)', async () => {
-    attendance.findByIdInInstitution.mockResolvedValue(null)
+    attendance.findById.mockResolvedValue(null)
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
-    await expect(useCase.execute('att-missing', institutionId, fakeFile())).rejects.toBeInstanceOf(
+    await expect(useCase.execute('att-missing', fakeFile())).rejects.toBeInstanceOf(
       BadRequestException,
     )
     expect(cloudinary.uploadImage).not.toHaveBeenCalled()
@@ -127,7 +124,7 @@ describe('UploadEvidenceUseCase', () => {
   it('preserves error metadata for RFC 7807 (maxBytes + receivedBytes)', async () => {
     const useCase = new UploadEvidenceUseCase(attendance, cloudinary as never)
     try {
-      await useCase.execute(attendanceId, institutionId, fakeFile({ size: 6 * 1024 * 1024 }))
+      await useCase.execute(attendanceId, fakeFile({ size: 6 * 1024 * 1024 }))
       fail('expected throw')
     } catch (err) {
       expect(err).toBeInstanceOf(BadRequestException)

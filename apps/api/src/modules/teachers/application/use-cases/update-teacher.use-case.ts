@@ -15,14 +15,14 @@ import type { UpdateTeacherDto } from '../../application/dtos/update-teacher.dto
 export class UpdateTeacherUseCase {
   constructor(@Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository) {}
 
-  async execute(institutionId: string, id: string, input: UpdateTeacherDto): Promise<Teacher> {
-    const target = await this.teachers.findByIdInInstitution(institutionId, id)
+  async execute(id: string, input: UpdateTeacherDto): Promise<Teacher> {
+    const target = await this.teachers.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Teacher not found', error: 'Not Found' })
     }
 
     if (input.email !== undefined && input.email.toLowerCase() !== target.email) {
-      const conflict = await this.teachers.findByEmailInInstitution(institutionId, input.email)
+      const conflict = await this.teachers.findByEmail(input.email)
       if (conflict && conflict.id !== id) {
         throw new (await import('@nestjs/common')).ConflictException({
           message: 'Email already in use in this institution',
@@ -32,7 +32,7 @@ export class UpdateTeacherUseCase {
       }
     }
 
-    return this.teachers.updateInInstitution(institutionId, id, {
+    return this.teachers.update(id, {
       fullName: input.fullName,
       email: input.email,
       isActive: input.isActive,

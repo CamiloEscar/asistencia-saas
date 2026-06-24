@@ -1,6 +1,6 @@
 import { BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
-import type { CloudinaryService } from '../../../../shared/cloudinary/cloudinary.service'
-import type { IAttendanceRepository } from '../../domain/repositories/attendance.repository.interface'
+import  { CloudinaryService } from '../../../../shared/cloudinary/cloudinary.service'
+import  { IAttendanceRepository } from '../../domain/repositories/attendance.repository.interface'
 import { ATTENDANCE_REPOSITORY } from '../../domain/repositories/attendance.repository.interface'
 import type { Attendance } from '../../domain/entities/attendance.entity'
 
@@ -21,7 +21,7 @@ export type EvidenceMimeType = (typeof ALLOWED_EVIDENCE_MIME_TYPES)[number]
  * to Cloudinary and persists the URL on the attendance record.
  *
  * Per task description:
- *   - Folder pattern: `attendance/{institutionId}/{attendanceId}/`
+ *   - Folder pattern: `attendance/{attendanceId}/`
  *   - File validation: max 5MB, image types only
  *   - Public ID: `evidence` (so re-uploads overwrite)
  *
@@ -41,7 +41,6 @@ export class UploadEvidenceUseCase {
 
   async execute(
     attendanceId: string,
-    institutionId: string,
     file: { buffer: Buffer; mimetype: string; size: number },
   ): Promise<Attendance> {
     // 1. Validate size.
@@ -70,10 +69,10 @@ export class UploadEvidenceUseCase {
       })
     }
 
-    // 3. Verify the attendance record exists in this institution.
+    // 3. Verify the attendance record exists.
     //    A missing record would create a dangling Cloudinary asset,
     //    so we check up front.
-    const existing = await this.attendance.findByIdInInstitution(institutionId, attendanceId)
+    const existing = await this.attendance.findById(attendanceId)
     if (!existing) {
       throw new BadRequestException({
         message: 'Attendance record not found',
@@ -83,22 +82,21 @@ export class UploadEvidenceUseCase {
     }
 
     // 4. Upload to Cloudinary.
-    const folder = `attendance/${institutionId}/${attendanceId}`
+    const folder = `attendance/${attendanceId}`
     const result = await this.cloudinary.uploadImage(file.buffer, {
       folder,
       publicId: 'evidence',
     })
 
     // 5. Persist the URL on the attendance row.
-    const updated = await this.attendance.updateByIdInInstitution(
-      institutionId,
+    const updated = await this.attendance.updateById(
       attendanceId,
       { evidenceUrl: result.url },
       'system:upload-evidence',
     )
 
     this.logger.log(
-      `uploadEvidence: attendance=${attendanceId} institution=${institutionId} url=${result.url}`,
+      `uploadEvidence: attendance=${attendanceId} url=${result.url}`,
     )
 
     return updated

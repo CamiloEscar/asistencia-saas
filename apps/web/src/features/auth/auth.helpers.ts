@@ -37,12 +37,9 @@ export function applyReturnTo(defaultPath: string): string {
 
 /** Map a 4xx ProblemJson to a localised, UI-friendly message key. */
 export function problemMessageKey(err: unknown): string {
-  const { status, title } = toApiError(err)
+  const { status } = toApiError(err)
   if (status === 401) return 'errors:unauthorized'
-  if (status === 403) {
-    if (title?.toLowerCase().includes('inactive')) return 'errors:inactiveInstitution'
-    return 'errors:forbidden'
-  }
+  if (status === 403) return 'errors:forbidden'
   if (status === 404) return 'errors:notFound'
   if (status === 422 || status === 400) return 'errors:validation'
   if (status === 429) return 'errors:rateLimited'

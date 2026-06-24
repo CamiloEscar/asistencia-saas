@@ -17,19 +17,18 @@ describe('ResetPasswordUseCase', () => {
     fullName: 'A',
     role: 'TEACHER',
     status: 'ACTIVE',
-    institutionId: 'i-1',
   } as unknown as User
 
   beforeEach(() => {
     users = {
-      findByIdInInstitution: jest.fn(),
-      findByEmailInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
-      createInInstitution: jest.fn(),
-      updateInInstitution: jest.fn(),
-      setActiveInInstitution: jest.fn(),
-      setPasswordHashInInstitution: jest.fn(),
-      countByRoleInInstitution: jest.fn(),
+      findById: jest.fn(),
+      findByEmail: jest.fn(),
+      list: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      setActive: jest.fn(),
+      setPasswordHash: jest.fn(),
+      countByRole: jest.fn(),
       toEntity: jest.fn(),
     } as unknown as jest.Mocked<IUserRepository>
     passwordHasher = {
@@ -44,28 +43,24 @@ describe('ResetPasswordUseCase', () => {
   })
 
   it('rejects self-reset (400)', async () => {
-    await expect(useCase.execute('i-1', 'u-1', 'u-1')).rejects.toBeInstanceOf(
+    await expect(useCase.execute('u-1', 'u-1')).rejects.toBeInstanceOf(
       BadRequestException,
     )
   })
 
   it('throws 404 when target not found', async () => {
-    users.findByIdInInstitution.mockResolvedValue(null)
-    await expect(useCase.execute('i-1', 'actor-1', 'u-9')).rejects.toBeInstanceOf(
+    users.findById.mockResolvedValue(null)
+    await expect(useCase.execute('actor-1', 'u-9')).rejects.toBeInstanceOf(
       NotFoundException,
     )
   })
 
   it('generates a new password and returns it', async () => {
-    users.findByIdInInstitution.mockResolvedValue(baseUser)
-    const result = await useCase.execute('i-1', 'actor-1', 'u-1')
+    users.findById.mockResolvedValue(baseUser)
+    const result = await useCase.execute('actor-1', 'u-1')
     expect(result.temporaryPassword).toBeDefined()
     expect(result.temporaryPassword.length).toBeGreaterThanOrEqual(16)
     expect(passwordHasher.hash).toHaveBeenCalled()
-    expect(users.setPasswordHashInInstitution).toHaveBeenCalledWith(
-      'i-1',
-      'u-1',
-      'hashed-new',
-    )
+    expect(users.setPasswordHash).toHaveBeenCalledWith('u-1', 'hashed-new')
   })
 })

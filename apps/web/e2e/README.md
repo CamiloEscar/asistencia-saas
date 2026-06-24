@@ -45,8 +45,6 @@ End-to-end tests for the asistencia-saas frontend. Uses [Playwright](https://pla
 ## Suite structure
 
 - `auth/login.spec.ts` — login, set-password, forgot-password
-- `cross-tenant-isolation.spec.ts` — defense-in-depth against cross-tenant access
-- `admin/create-institution.spec.ts` — super admin creates institution
 - `admin/manage-courses.spec.ts` — admin creates teacher + subject + students + course
 - `attendance/teacher-take-attendance.spec.ts` — critical path: teacher takes attendance
 - `attendance/student-views-attendance.spec.ts` — student views their history

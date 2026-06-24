@@ -7,19 +7,19 @@
  *
  * Spec: REQ-ATT-001..009, SC-1 (60 students ≤ 30s)
  */
-import { test, expect, TEST_TENANT } from '../helpers'
+import { test, expect } from '../helpers'
 
 test.describe('Teacher takes attendance (critical path)', () => {
   test('teacher marks a mix of statuses and submits', async ({ page }) => {
     // 1. Login as teacher
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('teacher1@celsius.com')
+    await page.goto('http://localhost:5173/login')
+    await page.getByLabel(/email/i).fill('teacher1@asistencia.local')
     await page.getByLabel(/contraseña/i).fill('teacher1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/today|\/dashboard/, { timeout: 10_000 })
 
     // 2. Navigate to attendance history and pick a session
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/attendance/history`)
+    await page.goto('http://localhost:5173/attendance/history')
 
     // 3. If there's an open session for today, take attendance
     const takeButton = page.getByRole('link', { name: /tomar.+asistencia/i }).first()

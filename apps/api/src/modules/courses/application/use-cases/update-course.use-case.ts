@@ -16,8 +16,8 @@ import type { UpdateCourseDto } from '../dtos/update-course.dto'
 export class UpdateCourseUseCase {
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
-  async execute(institutionId: string, id: string, input: UpdateCourseDto): Promise<Course> {
-    const target = await this.courses.findByIdInInstitution(institutionId, id)
+  async execute(id: string, input: UpdateCourseDto): Promise<Course> {
+    const target = await this.courses.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Course not found', error: 'Not Found' })
     }
@@ -27,7 +27,7 @@ export class UpdateCourseUseCase {
       ScheduleVO.create(input.schedule)
     }
 
-    return this.courses.updateInInstitution(institutionId, id, {
+    return this.courses.update(id, {
       name: input.name as string | undefined,
       description: input.description as string | null | undefined,
       startDate: input.startDate ? new Date(input.startDate as string | number | Date) : undefined,

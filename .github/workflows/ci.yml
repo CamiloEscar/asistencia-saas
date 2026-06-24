@@ -58,8 +58,7 @@ jobs:
         run: pnpm -r typecheck
 
       - name: i18n key coverage (strict)
-        # Guard against missing es locale keys. See
-        # sdd/tenant-celsius-i18n-neutral for context. Use the `:strict`
+        # Guard against missing es locale keys. Use the `:strict`
         # variant so missing keys fail the build instead of just warning.
         run: pnpm --filter @asistencia/web check:i18n:strict
 
@@ -89,9 +88,9 @@ jobs:
       - name: Build
         run: pnpm -r build
 
-  # ─── Backend E2E + cross-tenant isolation (slow, needs DB) ────────────
+  # ─── Backend E2E (slow, needs DB) ────────────────────────────────────
   api-e2e:
-    name: API E2E (cross-tenant isolation)
+    name: API E2E
     runs-on: ubuntu-latest
     needs: install
     services:
@@ -170,7 +169,6 @@ jobs:
       REDIS_URL: redis://localhost:6379
       NODE_ENV: test
       E2E_BASE_URL: http://localhost:5173
-      E2E_TENANT: celsius
     steps:
       - uses: actions/checkout@v4
 

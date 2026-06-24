@@ -2,8 +2,9 @@ import { HttpException, HttpStatus, Inject, Injectable, Logger } from '@nestjs/c
 import { randomUUID } from 'node:crypto'
 import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
-import type { CsvParserService, ParsedCsvRow } from '../../../../shared/csv/csv-parser.service'
-import type { RedisService } from '../../../../shared/redis/redis.service'
+import  { CsvParserService} from '../../../../shared/csv/csv-parser.service';
+import { type ParsedCsvRow } from '../../../../shared/csv/csv-parser.service'
+import  { RedisService } from '../../../../shared/redis/redis.service'
 import { BULLMQ_QUEUE, type Queue, QUEUE_NAMES } from '../../../../shared/queue/queue.module'
 import type { StudentBulkImportJob } from '../../infrastructure/queue/student-bulk-import.processor'
 import { CsvRowSchema, type CsvRowError } from '../../domain/value-objects/csv-row.vo'
@@ -68,12 +69,11 @@ export class BulkImportStudentsUseCase {
    */
   async execute(
     file: Buffer,
-    institutionId: string,
     userId: string,
     dto: BulkImportStudentsDto,
   ): Promise<BulkImportDryRunResult | BulkImportCommitResult | BulkImportAsyncAccepted> {
     // 1. Enforce the rate limit.
-    await this.enforceRateLimit(institutionId)
+    await this.enforceRateLimit(userId)
 
     // 2. Parse the CSV.
     const parsed = await this.csv.parseStudentCsv(file)
@@ -96,33 +96,17 @@ export class BulkImportStudentsUseCase {
 
     // 4. Sync path (≤ threshold rows).
     if (parsed.totalRows <= SYNC_THRESHOLD) {
-      return this.executeSync(institutionId, userId, parsed.rows, parsed.errors)
+      return this.executeSync(userId, parsed.rows, parsed.errors)
     }
 
     // 5. Async path: enqueue and return a jobId.
-    return this.enqueueAsync(institutionId, userId, parsed.rows, dto.courseId)
+    return this.enqueueAsync(userId, parsed.rows, dto.courseId)
   }
 
   /** Get the status of an async job. */
-  async getJobStatus(institutionId: string, jobId: string): Promise<BulkImportJobStatus> {
-    // BullMQ's job lookup uses its own connection; the queue we
-    // hold is sufficient for `getJob`.
+  async getJobStatus(jobId: string): Promise<BulkImportJobStatus> {
     const job = await this.queue.getJob(jobId)
     if (!job) {
-      // Return a `failed` status with a clear message so the FE
-      // can render it.
-      return {
-        jobId,
-        status: 'failed',
-        progress: 0,
-        failedReason: 'Job not found',
-      }
-    }
-
-    // Tenant guard: a job belongs to one institution. Reject
-    // cross-tenant lookups with a generic failed state.
-    const jobData = job.data as StudentBulkImportJob
-    if (jobData.institutionId !== institutionId) {
       return {
         jobId,
         status: 'failed',
@@ -172,7 +156,6 @@ export class BulkImportStudentsUseCase {
     entityType: 'Student',
   })
   private async executeSync(
-    institutionId: string,
     _userId: string,
     rows: ParsedCsvRow[],
     validationErrors: CsvRowError[],
@@ -198,7 +181,6 @@ export class BulkImportStudentsUseCase {
     }
 
     const result = await this.students.bulkUpsert(
-      institutionId,
       accepted.map((a) => ({
         row: a.row,
         legajo: a.legajo,
@@ -219,7 +201,6 @@ export class BulkImportStudentsUseCase {
   }
 
   private async enqueueAsync(
-    institutionId: string,
     userId: string,
     rows: ParsedCsvRow[],
     courseId?: string,
@@ -227,7 +208,6 @@ export class BulkImportStudentsUseCase {
     const job = await this.queue.add(
       QUEUE_NAMES.STUDENT_BULK_IMPORT,
       {
-        institutionId,
         userId,
         rows,
         dryRun: false,
@@ -250,8 +230,8 @@ export class BulkImportStudentsUseCase {
     }
   }
 
-  private async enforceRateLimit(institutionId: string): Promise<void> {
-    const key = `${RATE_LIMIT_KEY_PREFIX}${institutionId}`
+  private async enforceRateLimit(userId: string): Promise<void> {
+    const key = `${RATE_LIMIT_KEY_PREFIX}${userId}`
     // The RedisService doesn't expose `incr` directly; we use
     // a tiny Lua script for atomic INCR + EXPIRE.
     const result = (await this.redis.eval(

@@ -1,6 +1,6 @@
 import { Test } from '@nestjs/testing'
 import { PrismaRefreshTokenRepository } from './prisma-refresh-token.repository'
-import { SUPER_ADMIN_PRISMA } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 
 /**
  * Unit test for REQ-AUTH-001: a refresh-token row whose `tokenHash` is NULL
@@ -34,7 +34,7 @@ describe('PrismaRefreshTokenRepository — REQ-AUTH-001 (legacy NULL tokenHash)'
       providers: [
         PrismaRefreshTokenRepository,
         {
-          provide: SUPER_ADMIN_PRISMA,
+          provide: PrismaService,
           useValue: prismaMock,
         },
       ],

@@ -12,7 +12,6 @@ export interface CreateTeacherInput {
   email: string
   passwordHash: string
   fullName: string
-  institutionId: string
   legajo?: string | null
   phone?: string | null
   userId?: string | null
@@ -40,14 +39,10 @@ export interface ListTeachersResult {
 }
 
 export interface ITeacherRepository {
-  findByIdInInstitution(institutionId: string, id: string): Promise<Teacher | null>
-  findByEmailInInstitution(institutionId: string, email: string): Promise<Teacher | null>
-  listInInstitution(institutionId: string, input: ListTeachersInput): Promise<ListTeachersResult>
-  createInInstitution(input: CreateTeacherInput): Promise<Teacher>
-  updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateTeacherInput,
-  ): Promise<Teacher>
-  setActiveInInstitution(institutionId: string, id: string, isActive: boolean): Promise<Teacher>
+  findById(id: string): Promise<Teacher | null>
+  findByEmail(email: string): Promise<Teacher | null>
+  list(input: ListTeachersInput): Promise<ListTeachersResult>
+  create(input: CreateTeacherInput): Promise<Teacher>
+  update(id: string, input: UpdateTeacherInput): Promise<Teacher>
+  setActive(id: string, isActive: boolean): Promise<Teacher>
 }

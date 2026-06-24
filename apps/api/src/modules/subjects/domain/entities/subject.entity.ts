@@ -1,11 +1,10 @@
 /**
  * Domain entity for a Subject (academic topic). Subjects are the
  * catalog of courses the institution offers (e.g., "MAT101 —
- * Matemática I"). They carry an institution-scoped UNIQUE code.
+ * Matemática I"). They carry a globally UNIQUE code.
  */
 export interface SubjectProps {
   id: string
-  institutionId: string
   code: string
   name: string
   description: string | null
@@ -23,9 +22,6 @@ export class Subject {
 
   get id(): string {
     return this.props.id
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get code(): string {
     return this.props.code

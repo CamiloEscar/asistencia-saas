@@ -6,7 +6,6 @@ import { z } from 'zod'
  */
 export const ForgotPasswordDtoSchema = z.object({
   email: z.string().trim().toLowerCase().email(),
-  tenantSubdomain: z.string().trim().toLowerCase(),
 })
 
 export type ForgotPasswordDto = z.infer<typeof ForgotPasswordDtoSchema>

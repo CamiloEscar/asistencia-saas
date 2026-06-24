@@ -1,8 +1,7 @@
 import { Inject, Injectable, Logger, type OnModuleInit } from '@nestjs/common'
 import type { Job } from 'bullmq'
 import { BULLMQ_REDIS, QueueLifecycle } from '../../../../shared/queue/queue.module'
-import { enterTenantContext } from '../../../../shared/tenant/tenant.context'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import type { ParsedCsvRow } from '../../../../shared/csv/csv-parser.service'
 import { CsvRowSchema } from '../../domain/value-objects/csv-row.vo'
 import type { BulkImportResult } from '../../domain/repositories/student.repository.interface'
@@ -16,7 +15,6 @@ import {
  * controller via `BulkImportStudentsUseCase` and consumed here.
  */
 export interface StudentBulkImportJob {
-  institutionId: string
   userId: string
   rows: ParsedCsvRow[]
   dryRun: boolean
@@ -26,14 +24,12 @@ export interface StudentBulkImportJob {
 /**
  * StudentBulkImportProcessor — the worker that processes async
  * student bulk imports (>500 rows). It:
- *   1. Re-establishes the tenant context (workers run outside the
- *      HTTP request pipeline, so AsyncLocalStorage is empty).
- *   2. Validates each row against `CsvRowSchema` (defense in depth
+ *   1. Validates each row against `CsvRowSchema` (defense in depth
  *      — the use case already validated, but a worker can be
  *      invoked from anywhere).
- *   3. Delegates the bulk insert to `IStudentRepository.bulkUpsert`.
- *   4. Optionally auto-enrolls the created students in `courseId`.
- *   5. Writes an audit log entry.
+ *   2. Delegates the bulk insert to `IStudentRepository.bulkUpsert`.
+ *   3. Optionally auto-enrolls the created students in `courseId`.
+ *   4. Writes an audit log entry.
  */
 @Injectable()
 export class StudentBulkImportProcessor implements OnModuleInit {
@@ -58,19 +54,9 @@ export class StudentBulkImportProcessor implements OnModuleInit {
    * BullMQ retries with backoff (configurable per queue).
    */
   async process(job: Job<StudentBulkImportJob>): Promise<BulkImportResult> {
-    const { institutionId, userId, rows, dryRun, courseId } = job.data
+    const { userId, rows, dryRun, courseId } = job.data
 
-    // 1. Re-establish tenant context. Without this, the Prisma
-    // extension's WHERE-injection has nothing to inject and throws.
-    enterTenantContext({
-      tenantId: institutionId,
-      subdomain: '',
-      timezone: 'UTC',
-      userId,
-      role: 'INSTITUTION_ADMIN',
-    })
-
-    // 2. Re-validate rows (defense in depth).
+    // 1. Re-validate rows (defense in depth).
     const validRows: Array<ParsedCsvRow & { email: string; fullName: string; legajo: string }> = []
     const errors: BulkImportResult['errors'] = []
     for (const r of rows) {
@@ -99,14 +85,13 @@ export class StudentBulkImportProcessor implements OnModuleInit {
       return { created: 0, skipped: 0, updated: 0, errors }
     }
 
-    // 3. Dry run: just return the validation result.
+    // 2. Dry run: just return the validation result.
     if (dryRun) {
       return { created: 0, skipped: 0, updated: 0, errors }
     }
 
-    // 4. Bulk upsert.
+    // 3. Bulk upsert.
     const result = await this.students.bulkUpsert(
-      institutionId,
       validRows.map((r) => ({
         row: r.row,
         legajo: r.legajo,
@@ -118,12 +103,12 @@ export class StudentBulkImportProcessor implements OnModuleInit {
       })),
     )
 
-    // 5. Auto-enroll in the given course, if provided. We
+    // 4. Auto-enroll in the given course, if provided. We
     // intentionally do this AFTER bulkUpsert so that the enrollments
     // reference rows that actually exist in the DB.
     if (courseId) {
       const created = await this.prisma.user.findMany({
-        where: { institutionId, role: 'STUDENT' },
+        where: { role: 'STUDENT' },
         select: { id: true, legajo: true },
       })
       const createdLegajos = new Set(
@@ -135,7 +120,7 @@ export class StudentBulkImportProcessor implements OnModuleInit {
       for (const u of toEnroll) {
         await this.prisma.enrollment
           .create({
-            data: { institutionId, courseId, studentId: u.id },
+            data: { courseId, studentId: u.id },
           })
           .catch((err: Error) => {
             // Idempotent — UNIQUE (courseId, studentId) may collide
@@ -145,11 +130,10 @@ export class StudentBulkImportProcessor implements OnModuleInit {
       }
     }
 
-    // 6. Audit log (fire-and-forget; failure does not roll back).
+    // 5. Audit log (fire-and-forget; failure does not roll back).
     await this.prisma.auditLog
       .create({
         data: {
-          institutionId,
           actorUserId: userId,
           action: 'STUDENTS_BULK_IMPORTED',
           entityType: 'Student',

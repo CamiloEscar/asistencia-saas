@@ -15,12 +15,12 @@ import type { UpdateSubjectDto } from '../dtos/update-subject.dto'
 export class UpdateSubjectUseCase {
   constructor(@Inject(SUBJECT_REPOSITORY) private readonly subjects: ISubjectRepository) {}
 
-  async execute(institutionId: string, id: string, input: UpdateSubjectDto): Promise<Subject> {
-    const target = await this.subjects.findByIdInInstitution(institutionId, id)
+  async execute(id: string, input: UpdateSubjectDto): Promise<Subject> {
+    const target = await this.subjects.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Subject not found', error: 'Not Found' })
     }
-    return this.subjects.updateInInstitution(institutionId, id, {
+    return this.subjects.update(id, {
       name: input.name,
       description: input.description,
     })

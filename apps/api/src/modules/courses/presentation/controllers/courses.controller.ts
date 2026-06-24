@@ -14,19 +14,17 @@ import { Audit } from '../../../../audit/decorators/audit.decorator'
 import { JwtAuthGuard } from '../../../auth/infrastructure/guards/jwt-auth.guard'
 import { Roles } from '../../../auth/presentation/decorators/roles.decorator'
 import { RolesGuard } from '../../../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../../../auth/infrastructure/guards/tenant.guard'
 import { ZodValidationPipe } from '../../../../shared/pipes/zod-validation.pipe'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
-import type { CreateCourseUseCase } from '../../application/use-cases/create-course.use-case'
-import type { ListCoursesUseCase } from '../../application/use-cases/list-courses.use-case'
-import type { GetCourseUseCase } from '../../application/use-cases/get-course.use-case'
-import type { UpdateCourseUseCase } from '../../application/use-cases/update-course.use-case'
-import type { DeactivateCourseUseCase } from '../../application/use-cases/deactivate-course.use-case'
-import type { AssignTeachersUseCase } from '../../application/use-cases/assign-teachers.use-case'
-import type { EnrollStudentsUseCase } from '../../application/use-cases/enroll-students.use-case'
-import type { UnenrollStudentUseCase } from '../../application/use-cases/unenroll-student.use-case'
-import type { UnassignTeacherUseCase } from '../../application/use-cases/unassign-teacher.use-case'
-import type { ListEnrolledStudentsUseCase } from '../../application/use-cases/list-enrolled-students.use-case'
+import  { CreateCourseUseCase } from '../../application/use-cases/create-course.use-case'
+import  { ListCoursesUseCase } from '../../application/use-cases/list-courses.use-case'
+import  { GetCourseUseCase } from '../../application/use-cases/get-course.use-case'
+import  { UpdateCourseUseCase } from '../../application/use-cases/update-course.use-case'
+import  { DeactivateCourseUseCase } from '../../application/use-cases/deactivate-course.use-case'
+import  { AssignTeachersUseCase } from '../../application/use-cases/assign-teachers.use-case'
+import  { EnrollStudentsUseCase } from '../../application/use-cases/enroll-students.use-case'
+import  { UnenrollStudentUseCase } from '../../application/use-cases/unenroll-student.use-case'
+import  { UnassignTeacherUseCase } from '../../application/use-cases/unassign-teacher.use-case'
+import  { ListEnrolledStudentsUseCase } from '../../application/use-cases/list-enrolled-students.use-case'
 import {
   CreateCourseDtoSchema,
   type CreateCourseDto,
@@ -49,14 +47,14 @@ import {
 
 /**
  * CoursesController — `/api/courses/*` endpoints.
- *   - GET (list, by-id, by-id/students): any authenticated user in the institution.
+ *   - GET (list, by-id, by-id/students): any authenticated user.
  *     Filtering by role happens at the use case layer (TEACHER sees
  *     only their assigned courses, STUDENT only enrolled).
  *   - POST / PATCH / DELETE / enroll / unenroll / teachers:
- *     INSTITUTION_ADMIN only.
+ *     ADMIN only.
  */
 @Controller('courses')
-@UseGuards(JwtAuthGuard, RolesGuard, TenantGuard)
+@UseGuards(JwtAuthGuard, RolesGuard)
 export class CoursesController {
   constructor(
     private readonly createUseCase: CreateCourseUseCase,
@@ -76,8 +74,7 @@ export class CoursesController {
   async list(
     @Query(new ZodValidationPipe(ListCoursesQueryDtoSchema)) query: ListCoursesQueryDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const result = await this.listUseCase.execute(institutionId, {
+    const result = await this.listUseCase.execute({
       cursor: query.cursor,
       limit: query.limit,
       subjectId: query.subjectId ?? null,
@@ -96,71 +93,65 @@ export class CoursesController {
 
   // ─── POST /courses ────────────────────────────────────────────────────
   @Post()
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'COURSE_CREATED', entityType: 'Course', entityIdFrom: 'result' })
   async create(
     @Body(new ZodValidationPipe(CreateCourseDtoSchema)) body: CreateCourseDto,
   ): Promise<CreateCourseResponse> {
-    const institutionId = this.requireTenantId()
-    return this.createUseCase.execute(body, institutionId)
+    return this.createUseCase.execute(body)
   }
 
   // ─── GET /courses/:id ─────────────────────────────────────────────────
   @Get(':id')
   async byId(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const c = await this.getUseCase.execute(institutionId, id)
+    const c = await this.getUseCase.execute(id)
     return c.toPublicJson()
   }
 
   // ─── PATCH /courses/:id ───────────────────────────────────────────────
   @Patch(':id')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'COURSE_UPDATED', entityType: 'Course' })
   async update(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(UpdateCourseDtoSchema)) body: UpdateCourseDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const c = await this.updateUseCase.execute(institutionId, id, body)
+    const c = await this.updateUseCase.execute(id, body)
     return c.toPublicJson()
   }
 
   // ─── POST /courses/:id/deactivate ─────────────────────────────────────
   @Post(':id/deactivate')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'COURSE_DEACTIVATED', entityType: 'Course' })
   async deactivate(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const c = await this.deactivateUseCase.execute(institutionId, id)
+    const c = await this.deactivateUseCase.execute(id)
     return c.toPublicJson()
   }
 
   // ─── DELETE /courses/:id (alias) ──────────────────────────────────────
   @Delete(':id')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'COURSE_DELETED', entityType: 'Course' })
   async delete(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    const c = await this.deactivateUseCase.execute(institutionId, id)
+    const c = await this.deactivateUseCase.execute(id)
     return c.toPublicJson()
   }
 
   // ─── POST /courses/:id/teachers ───────────────────────────────────────
   @Post(':id/teachers')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'TEACHERS_ASSIGNED', entityType: 'Course' })
   async assignTeachers(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(AssignTeachersDtoSchema)) body: AssignTeachersDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    return this.assignTeachersUseCase.execute(institutionId, id, body.teacherIds)
+    return this.assignTeachersUseCase.execute(id, body.teacherIds)
   }
 
   // ─── DELETE /courses/:id/teachers/:teacherId ──────────────────────────
   @Delete(':id/teachers/:teacherId')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'TEACHER_UNASSIGNED', entityType: 'Course' })
   async unassignTeacher(
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -171,19 +162,18 @@ export class CoursesController {
 
   // ─── POST /courses/:id/enrollments ───────────────────────────────────
   @Post(':id/enrollments')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'STUDENTS_ENROLLED', entityType: 'Course' })
   async enrollStudents(
     @Param('id', new ParseUUIDPipe()) id: string,
     @Body(new ZodValidationPipe(EnrollStudentsDtoSchema)) body: EnrollStudentsDto,
   ): Promise<unknown> {
-    const institutionId = this.requireTenantId()
-    return this.enrollStudentsUseCase.execute(institutionId, id, body.studentIds)
+    return this.enrollStudentsUseCase.execute(id, body.studentIds)
   }
 
   // ─── DELETE /courses/:id/enrollments/:studentId ──────────────────────
   @Delete(':id/enrollments/:studentId')
-  @Roles('INSTITUTION_ADMIN')
+  @Roles('ADMIN')
   @Audit({ action: 'STUDENT_UNENROLLED', entityType: 'Course' })
   async unenrollStudent(
     @Param('id', new ParseUUIDPipe()) id: string,
@@ -194,17 +184,9 @@ export class CoursesController {
 
   // ─── GET /courses/:id/students ───────────────────────────────────────
   @Get(':id/students')
-  @Roles('INSTITUTION_ADMIN', 'TEACHER')
+  @Roles('ADMIN', 'TEACHER')
   async listEnrolledStudents(@Param('id', new ParseUUIDPipe()) id: string): Promise<unknown> {
     const students = await this.listEnrolledStudentsUseCase.execute(id)
     return { data: students }
-  }
-
-  private requireTenantId(): string {
-    const ctx = getTenantContext()
-    if (!ctx) {
-      throw new Error('Tenant context missing — TenantMiddleware did not run')
-    }
-    return ctx.tenantId
   }
 }

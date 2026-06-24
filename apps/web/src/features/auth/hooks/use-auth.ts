@@ -39,8 +39,8 @@ export function useLogin() {
       return data
     },
     onSuccess: async (_data) => {
-      // Manually call /auth/me so the store has the institution
-      // context. Cheaper than overloading the login response.
+      // Manually call /auth/me so the store has the latest user info.
+      // Cheaper than overloading the login response.
       const me = await apiClient
         .get<MeResponse>('/auth/me')
         .then((r) => r.data)

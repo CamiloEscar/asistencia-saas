@@ -9,11 +9,11 @@
  *
  * Spec: FE-REQ-AUTH-001..004
  */
-import { test, expect, TEST_TENANT } from '../helpers'
+import { test, expect } from '../helpers'
 
 test.describe('Authentication', () => {
   test('valid credentials redirect to role-specific dashboard', async ({ page }) => {
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
+    await page.goto(`http://localhost:5173/login`)
 
     await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('admin1234')
@@ -25,7 +25,7 @@ test.describe('Authentication', () => {
   })
 
   test('invalid credentials show an error message', async ({ page }) => {
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
+    await page.goto(`http://localhost:5173/login`)
 
     await page.getByLabel(/email/i).fill('admin@celsius.com')
     await page.getByLabel(/contraseña/i).fill('wrong-password')
@@ -40,7 +40,7 @@ test.describe('Authentication', () => {
   })
 
   test('forgot-password link navigates to the recovery page', async ({ page }) => {
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
+    await page.goto(`http://localhost:5173/login`)
 
     await page.getByRole('link', { name: /olvid.+contraseña|forgot.+password/i }).click()
     await page.waitForURL(/\/forgot-password/)
@@ -51,7 +51,7 @@ test.describe('Authentication', () => {
     // Navigate with a fake token — the page should render the form
     // (it will fail to validate the token, but the form should show up)
     await page.goto(
-      `http://${TEST_TENANT}.app.localhost:5173/set-password?token=fake-token-for-testing`,
+      `http://localhost:5173/set-password?token=fake-token-for-testing`,
     )
     // The set-password form should render
     await expect(page.getByLabel(/contraseña|password/i).first()).toBeVisible({

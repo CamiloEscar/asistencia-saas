@@ -1,6 +1,5 @@
 import { DateTime } from 'luxon'
 import { ForbiddenException, BadRequestException, Inject, Injectable, Logger } from '@nestjs/common'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 import {
   ATTENDANCE_REPOSITORY,
   type IAttendanceRepository,
@@ -16,8 +15,7 @@ import type { MarkAttendanceDto } from '../dtos/mark-attendance.dto'
  * pair. The core "docente registra asistencia" flow. Per spec
  * REQ-ATT-001..007:
  *
- *   1. Validate the caller is the assigned teacher OR an
- *      INSTITUTION_ADMIN.
+ *   1. Validate the caller is the assigned teacher OR an ADMIN.
  *   2. Same-day rule for teachers: the requested date must equal
  *      "today" in the institution's timezone.
  *   3. Validate every studentId is enrolled in the course.
@@ -42,7 +40,7 @@ export class MarkAttendanceUseCase {
 
   async execute(
     input: MarkAttendanceDto,
-    ctx: { institutionId: string; actorUserId: string; actorRole: string },
+    ctx: { actorUserId: string; actorRole: string },
   ): Promise<{
     sessionId: string
     created: number
@@ -52,9 +50,7 @@ export class MarkAttendanceUseCase {
     lateCount: number
     justifiedCount: number
   }> {
-    // 1. Resolve institution TZ from AsyncLocalStorage.
-    const tenantCtx = getTenantContext()
-    const timezone = tenantCtx?.timezone ?? 'America/Argentina/Buenos_Aires'
+    const timezone = 'America/Argentina/Buenos_Aires'
 
     // 2. Parse the input date as a calendar day in the institution TZ.
     const requestedDay = DateTime.fromISO(input.date, { zone: timezone })
@@ -87,7 +83,6 @@ export class MarkAttendanceUseCase {
     // 4. If teacher, validate they're assigned to this course.
     if (ctx.actorRole === 'TEACHER') {
       const assigned = await this.classSessions.isTeacherAssignedToCourse(
-        ctx.institutionId,
         ctx.actorUserId,
         input.courseId,
       )
@@ -97,7 +92,7 @@ export class MarkAttendanceUseCase {
           error: 'Forbidden',
         })
       }
-    } else if (ctx.actorRole !== 'INSTITUTION_ADMIN' && ctx.actorRole !== 'SUPER_ADMIN') {
+    } else if (ctx.actorRole !== 'ADMIN') {
       throw new ForbiddenException({
         message: 'Only teachers and institution admins can mark attendance',
         error: 'Forbidden',
@@ -123,10 +118,9 @@ export class MarkAttendanceUseCase {
     const dayStartLocal = requestStart.toJSDate()
     const duration =
       input.sessionDurationMin ??
-      (await this.classSessions.getCourseDefaultDuration(ctx.institutionId, input.courseId)) ??
+      (await this.classSessions.getCourseDefaultDuration(input.courseId)) ??
       80
     const session = await this.classSessions.getOrCreateForCourseAndDate({
-      institutionId: ctx.institutionId,
       courseId: input.courseId,
       scheduledAt: dayStartLocal,
       durationMin: duration,
@@ -142,7 +136,6 @@ export class MarkAttendanceUseCase {
     }))
     const result = await this.attendance.bulkCreateOrUpdate({
       sessionId: session.id,
-      institutionId: ctx.institutionId,
       recordedBy: ctx.actorUserId,
       records,
     })

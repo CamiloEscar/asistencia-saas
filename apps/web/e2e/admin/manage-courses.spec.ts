@@ -11,24 +11,24 @@
  *
  * Spec: journey 4 from explore (CRUD round-trip).
  */
-import { test, expect, TEST_TENANT } from '../helpers'
+import { test, expect } from '../helpers'
 import * as path from 'node:path'
 import * as fs from 'node:fs'
 import * as os from 'node:os'
 
-test.describe('Institution admin: course creation with bulk import', () => {
+test.describe('Admin: course creation with bulk import', () => {
   test('admin creates teacher, subject, imports students, and creates a course', async ({
     page,
   }) => {
     // 1. Login
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('admin@celsius.com')
+    await page.goto('http://localhost:5173/login')
+    await page.getByLabel(/email/i).fill('admin@asistencia.local')
     await page.getByLabel(/contraseña/i).fill('admin1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/dashboard/, { timeout: 10_000 })
 
     // 2. Create a teacher (using the dialog)
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/teachers`)
+    await page.goto('http://localhost:5173/teachers')
     await page
       .getByRole('button', { name: /crear.+profesor|nuevo.+profesor/i })
       .first()
@@ -44,7 +44,7 @@ test.describe('Institution admin: course creation with bulk import', () => {
     await expect(page.getByText(/éxito|creado/i).first()).toBeVisible({ timeout: 5_000 })
 
     // 3. Create a subject
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/subjects`)
+    await page.goto(`http://localhost:5173/subjects`)
     await page
       .getByRole('button', { name: /crear.+materia|nueva.+materia/i })
       .first()
@@ -68,7 +68,7 @@ test.describe('Institution admin: course creation with bulk import', () => {
     const tmpFile = path.join(os.tmpdir(), `students-${Date.now()}.csv`)
     fs.writeFileSync(tmpFile, csv, 'utf8')
 
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/students/bulk`)
+    await page.goto(`http://localhost:5173/students/bulk`)
     const fileInput = page.locator('input[type="file"]')
     await fileInput.setInputFiles(tmpFile)
     // Wait for the preview

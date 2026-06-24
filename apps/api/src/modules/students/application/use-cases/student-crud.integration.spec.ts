@@ -24,9 +24,7 @@ import type {
 
 /**
  * In-memory implementation of `IStudentRepository`. Mirrors the
- * Prisma `createMany` semantics (`skipDuplicates: true`) and
- * the tenant-scoped `findByIdInInstitution` etc. This lets us
- * exercise the use cases without a real DB.
+ * Prisma `createMany` semantics (`skipDuplicates: true`).
  */
 class InMemoryStudentRepository implements IStudentRepository {
   private next = 1
@@ -51,43 +49,39 @@ class InMemoryStudentRepository implements IStudentRepository {
         fullName: r.fullName as string,
         role: 'STUDENT',
         status: (r.status as 'ACTIVE' | 'INACTIVE') ?? 'ACTIVE',
-        institutionId: (r.institutionId as string | null) ?? null,
       } as never,
       extras,
     )
   }
 
-  async findByIdInInstitution(institutionId: string, id: string) {
+  async findById(id: string) {
     const r = this.students.get(id)
-    if (!r || r.institutionId !== institutionId) return null
-    return this.toStudent(r) as never
+    return r ? (this.toStudent(r) as never) : null
   }
-  async findByLegajoInInstitution(institutionId: string, legajo: string) {
+  async findByLegajo(legajo: string) {
     for (const r of this.students.values()) {
-      if (r.institutionId === institutionId && r.legajo === legajo.toUpperCase()) {
+      if (r.legajo === legajo.toUpperCase()) {
         return this.toStudent(r) as never
       }
     }
     return null
   }
-  async findByEmailInInstitution(institutionId: string, email: string) {
+  async findByEmail(email: string) {
     for (const r of this.students.values()) {
-      if (r.institutionId === institutionId && r.email === email.toLowerCase()) {
+      if (r.email === email.toLowerCase()) {
         return this.toStudent(r) as never
       }
     }
     return null
   }
-  async listInInstitution(_institutionId: string, _input: ListStudentsInput) {
-    const rows = Array.from(this.students.values())
-      .filter((r) => r.institutionId === _institutionId)
-      .map((r) => this.toStudent(r))
+  async list(_input: ListStudentsInput) {
+    const rows = Array.from(this.students.values()).map((r) => this.toStudent(r))
     return { data: rows as never, nextCursor: null, hasMore: false } satisfies ListStudentsResult
   }
-  async listForTeacher(_i: string, _t: string, _input: ListStudentsInput) {
+  async listForTeacher(_t: string, _input: ListStudentsInput) {
     return { data: [], nextCursor: null, hasMore: false } satisfies ListStudentsResult
   }
-  async createInInstitution(input: CreateStudentInput) {
+  async create(input: CreateStudentInput) {
     const id = this.genId()
     const row: Record<string, unknown> = {
       id,
@@ -96,7 +90,6 @@ class InMemoryStudentRepository implements IStudentRepository {
       fullName: input.fullName,
       role: 'STUDENT',
       status: 'ACTIVE',
-      institutionId: input.institutionId,
       legajo: input.legajo.toUpperCase(),
       phone: input.phone ?? null,
       birthDate: input.birthDate ?? null,
@@ -105,9 +98,9 @@ class InMemoryStudentRepository implements IStudentRepository {
     this.students.set(id, row)
     return this.toStudent(row) as never
   }
-  async updateInInstitution(institutionId: string, id: string, input: UpdateStudentInput) {
+  async update(id: string, input: UpdateStudentInput) {
     const r = this.students.get(id)
-    if (!r || r.institutionId !== institutionId) {
+    if (!r) {
       throw new NotFoundException({ message: 'Student not found' })
     }
     if (input.fullName !== undefined) r.fullName = input.fullName
@@ -118,34 +111,32 @@ class InMemoryStudentRepository implements IStudentRepository {
     if (input.career !== undefined) r.career = input.career
     return this.toStudent(r) as never
   }
-  async setActiveInInstitution(institutionId: string, id: string, isActive: boolean) {
+  async setActive(id: string, isActive: boolean) {
     const r = this.students.get(id)
-    if (!r || r.institutionId !== institutionId) {
+    if (!r) {
       throw new NotFoundException({ message: 'Student not found' })
     }
     r.status = isActive ? 'ACTIVE' : 'INACTIVE'
     return this.toStudent(r) as never
   }
   async bulkUpsert(
-    institutionId: string,
-    rows: Array<Omit<CreateStudentInput, 'institutionId' | 'passwordHash'> & { row: number }>,
+    rows: Array<Omit<CreateStudentInput, 'passwordHash'> & { row: number }>,
   ) {
     let created = 0
     let skipped = 0
     for (const r of rows) {
-      const existing = await this.findByLegajoInInstitution(institutionId, r.legajo)
+      const existing = await this.findByLegajo(r.legajo)
       if (existing) {
         skipped += 1
         continue
       }
-      await this.createInInstitution({ ...r, institutionId, passwordHash: null })
+      await this.create({ ...r, passwordHash: null })
       created += 1
     }
     return { created, skipped, updated: 0, errors: [] }
   }
-  async countInInstitution(institutionId: string) {
-    return Array.from(this.students.values()).filter((r) => r.institutionId === institutionId)
-      .length
+  async count() {
+    return this.students.size
   }
 }
 
@@ -153,7 +144,6 @@ describe('Student CRUD lifecycle (integration)', () => {
   let students: InMemoryStudentRepository
   let passwordHasher: jest.Mocked<PasswordHasherService>
   let setPassword: jest.Mocked<SetPasswordUseCase>
-  const institutionId = 'i-1'
 
   beforeEach(() => {
     students = new InMemoryStudentRepository()
@@ -171,49 +161,44 @@ describe('Student CRUD lifecycle (integration)', () => {
     const deactivate = new DeactivateStudentUseCase(students)
 
     // 1. Create
-    const created = await create.execute(
-      { legajo: '2024-001', fullName: 'Juan Pérez', sendActivationLink: false },
-      institutionId,
-    )
+    const created = await create.execute({
+      legajo: '2024-001',
+      fullName: 'Juan Pérez',
+      sendActivationLink: false,
+    })
     expect(created.student.email).toMatch(/imported\.local/)
     expect(created.student.legajo).toBe('2024-001')
     expect(created.student.isActive).toBe(true)
     const id = created.student.id
 
     // 2. List
-    const l = await list.execute(institutionId, {})
+    const l = await list.execute({}, { role: 'ADMIN', userId: 'a-1' })
     expect(l.data.length).toBe(1)
 
     // 3. Update name
-    const updated = await update.execute(institutionId, id, { fullName: 'Juan P.' })
+    const updated = await update.execute(id, { fullName: 'Juan P.' })
     expect(updated.fullName).toBe('Juan P.')
 
     // 4. Deactivate
-    const deactivated = await deactivate.execute(institutionId, id)
+    const deactivated = await deactivate.execute(id)
     expect(deactivated.isActive).toBe(false)
 
     // Final list count is still 1 (soft delete preserves history).
-    const finalList = await list.execute(institutionId, {})
+    const finalList = await list.execute({}, { role: 'ADMIN', userId: 'a-1' })
     expect(finalList.data.length).toBe(1)
   })
 
-  it('rejects a duplicate legajo in the same institution', async () => {
+  it('rejects a duplicate legajo', async () => {
     const create = new CreateStudentUseCase(students, passwordHasher, setPassword)
-    await create.execute(
-      { legajo: '2024-001', fullName: 'A', sendActivationLink: false },
-      institutionId,
-    )
+    await create.execute({ legajo: '2024-001', fullName: 'A', sendActivationLink: false })
     await expect(
-      create.execute(
-        { legajo: '2024-001', fullName: 'B', sendActivationLink: false },
-        institutionId,
-      ),
+      create.execute({ legajo: '2024-001', fullName: 'B', sendActivationLink: false }),
     ).rejects.toBeInstanceOf(ConflictException)
   })
 
   it('404s when updating a non-existent student', async () => {
     const update = new UpdateStudentUseCase(students)
-    await expect(update.execute(institutionId, 'u-999', { fullName: 'X' })).rejects.toBeInstanceOf(
+    await expect(update.execute('u-999', { fullName: 'X' })).rejects.toBeInstanceOf(
       NotFoundException,
     )
   })

@@ -8,20 +8,18 @@ import {
 /**
  * AssignTeachersUseCase — assigns a list of teachers to a course.
  * Idempotent (REQ-COURSE-007-02): re-assigning the same teacher
- * is a no-op. Cross-tenant: each teacherId is validated against
- * the caller's institution by the repository.
+ * is a no-op. Each teacherId is validated to exist.
  */
 @Injectable()
 export class AssignTeachersUseCase {
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
   async execute(
-    institutionId: string,
     courseId: string,
     teacherIds: string[],
   ): Promise<{ added: string[]; teachers: AssignedTeacher[] }> {
     for (const teacherId of teacherIds) {
-      await this.courses.validateTeacherInInstitution(institutionId, teacherId)
+      await this.courses.validateTeacherExists(teacherId)
       await this.courses.assignTeacher(courseId, teacherId)
     }
     const teachers = await this.courses.listAssignedTeachers(courseId)

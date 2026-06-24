@@ -9,19 +9,19 @@
  *
  * Spec: REQ-STUDENT-005, FE-REQ-STU-001..005
  */
-import { test, expect, TEST_TENANT } from '../helpers'
+import { test, expect } from '../helpers'
 
 test.describe('Student views attendance', () => {
   test('student sees overall attendance and per-course breakdown', async ({ page }) => {
     // 1. Login
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('student1@celsius.com')
+    await page.goto('http://localhost:5173/login')
+    await page.getByLabel(/email/i).fill('student1@asistencia.local')
     await page.getByLabel(/contraseña/i).fill('student1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/me/, { timeout: 10_000 })
 
     // 2. Navigate to my attendance
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/me/attendance`)
+    await page.goto('http://localhost:5173/me/attendance')
 
     // 3. The page should render either a per-course list OR an empty state
     //    (depending on whether the test seed includes enrollments for this student)
@@ -30,8 +30,8 @@ test.describe('Student views attendance', () => {
   })
 
   test('student dashboard shows overall attendance percentage', async ({ page }) => {
-    await page.goto(`http://${TEST_TENANT}.app.localhost:5173/login`)
-    await page.getByLabel(/email/i).fill('student1@celsius.com')
+    await page.goto('http://localhost:5173/login')
+    await page.getByLabel(/email/i).fill('student1@asistencia.local')
     await page.getByLabel(/contraseña/i).fill('student1234')
     await page.getByRole('button', { name: /ingresar/i }).click()
     await page.waitForURL(/\/me/, { timeout: 10_000 })

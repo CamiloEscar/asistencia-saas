@@ -23,16 +23,16 @@ describe('Student use cases', () => {
 
   beforeEach(() => {
     students = {
-      findByIdInInstitution: jest.fn(),
-      findByLegajoInInstitution: jest.fn(),
-      findByEmailInInstitution: jest.fn(),
-      listInInstitution: jest.fn(),
+      findById: jest.fn(),
+      findByLegajo: jest.fn(),
+      findByEmail: jest.fn(),
+      list: jest.fn(),
       listForTeacher: jest.fn(),
-      createInInstitution: jest.fn(),
-      updateInInstitution: jest.fn(),
-      setActiveInInstitution: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      setActive: jest.fn(),
       bulkUpsert: jest.fn(),
-      countInInstitution: jest.fn(),
+      count: jest.fn(),
     } as unknown as jest.Mocked<IStudentRepository>
     passwordHasher = {
       hash: jest.fn().mockResolvedValue('hashed-pw'),
@@ -43,17 +43,18 @@ describe('Student use cases', () => {
 
   describe('CreateStudentUseCase', () => {
     it('creates a student (happy path)', async () => {
-      students.findByLegajoInInstitution.mockResolvedValue(null)
-      students.findByEmailInInstitution.mockResolvedValue(null)
-      students.createInInstitution.mockImplementation(async (input) =>
+      students.findByLegajo.mockResolvedValue(null)
+      students.findByEmail.mockResolvedValue(null)
+      students.create.mockImplementation(async (input) =>
         makeStudent({ email: input.email }),
       )
 
       const useCase = new CreateStudentUseCase(students, passwordHasher, setPassword)
-      const result = await useCase.execute(
-        { legajo: '2024-001', fullName: 'Juan Pérez', sendActivationLink: false },
-        'i-1',
-      )
+      const result = await useCase.execute({
+        legajo: '2024-001',
+        fullName: 'Juan Pérez',
+        sendActivationLink: false,
+      })
 
       // When no email is provided, the use case derives one from
       // the legajo at the `imported.local` domain.
@@ -63,46 +64,44 @@ describe('Student use cases', () => {
     })
 
     it('rejects a duplicate legajo (409)', async () => {
-      students.findByLegajoInInstitution.mockResolvedValue(makeStudent())
+      students.findByLegajo.mockResolvedValue(makeStudent())
 
       const useCase = new CreateStudentUseCase(students, passwordHasher, setPassword)
       await expect(
-        useCase.execute({ legajo: '2024-001', fullName: 'X', sendActivationLink: false }, 'i-1'),
+        useCase.execute({ legajo: '2024-001', fullName: 'X', sendActivationLink: false }),
       ).rejects.toBeInstanceOf(ConflictException)
     })
   })
 
   describe('UpdateStudentUseCase', () => {
     it('updates a student when the new legajo is unique', async () => {
-      students.findByIdInInstitution.mockResolvedValue(makeStudent({ legajo: '2024-001' }))
-      students.findByLegajoInInstitution.mockResolvedValue(null)
-      students.updateInInstitution.mockResolvedValue(makeStudent({ fullName: 'New Name' }))
+      students.findById.mockResolvedValue(makeStudent({ legajo: '2024-001' }))
+      students.findByLegajo.mockResolvedValue(null)
+      students.update.mockResolvedValue(makeStudent({ fullName: 'New Name' }))
 
       const useCase = new UpdateStudentUseCase(students)
-      const result = await useCase.execute('i-1', 'u-1', { fullName: 'New Name' })
+      const result = await useCase.execute('u-1', { fullName: 'New Name' })
       expect(result.fullName).toBe('New Name')
     })
 
     it('rejects a duplicate legajo (409)', async () => {
-      students.findByIdInInstitution.mockResolvedValue(makeStudent({ legajo: '2024-001' }))
-      students.findByLegajoInInstitution.mockResolvedValue(
-        makeStudent({ id: 'other', legajo: '2024-002' }),
-      )
+      students.findById.mockResolvedValue(makeStudent({ legajo: '2024-001' }))
+      students.findByLegajo.mockResolvedValue(makeStudent({ id: 'other', legajo: '2024-002' }))
 
       const useCase = new UpdateStudentUseCase(students)
-      await expect(useCase.execute('i-1', 'u-1', { legajo: '2024-002' })).rejects.toBeInstanceOf(
-        ConflictException,
-      )
+      await expect(
+        useCase.execute('u-1', { legajo: '2024-002' }),
+      ).rejects.toBeInstanceOf(ConflictException)
     })
   })
 
   describe('DeactivateStudentUseCase', () => {
     it('deactivates a student', async () => {
-      students.findByIdInInstitution.mockResolvedValue(makeStudent())
-      students.setActiveInInstitution.mockResolvedValue(makeStudent({ status: 'INACTIVE' }))
+      students.findById.mockResolvedValue(makeStudent())
+      students.setActive.mockResolvedValue(makeStudent({ status: 'INACTIVE' }))
 
       const useCase = new DeactivateStudentUseCase(students)
-      const result = await useCase.execute('i-1', 'u-1')
+      const result = await useCase.execute('u-1')
       expect(result.status).toBe('INACTIVE')
     })
   })
@@ -114,10 +113,10 @@ describe('Student use cases', () => {
         nextCursor: null,
         hasMore: false,
       }
-      students.listInInstitution.mockResolvedValue(result)
+      students.list.mockResolvedValue(result)
 
       const useCase = new ListStudentsUseCase(students)
-      const r = await useCase.execute('i-1', {})
+      const r = await useCase.execute({}, { role: 'ADMIN', userId: 'a-1' })
       expect(r.data).toHaveLength(1)
       expect(students.listForTeacher).not.toHaveBeenCalled()
     })
@@ -125,9 +124,9 @@ describe('Student use cases', () => {
 
   describe('GetStudentUseCase', () => {
     it('returns the student on a hit', async () => {
-      students.findByIdInInstitution.mockResolvedValue(makeStudent())
+      students.findById.mockResolvedValue(makeStudent())
       const useCase = new GetStudentUseCase(students)
-      const r = await useCase.execute('i-1', 'u-1')
+      const r = await useCase.execute('u-1')
       expect(r.id).toBe('u-1')
     })
   })

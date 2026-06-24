@@ -1,10 +1,8 @@
 import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
 import { PrismaModule } from '../../shared/prisma/prisma.module'
-import { TenantModule } from '../../shared/tenant/tenant.module'
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard'
 import { RolesGuard } from '../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../auth/infrastructure/guards/tenant.guard'
 import { CreateCourseUseCase } from './application/use-cases/create-course.use-case'
 import { ListCoursesUseCase } from './application/use-cases/list-courses.use-case'
 import { GetCourseUseCase } from './application/use-cases/get-course.use-case'
@@ -22,10 +20,10 @@ import { CoursesController } from './presentation/controllers/courses.controller
 
 /**
  * CoursesModule — course CRUD + teacher/student assignment +
- * enrollment management. Tenant-scoped.
+ * enrollment management.
  */
 @Module({
-  imports: [PrismaModule, TenantModule, AuthModule],
+  imports: [PrismaModule, AuthModule],
   controllers: [CoursesController],
   providers: [
     { provide: COURSE_REPOSITORY, useClass: PrismaCourseRepository },
@@ -42,7 +40,6 @@ import { CoursesController } from './presentation/controllers/courses.controller
     MyCoursesUseCase,
     JwtAuthGuard,
     RolesGuard,
-    TenantGuard,
   ],
   exports: [COURSE_REPOSITORY, MyCoursesUseCase],
 })

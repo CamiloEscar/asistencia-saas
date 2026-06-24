@@ -10,9 +10,8 @@ import {
 
 /**
  * GetAttendanceUseCase — fetch a single attendance record,
- * enforcing tenant isolation (404 on cross-tenant) and
- * role-based visibility (TEACHER sees only their own courses'
- * records; STUDENT sees only their own).
+ * enforcing role-based visibility (TEACHER sees only their own
+ * courses' records; STUDENT sees only their own).
  *
  * The role check is done here rather than in the controller so
  * the authorization logic stays next to the persistence layer
@@ -28,9 +27,9 @@ export class GetAttendanceUseCase {
 
   async execute(
     id: string,
-    ctx: { institutionId: string; actorUserId: string; actorRole: string },
+    ctx: { actorUserId: string; actorRole: string },
   ) {
-    const record = await this.attendance.findByIdInInstitution(ctx.institutionId, id)
+    const record = await this.attendance.findById(id)
     if (!record) {
       throw new NotFoundException({
         message: 'Attendance record not found',
@@ -39,10 +38,7 @@ export class GetAttendanceUseCase {
     }
 
     if (ctx.actorRole === 'TEACHER') {
-      const session = await this.classSessions.findByIdInInstitution(
-        ctx.institutionId,
-        record.sessionId,
-      )
+      const session = await this.classSessions.findById(record.sessionId)
       if (!session) {
         // Should not happen; the FK guarantees the session exists.
         throw new NotFoundException({
@@ -51,7 +47,6 @@ export class GetAttendanceUseCase {
         })
       }
       const assigned = await this.classSessions.isTeacherAssignedToCourse(
-        ctx.institutionId,
         ctx.actorUserId,
         session.courseId,
       )
@@ -70,8 +65,7 @@ export class GetAttendanceUseCase {
         })
       }
     }
-    // ADMIN / SUPER_ADMIN: no extra check (tenant guard already
-    // validated institution match).
+    // ADMIN / SUPER_ADMIN: no extra check.
 
     return record
   }

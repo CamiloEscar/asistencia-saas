@@ -35,7 +35,6 @@ export interface StudentProps {
   fullName: string
   role: 'STUDENT'
   status: StudentStatus
-  institutionId: string
   legajo: string | null
   phone: string | null
   birthDate: Date | null
@@ -60,7 +59,6 @@ export class Student {
       fullName: user.fullName,
       role: 'STUDENT',
       status: user.status,
-      institutionId: user.institutionId ?? '',
       legajo: extras?.legajo ?? null,
       phone: extras?.phone ?? null,
       birthDate: extras?.birthDate ?? null,
@@ -85,9 +83,6 @@ export class Student {
   }
   get isActive(): boolean {
     return this.props.status === 'ACTIVE'
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get legajo(): string | null {
     return this.props.legajo

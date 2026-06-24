@@ -5,7 +5,7 @@ import { Paths } from './paths'
 /**
  * 404 page. Shown when a route does not match any of the registered
  * patterns. Lives outside the AppShell (no sidebar) because the user
- * could be in any state — authenticated or not, in any institution.
+ * could be in any state — authenticated or not.
  */
 export function NotFoundPage() {
   return (

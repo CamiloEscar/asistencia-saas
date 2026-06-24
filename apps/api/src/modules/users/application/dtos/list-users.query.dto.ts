@@ -7,7 +7,7 @@ import { z } from 'zod'
 export const ListUsersQueryDtoSchema = z.object({
   cursor: z.string().uuid().optional(),
   limit: z.coerce.number().int().min(1).max(100).default(20),
-  role: z.enum(['INSTITUTION_ADMIN', 'TEACHER', 'STUDENT']).optional(),
+  role: z.enum(['ADMIN', 'TEACHER', 'STUDENT']).optional(),
   isActive: z
     .union([z.literal('true'), z.literal('false')])
     .optional()

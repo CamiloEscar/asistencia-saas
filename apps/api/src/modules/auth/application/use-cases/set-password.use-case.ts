@@ -1,10 +1,10 @@
 import { Inject, Injectable, Logger, UnauthorizedException } from '@nestjs/common'
 import type Redis from 'ioredis'
-import type { JwtService } from '../../../../shared/crypto/jwt.service'
-import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
+import  { JwtService } from '../../../../shared/crypto/jwt.service'
+import  { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
 import { USER_REPOSITORY } from '../../domain/repositories/user.repository.interface'
-import type { UserRepository } from '../../domain/repositories/user.repository.interface'
-import type { LoginUseCase } from './login.use-case'
+import  { UserRepository } from '../../domain/repositories/user.repository.interface'
+import  { LoginUseCase } from './login.use-case'
 import type { SetPasswordResponse, SetPasswordIssueResponse } from '../dtos/set-password.dto'
 
 /**
@@ -43,7 +43,7 @@ export class SetPasswordUseCase {
   ) {}
 
   async issue(userId: string): Promise<SetPasswordIssueResponse> {
-    const user = await this.users.findByIdForAuth(userId)
+    const user = await this.users.findById(userId)
     if (!user) {
       throw new UnauthorizedException({ message: 'User not found' })
     }
@@ -111,14 +111,7 @@ export class SetPasswordUseCase {
     const hash = await this.passwordHasher.hash(newPassword)
     const updated = await this.users.updatePasswordHash(record.userId, hash)
 
-    // 5. Establish tenant context for the auto-login (so the Prisma
-    // extension WHERE-injection doesn't blow up). The user's institution
-    // is non-null for everyone except SUPER_ADMIN, but activation tokens
-    // are only for non-super users (admins issue them for teachers/
-    // students in their tenant). We delegate to LoginUseCase.issueTokenPair
-    // which handles both cases (it signs the JWT with institutionId from
-    // the user record and writes the refresh state — Prisma queries in
-    // that path use the SUPER_ADMIN client where needed).
+    // 5. Auto-login — issue access + refresh tokens for the user.
     const tokenPair = await this.loginUseCase.issueTokenPair({
       user: updated,
     })

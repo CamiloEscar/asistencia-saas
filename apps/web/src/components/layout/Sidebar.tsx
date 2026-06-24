@@ -6,7 +6,6 @@ import {
   X,
   BarChart3,
   BookOpen,
-  Building2,
   GraduationCap,
   Home,
   School,
@@ -27,25 +26,24 @@ interface SidebarItem {
 }
 
 const ITEMS: ReadonlyArray<SidebarItem> = [
-  { to: Paths.admin, labelKey: 'nav.institutions', icon: Building2, roles: ['SUPER_ADMIN'] },
-  { to: Paths.dashboard, labelKey: 'nav.dashboard', icon: Home, roles: ['INSTITUTION_ADMIN'] },
+  { to: Paths.dashboard, labelKey: 'nav.dashboard', icon: Home, roles: ['ADMIN'] },
   { to: Paths.today, labelKey: 'nav.attendance', icon: BarChart3, roles: ['TEACHER'] },
   { to: Paths.me, labelKey: 'nav.dashboard', icon: Home, roles: ['STUDENT'] },
-  { to: Paths.users, labelKey: 'nav.users', icon: UserCog, roles: ['INSTITUTION_ADMIN'] },
+  { to: Paths.users, labelKey: 'nav.users', icon: UserCog, roles: ['ADMIN'] },
   {
     to: Paths.courses,
     labelKey: 'nav.courses',
     icon: BookOpen,
-    roles: ['INSTITUTION_ADMIN', 'TEACHER'],
+    roles: ['ADMIN', 'TEACHER'],
   },
   {
     to: Paths.students,
     labelKey: 'nav.students',
     icon: GraduationCap,
-    roles: ['INSTITUTION_ADMIN', 'TEACHER'],
+    roles: ['ADMIN', 'TEACHER'],
   },
-  { to: Paths.teachers, labelKey: 'nav.teachers', icon: Users, roles: ['INSTITUTION_ADMIN'] },
-  { to: Paths.subjects, labelKey: 'nav.subjects', icon: School, roles: ['INSTITUTION_ADMIN'] },
+  { to: Paths.teachers, labelKey: 'nav.teachers', icon: Users, roles: ['ADMIN'] },
+  { to: Paths.subjects, labelKey: 'nav.subjects', icon: School, roles: ['ADMIN'] },
 ]
 
 interface SidebarProps {

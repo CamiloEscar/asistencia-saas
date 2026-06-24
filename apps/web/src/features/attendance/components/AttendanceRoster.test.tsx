@@ -31,7 +31,6 @@ beforeAll(async () => {
     'errors',
     'dashboard',
     'feedback',
-    'institutions',
     'users',
     'students',
     'teachers',

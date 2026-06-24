@@ -10,7 +10,6 @@
  */
 export interface CourseProps {
   id: string
-  institutionId: string
   subjectId: string
   code: string
   name: string
@@ -34,9 +33,6 @@ export class Course {
 
   get id(): string {
     return this.props.id
-  }
-  get institutionId(): string {
-    return this.props.institutionId
   }
   get subjectId(): string {
     return this.props.subjectId

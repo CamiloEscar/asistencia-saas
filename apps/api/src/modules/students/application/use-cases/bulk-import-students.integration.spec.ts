@@ -39,45 +39,40 @@ class InMemoryStudentRepo implements IStudentRepository {
         fullName: r.fullName as string,
         role: 'STUDENT',
         status: (r.status as 'ACTIVE' | 'INACTIVE') ?? 'ACTIVE',
-        institutionId: (r.institutionId as string | null) ?? null,
       } as never,
       extras,
     )
   }
-  async findByIdInInstitution(i: string, id: string) {
-    const r = this.rows.get(id)
-    return r && r.institutionId === i ? (this.toStudent(r) as never) : null
+  async findById(id: string) {
+    return this.rows.has(id) ? (this.toStudent(this.rows.get(id)!) as never) : null
   }
-  async findByLegajoInInstitution(i: string, legajo: string) {
+  async findByLegajo(legajo: string) {
     for (const r of this.rows.values()) {
-      if (r.institutionId === i && r.legajo === legajo.toUpperCase()) {
+      if (r.legajo === legajo.toUpperCase()) {
         return this.toStudent(r) as never
       }
     }
     return null
   }
-  async findByEmailInInstitution(i: string, email: string) {
+  async findByEmail(email: string) {
     for (const r of this.rows.values()) {
-      if (r.institutionId === i && r.email === email.toLowerCase()) {
+      if (r.email === email.toLowerCase()) {
         return this.toStudent(r) as never
       }
     }
     return null
   }
-  async listInInstitution(i: string) {
-    const data = Array.from(this.rows.values())
-      .filter((r) => r.institutionId === i)
-      .map((r) => this.toStudent(r))
+  async list() {
+    const data = Array.from(this.rows.values()).map((r) => this.toStudent(r))
     return { data: data as never, nextCursor: null, hasMore: false } satisfies ListStudentsResult
   }
   async listForTeacher() {
     return { data: [], nextCursor: null, hasMore: false } satisfies ListStudentsResult
   }
-  async createInInstitution(input: {
+  async create(input: {
     email: string
     passwordHash: string | null
     fullName: string
-    institutionId: string
     legajo: string
     phone?: string | null
     birthDate?: Date | null
@@ -90,7 +85,6 @@ class InMemoryStudentRepo implements IStudentRepository {
       fullName: input.fullName,
       role: 'STUDENT',
       status: 'ACTIVE',
-      institutionId: input.institutionId,
       legajo: input.legajo.toUpperCase(),
       phone: input.phone ?? null,
       birthDate: input.birthDate ?? null,
@@ -99,20 +93,19 @@ class InMemoryStudentRepo implements IStudentRepository {
     this.rows.set(id, r)
     return this.toStudent(r) as never
   }
-  async updateInInstitution(i: string, id: string, input: Record<string, unknown>) {
+  async update(id: string, input: Record<string, unknown>) {
     const r = this.rows.get(id)
-    if (!r || r.institutionId !== i) throw new NotFoundException({ message: 'Student not found' })
+    if (!r) throw new NotFoundException({ message: 'Student not found' })
     Object.assign(r, input)
     return this.toStudent(r) as never
   }
-  async setActiveInInstitution(i: string, id: string, isActive: boolean) {
+  async setActive(id: string, isActive: boolean) {
     const r = this.rows.get(id)
-    if (!r || r.institutionId !== i) throw new NotFoundException({ message: 'Student not found' })
+    if (!r) throw new NotFoundException({ message: 'Student not found' })
     r.status = isActive ? 'ACTIVE' : 'INACTIVE'
     return this.toStudent(r) as never
   }
   async bulkUpsert(
-    i: string,
     rows: Array<{
       row: number
       legajo: string
@@ -126,16 +119,15 @@ class InMemoryStudentRepo implements IStudentRepository {
     let created = 0
     let skipped = 0
     for (const r of rows) {
-      const existing = await this.findByLegajoInInstitution(i, r.legajo)
+      const existing = await this.findByLegajo(r.legajo)
       if (existing) {
         skipped += 1
         continue
       }
-      await this.createInInstitution({
+      await this.create({
         email: r.email ?? `${r.legajo.toLowerCase()}@imported.local`,
         passwordHash: null,
         fullName: r.fullName,
-        institutionId: i,
         legajo: r.legajo,
         phone: r.phone,
         birthDate: r.birthDate,
@@ -145,8 +137,8 @@ class InMemoryStudentRepo implements IStudentRepository {
     }
     return { created, skipped, updated: 0, errors: [] }
   }
-  async countInInstitution(i: string) {
-    return Array.from(this.rows.values()).filter((r) => r.institutionId === i).length
+  async count() {
+    return this.rows.size
   }
 }
 
@@ -170,7 +162,6 @@ const stubQueue = (): { add: jest.Mock; getJob: jest.Mock } => ({
 describe('Bulk import (integration)', () => {
   let students: InMemoryStudentRepo
   let queue: { add: jest.Mock; getJob: jest.Mock }
-  const institutionId = 'i-1'
 
   beforeEach(() => {
     students = new InMemoryStudentRepo()
@@ -197,12 +188,12 @@ describe('Bulk import (integration)', () => {
       queue as unknown as Queue,
     )
 
-    const result = await useCase.execute(Buffer.from('ignored'), institutionId, 'u-1', {
+    const result = await useCase.execute(Buffer.from('ignored'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
 
-    expect(await students.countInInstitution(institutionId)).toBe(10)
+    expect(await students.count()).toBe(10)
     expect(queue.add).not.toHaveBeenCalled()
     expect(result).toMatchObject({ created: 10, skipped: 0 })
   })
@@ -228,17 +219,14 @@ describe('Bulk import (integration)', () => {
     )
 
     // First import — creates 5.
-    await useCase.execute(Buffer.from('x'), institutionId, 'u-1', {
-      dryRun: false,
-      updateExisting: false,
-    })
+    await useCase.execute(Buffer.from('x'), 'u-1', { dryRun: false, updateExisting: false })
     // Second import — all 5 skipped.
-    const second = await useCase.execute(Buffer.from('x'), institutionId, 'u-1', {
+    const second = await useCase.execute(Buffer.from('x'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
 
-    expect(await students.countInInstitution(institutionId)).toBe(5)
+    expect(await students.count()).toBe(5)
     if ('created' in second) {
       expect(second.created).toBe(0)
       expect(second.skipped).toBe(5)
@@ -265,13 +253,13 @@ describe('Bulk import (integration)', () => {
       queue as unknown as Queue,
     )
 
-    const result = await useCase.execute(Buffer.from('x'), institutionId, 'u-1', {
+    const result = await useCase.execute(Buffer.from('x'), 'u-1', {
       dryRun: false,
       updateExisting: false,
     })
 
     expect(queue.add).toHaveBeenCalled()
-    expect(await students.countInInstitution(institutionId)).toBe(0) // async — not yet applied
+    expect(await students.count()).toBe(0) // async — not yet applied
     expect(result).toMatchObject({ jobId: 'job-async', status: 'queued', estimatedRows: 600 })
   })
 
@@ -297,12 +285,12 @@ describe('Bulk import (integration)', () => {
       queue as unknown as Queue,
     )
 
-    const result = await useCase.execute(Buffer.from('x'), institutionId, 'u-1', {
+    const result = await useCase.execute(Buffer.from('x'), 'u-1', {
       dryRun: true,
       updateExisting: false,
     })
 
-    expect(await students.countInInstitution(institutionId)).toBe(0)
+    expect(await students.count()).toBe(0)
     expect(queue.add).not.toHaveBeenCalled()
     expect(result).toMatchObject({ valid: true, totalRows: 1, validRows: 1 })
   })

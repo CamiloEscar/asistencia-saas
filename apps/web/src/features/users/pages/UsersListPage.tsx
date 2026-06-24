@@ -68,7 +68,7 @@ export function UsersListPage() {
       header: t('users.list.columns.isActive'),
       accessor: (r) => (
         <Badge variant={r.status === 'ACTIVE' ? 'success' : 'destructive'}>
-          {r.status === 'ACTIVE' ? t('institutionStatus.ACTIVE') : t('institutionStatus.INACTIVE')}
+          {r.status === 'ACTIVE' ? t('users.status.ACTIVE') : t('users.status.INACTIVE')}
         </Badge>
       ),
     },
@@ -179,7 +179,7 @@ export function UsersListPage() {
                 className="h-9 rounded-md border bg-background px-2 text-sm"
               >
                 <option value="">{t('users.list.filters.all')}</option>
-                <option value="INSTITUTION_ADMIN">{t('roles.INSTITUTION_ADMIN')}</option>
+                <option value="ADMIN">{t('roles.ADMIN')}</option>
                 <option value="TEACHER">{t('roles.TEACHER')}</option>
                 <option value="STUDENT">{t('roles.STUDENT')}</option>
               </select>

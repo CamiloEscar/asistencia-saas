@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common'
-import type { PrismaService } from '../../../../shared/prisma/prisma.service'
+import { PrismaService } from '../../../../shared/prisma/prisma.service'
 import type { User } from '../../../auth/domain/entities/user.entity'
 import { Teacher } from '../../domain/entities/teacher.entity'
 import type {
@@ -28,26 +28,23 @@ export class PrismaTeacherRepository implements ITeacherRepository {
 
   constructor(private readonly prisma: PrismaService) {}
 
-  async findByIdInInstitution(institutionId: string, id: string): Promise<Teacher | null> {
+  async findById(id: string): Promise<Teacher | null> {
     const row = await this.prisma.user.findFirst({
-      where: { id, institutionId, role: 'TEACHER' },
+      where: { id, role: 'TEACHER' },
     })
     return row ? Teacher.fromUser(row as unknown as User) : null
   }
 
-  async findByEmailInInstitution(institutionId: string, email: string): Promise<Teacher | null> {
+  async findByEmail(email: string): Promise<Teacher | null> {
     const row = await this.prisma.user.findFirst({
-      where: { email: email.toLowerCase(), institutionId, role: 'TEACHER' },
+      where: { email: email.toLowerCase(), role: 'TEACHER' },
     })
     return row ? Teacher.fromUser(row as unknown as User) : null
   }
 
-  async listInInstitution(
-    institutionId: string,
-    input: ListTeachersInput,
-  ): Promise<ListTeachersResult> {
+  async list(input: ListTeachersInput): Promise<ListTeachersResult> {
     const limit = Math.min(Math.max(input.limit ?? 20, 1), 100)
-    const where: UserWhereInput = { institutionId, role: 'TEACHER' }
+    const where: UserWhereInput = { role: 'TEACHER' }
     if (input.isActive !== null && input.isActive !== undefined) {
       where.status = input.isActive ? 'ACTIVE' : 'INACTIVE'
     }
@@ -78,14 +75,13 @@ export class PrismaTeacherRepository implements ITeacherRepository {
     }
   }
 
-  async createInInstitution(input: CreateTeacherInput): Promise<Teacher> {
+  async create(input: CreateTeacherInput): Promise<Teacher> {
     const row = await this.prisma.user.create({
       data: {
         email: input.email.toLowerCase(),
         passwordHash: input.passwordHash,
         fullName: input.fullName,
         role: 'TEACHER',
-        institutionId: input.institutionId,
         legajo: input.legajo ?? null,
         phone: input.phone ?? null,
       },
@@ -93,11 +89,7 @@ export class PrismaTeacherRepository implements ITeacherRepository {
     return Teacher.fromUser(row as unknown as User)
   }
 
-  async updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateTeacherInput,
-  ): Promise<Teacher> {
+  async update(id: string, input: UpdateTeacherInput): Promise<Teacher> {
     const data: UserUpdateInput = {}
     if (input.fullName !== undefined) data.fullName = input.fullName
     if (input.email !== undefined) data.email = input.email.toLowerCase()
@@ -108,19 +100,15 @@ export class PrismaTeacherRepository implements ITeacherRepository {
     if (input.legajo !== undefined) data.legajo = input.legajo
 
     const row = await this.prisma.user.update({
-      where: { id, institutionId, role: 'TEACHER' },
+      where: { id, role: 'TEACHER' },
       data,
     })
     return Teacher.fromUser(row as unknown as User)
   }
 
-  async setActiveInInstitution(
-    institutionId: string,
-    id: string,
-    isActive: boolean,
-  ): Promise<Teacher> {
+  async setActive(id: string, isActive: boolean): Promise<Teacher> {
     const row = await this.prisma.user.update({
-      where: { id, institutionId, role: 'TEACHER' },
+      where: { id, role: 'TEACHER' },
       data: { status: isActive ? 'ACTIVE' : 'INACTIVE' },
     })
     return Teacher.fromUser(row as unknown as User)

@@ -15,16 +15,13 @@ export class ListTeachersUseCase {
     @Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository,
   ) {}
 
-  execute(
-    institutionId: string,
-    input: {
-      cursor?: string | null
-      limit?: number
-      isActive?: boolean | null
-      search?: string | null
-    },
-  ): Promise<ListTeachersResult> {
-    return this.teachers.listInInstitution(institutionId, {
+  execute(input: {
+    cursor?: string | null
+    limit?: number
+    isActive?: boolean | null
+    search?: string | null
+  }): Promise<ListTeachersResult> {
+    return this.teachers.list({
       cursor: input.cursor ?? null,
       limit: input.limit ?? 20,
       isActive: input.isActive ?? null,

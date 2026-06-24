@@ -1,7 +1,7 @@
 import { ConflictException, Inject, Injectable, Logger } from '@nestjs/common'
 import { randomBytes } from 'node:crypto'
-import type { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
-import type { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
+import  { PasswordHasherService } from '../../../../shared/crypto/password-hasher.service'
+import  { SetPasswordUseCase } from '../../../auth/application/use-cases/set-password.use-case'
 import type { Teacher } from '../../domain/entities/teacher.entity'
 import { Email } from '../../../auth/domain/value-objects/email.vo'
 import {
@@ -11,7 +11,7 @@ import {
 import type { CreateTeacherDto } from '../../application/dtos/create-teacher.dto'
 
 /**
- * CreateTeacherUseCase — thin wrapper over `users.createInInstitution`
+ * CreateTeacherUseCase — thin wrapper over `users.create`
  * that forces `role = TEACHER` (REQ-TEACHER-002-02). The endpoint
  * is a convenience for the FE; admins could equally well call
  * `POST /api/users` with `role: TEACHER`.
@@ -26,19 +26,14 @@ export class CreateTeacherUseCase {
     private readonly setPasswordUseCase: SetPasswordUseCase,
   ) {}
 
-  async execute(
-    input: CreateTeacherDto,
-    institutionId: string,
-  ): Promise<{
+  async execute(input: CreateTeacherDto): Promise<{
     teacher: Teacher
     temporaryPassword?: string
     setPasswordLink?: string
   }> {
-    // 1. Validate email format.
     const email = Email.create(input.email)
 
-    // 2. Enforce email uniqueness within the institution.
-    const existing = await this.teachers.findByEmailInInstitution(institutionId, email.value)
+    const existing = await this.teachers.findByEmail(email.value)
     if (existing) {
       throw new ConflictException({
         message: 'Email already in use in this institution',
@@ -47,16 +42,13 @@ export class CreateTeacherUseCase {
       })
     }
 
-    // 3. Generate a temporary password if not provided.
     const plainPassword = input.password ?? this.generateTemporaryPassword()
     const passwordHash = await this.passwordHasher.hash(plainPassword)
 
-    // 4. Create the teacher.
-    const teacher = await this.teachers.createInInstitution({
+    const teacher = await this.teachers.create({
       email: email.value,
       passwordHash,
       fullName: input.fullName,
-      institutionId,
       legajo: input.legajo,
       phone: input.phone,
     })

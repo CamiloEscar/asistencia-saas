@@ -32,7 +32,7 @@ type ProfileFormValues = z.infer<typeof updateMeRequestSchema>
 export function ProfilePage() {
   const { t } = useTranslation()
   const toast = useToast()
-  const { user, institution } = useAuth()
+  const { user } = useAuth()
 
   const profileForm = useForm<ProfileFormValues>({
     resolver: zodResolver(updateMeRequestSchema),
@@ -81,12 +81,6 @@ export function ProfilePage() {
               <div className="text-xs text-muted-foreground">{t('profile.info.role')}</div>
               <div className="font-medium">{t(`roles.${user.role}`)}</div>
             </div>
-            {institution && (
-              <div>
-                <div className="text-xs text-muted-foreground">{t('profile.info.institution')}</div>
-                <div className="font-medium">{institution.name}</div>
-              </div>
-            )}
           </div>
         </CardContent>
       </Card>

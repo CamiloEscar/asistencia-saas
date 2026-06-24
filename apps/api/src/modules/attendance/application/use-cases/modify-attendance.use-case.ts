@@ -1,6 +1,5 @@
 import { DateTime } from 'luxon'
 import { ForbiddenException, Inject, Injectable, Logger, NotFoundException } from '@nestjs/common'
-import { getTenantContext } from '../../../../shared/tenant/tenant.context'
 import {
   ATTENDANCE_REPOSITORY,
   type IAttendanceRepository,
@@ -16,9 +15,7 @@ import type { ModifyAttendanceDto } from '../dtos/modify-attendance.dto'
  * ModifyAttendanceUseCase — modify a single attendance record.
  * Per spec REQ-ATT-002:
  *
- *   1. Load the attendance, validate it's in the caller's
- *      institution (404 if not — the spec prefers not to leak
- *      existence across tenants).
+ *   1. Load the attendance, validate it exists (404 if not).
  *   2. If the caller is a TEACHER:
  *        a. Enforce the SAME-DAY rule: the session's
  *           `scheduledAt` (in the institution's TZ) must equal
@@ -46,10 +43,10 @@ export class ModifyAttendanceUseCase {
   async execute(
     id: string,
     input: ModifyAttendanceDto,
-    ctx: { institutionId: string; actorUserId: string; actorRole: string },
+    ctx: { actorUserId: string; actorRole: string },
   ) {
     // 1. Load the attendance.
-    const record = await this.attendance.findByIdInInstitution(ctx.institutionId, id)
+    const record = await this.attendance.findById(id)
     if (!record) {
       throw new NotFoundException({
         message: 'Attendance record not found',
@@ -58,10 +55,7 @@ export class ModifyAttendanceUseCase {
     }
 
     // 2. Load the session to get its date for the same-day check.
-    const session = await this.classSessions.findByIdInInstitution(
-      ctx.institutionId,
-      record.sessionId,
-    )
+    const session = await this.classSessions.findById(record.sessionId)
     if (!session) {
       // Data integrity: attendance points to a missing session.
       // Treat as 404 to avoid leaking schema internals.
@@ -73,8 +67,7 @@ export class ModifyAttendanceUseCase {
 
     // 3. Authorization: same-day rule for teachers, plus course-assignment check.
     if (ctx.actorRole === 'TEACHER') {
-      const tenantCtx = getTenantContext()
-      const timezone = tenantCtx?.timezone ?? 'America/Argentina/Buenos_Aires'
+      const timezone = 'America/Argentina/Buenos_Aires'
       const sessionDay = DateTime.fromJSDate(session.scheduledAt).setZone(timezone).startOf('day')
       const today = DateTime.now().setZone(timezone).startOf('day')
       if (!sessionDay.equals(today)) {
@@ -84,7 +77,6 @@ export class ModifyAttendanceUseCase {
         })
       }
       const assigned = await this.classSessions.isTeacherAssignedToCourse(
-        ctx.institutionId,
         ctx.actorUserId,
         session.courseId,
       )
@@ -94,9 +86,9 @@ export class ModifyAttendanceUseCase {
           error: 'Forbidden',
         })
       }
-    } else if (ctx.actorRole !== 'INSTITUTION_ADMIN' && ctx.actorRole !== 'SUPER_ADMIN') {
+    } else if (ctx.actorRole !== 'ADMIN') {
       throw new ForbiddenException({
-        message: 'Only teachers and institution admins can modify attendance',
+        message: 'Only teachers and admins can modify attendance',
         error: 'Forbidden',
       })
     }
@@ -110,8 +102,7 @@ export class ModifyAttendanceUseCase {
     if (input.evidenceUrl !== undefined) {
       updateInput.evidenceUrl = input.evidenceUrl
     }
-    const updated = await this.attendance.updateByIdInInstitution(
-      ctx.institutionId,
+    const updated = await this.attendance.updateById(
       id,
       updateInput,
       ctx.actorUserId,

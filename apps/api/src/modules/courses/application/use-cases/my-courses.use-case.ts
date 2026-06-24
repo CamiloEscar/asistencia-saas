@@ -9,7 +9,7 @@ import {
  * MyCoursesUseCase — returns the courses assigned to the calling
  * teacher (REQ-TEACHER-005, REQ-COURSE-010). The repository does
  * the role-based filter using `forRole: 'TEACHER'` + `forUserId`
- * (see `PrismaCourseRepository.listInInstitution`).
+ * (see `PrismaCourseRepository.list`).
  *
  * The teacher is identified from the JWT claims (populated by
  * JwtAuthGuard into the tenant context). No role check happens
@@ -19,8 +19,8 @@ import {
 export class MyCoursesUseCase {
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
-  async execute(institutionId: string, teacherUserId: string): Promise<ListCoursesResult> {
-    return this.courses.listInInstitution(institutionId, {
+  async execute(teacherUserId: string): Promise<ListCoursesResult> {
+    return this.courses.list({
       forRole: 'TEACHER',
       forUserId: teacherUserId,
       isActive: true,

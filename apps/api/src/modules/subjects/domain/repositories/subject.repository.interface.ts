@@ -1,18 +1,14 @@
 /**
- * Domain repository contract for subjects. Subjects are institution-
- * scoped; the implementation uses the Prisma extension's automatic
- * `institutionId` injection.
+ * Domain repository contract for subjects.
  *
  * Per spec REQ-SUBJECT-005, `code` is uppercase alphanumeric +
- * hyphens, 2-20 chars, case-insensitive uniqueness within the
- * institution.
+ * hyphens, 2-20 chars, case-insensitive uniqueness.
  */
 import type { Subject } from '../entities/subject.entity'
 
 export const SUBJECT_REPOSITORY = Symbol('SUBJECT_REPOSITORY')
 
 export interface CreateSubjectInput {
-  institutionId: string
   code: string
   name: string
   description?: string | null
@@ -36,20 +32,16 @@ export interface ListSubjectsResult {
 }
 
 export interface ISubjectRepository {
-  findByIdInInstitution(institutionId: string, id: string): Promise<Subject | null>
-  findByCodeInInstitution(institutionId: string, code: string): Promise<Subject | null>
-  listInInstitution(institutionId: string, input: ListSubjectsInput): Promise<ListSubjectsResult>
-  createInInstitution(input: CreateSubjectInput): Promise<Subject>
-  updateInInstitution(
-    institutionId: string,
-    id: string,
-    input: UpdateSubjectInput,
-  ): Promise<Subject>
+  findById(id: string): Promise<Subject | null>
+  findByCode(code: string): Promise<Subject | null>
+  list(input: ListSubjectsInput): Promise<ListSubjectsResult>
+  create(input: CreateSubjectInput): Promise<Subject>
+  update(id: string, input: UpdateSubjectInput): Promise<Subject>
   /** Soft delete (sets deletedAt). Caller must verify no active
    *  courses reference the subject (REQ-SUBJECT-004-02). */
-  setDeletedInInstitution(institutionId: string, id: string): Promise<Subject>
+  setDeleted(id: string): Promise<Subject>
 
   /** Count active courses referencing this subject. Used by the
    *  deactivate use case to enforce REQ-SUBJECT-004-02. */
-  countActiveCoursesInInstitution(institutionId: string, id: string): Promise<number>
+  countActiveCourses(id: string): Promise<number>
 }

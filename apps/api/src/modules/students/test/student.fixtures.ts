@@ -14,7 +14,6 @@ export const makeStudentRow = (
   fullName: 'Juan Pérez',
   role: 'STUDENT',
   status: 'ACTIVE',
-  institutionId: 'i-1',
   legajo: '2024-001',
   phone: '555-0001',
   birthDate: new Date('2000-01-01'),
@@ -43,7 +42,6 @@ export const makeStudent = (overrides: Partial<Record<string, unknown>> = {}): S
       fullName: row.fullName as string,
       role: 'STUDENT',
       status: (row.status as 'ACTIVE' | 'INACTIVE') ?? 'ACTIVE',
-      institutionId: (row.institutionId as string | null) ?? null,
     } as never,
     extras,
   )

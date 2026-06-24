@@ -16,11 +16,11 @@ import {
 export class DeactivateCourseUseCase {
   constructor(@Inject(COURSE_REPOSITORY) private readonly courses: ICourseRepository) {}
 
-  async execute(institutionId: string, id: string): Promise<Course> {
-    const target = await this.courses.findByIdInInstitution(institutionId, id)
+  async execute(id: string): Promise<Course> {
+    const target = await this.courses.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Course not found', error: 'Not Found' })
     }
-    return this.courses.setDeletedInInstitution(institutionId, id)
+    return this.courses.setDeleted(id)
   }
 }

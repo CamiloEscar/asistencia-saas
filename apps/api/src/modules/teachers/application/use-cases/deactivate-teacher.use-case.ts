@@ -13,11 +13,11 @@ import {
 export class DeactivateTeacherUseCase {
   constructor(@Inject(TEACHER_REPOSITORY) private readonly teachers: ITeacherRepository) {}
 
-  async execute(institutionId: string, id: string): Promise<Teacher> {
-    const target = await this.teachers.findByIdInInstitution(institutionId, id)
+  async execute(id: string): Promise<Teacher> {
+    const target = await this.teachers.findById(id)
     if (!target) {
       throw new NotFoundException({ message: 'Teacher not found', error: 'Not Found' })
     }
-    return this.teachers.setActiveInInstitution(institutionId, id, false)
+    return this.teachers.setActive(id, false)
   }
 }

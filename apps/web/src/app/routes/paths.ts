@@ -13,14 +13,8 @@ export const Paths = {
   dashboard: '/dashboard',
   today: '/today', // Teacher
   me: '/me', // Student
-  admin: '/admin', // Super admin
 
   // Management
-  institutions: '/institutions',
-  institutionNew: '/institutions/new',
-  institutionDetail: (id: string) => `/institutions/${id}`,
-  institutionEdit: (id: string) => `/institutions/${id}/edit`,
-
   users: '/users',
   userNew: '/users/new',
   userDetail: (id: string) => `/users/${id}`,
@@ -66,12 +60,10 @@ export const Paths = {
  * `LoginPage` (post-login redirect) and `RequireAuth` (fallback).
  */
 export function landingPathForRole(
-  role: 'SUPER_ADMIN' | 'INSTITUTION_ADMIN' | 'TEACHER' | 'STUDENT' | null | undefined,
+  role: 'ADMIN' | 'TEACHER' | 'STUDENT' | null | undefined,
 ): string {
   switch (role) {
-    case 'SUPER_ADMIN':
-      return Paths.admin
-    case 'INSTITUTION_ADMIN':
+    case 'ADMIN':
       return Paths.dashboard
     case 'TEACHER':
       return Paths.today

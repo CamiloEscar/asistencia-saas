@@ -2,10 +2,8 @@ import { Module } from '@nestjs/common'
 import { AuthModule } from '../auth/auth.module'
 import { CryptoModule } from '../../shared/crypto/crypto.module'
 import { PrismaModule } from '../../shared/prisma/prisma.module'
-import { TenantModule } from '../../shared/tenant/tenant.module'
 import { JwtAuthGuard } from '../auth/infrastructure/guards/jwt-auth.guard'
 import { RolesGuard } from '../auth/infrastructure/guards/roles.guard'
-import { TenantGuard } from '../auth/infrastructure/guards/tenant.guard'
 import { CreateUserUseCase } from './application/use-cases/create-user.use-case'
 import { ListUsersUseCase } from './application/use-cases/list-users.use-case'
 import { GetUserUseCase } from './application/use-cases/get-user.use-case'
@@ -17,17 +15,17 @@ import { PrismaUserRepository } from './infrastructure/persistence/prisma-user.r
 import { UsersController } from './presentation/controllers/users.controller'
 
 /**
- * UsersModule — institution-scoped user management.
+ * UsersModule — user management.
  *
  * Cross-cutting dependencies:
  *   - `AuthModule` — for `SetPasswordUseCase` (issue activation
  *     links during user creation / password reset) and the auth
- *     guards (JwtAuthGuard, RolesGuard, TenantGuard).
- *   - `PrismaModule` — for the tenant-aware Prisma client.
+ *     guards (JwtAuthGuard, RolesGuard).
+ *   - `PrismaModule` — for the Prisma client.
  *   - `CryptoModule` — for the password hasher.
  */
 @Module({
-  imports: [PrismaModule, CryptoModule, TenantModule, AuthModule],
+  imports: [PrismaModule, CryptoModule, AuthModule],
   controllers: [UsersController],
   providers: [
     { provide: USER_REPOSITORY, useClass: PrismaUserRepository },
@@ -39,7 +37,6 @@ import { UsersController } from './presentation/controllers/users.controller'
     ResetPasswordUseCase,
     JwtAuthGuard,
     RolesGuard,
-    TenantGuard,
   ],
   exports: [USER_REPOSITORY],
 })
